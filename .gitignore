@@ -1,0 +1,23 @@
+### IDE & Tooling ###
+.idea/*
+!.idea/.gitignore
+!.idea/detekt.xml
+*.iml
+*.ipr
+*.iws
+.fleet/
+.gradle/
+.kotlin/
+.vscode/
+bin/
+build/
+local.properties
+projectFilesBackup*/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Other ###
+*.log
+_/

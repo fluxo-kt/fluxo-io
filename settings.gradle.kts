@@ -4,8 +4,18 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
+        // Google/Firebase/GMS/Androidx libraries
+        // Don't use exclusiveContent for androidx libraries so that snapshots work.
+        google {
+            content {
+                includeGroupByRegex("android.*")
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("org\\.chromium.*")
+            }
+        }
+        // For Gradle plugins only. Last because proxies to mavenCentral.
         gradlePluginPortal()
-        google()
     }
 
     // For local development.
@@ -18,9 +28,20 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    // Not supported in Kotlin Multiplatform plugin yet.
+    // repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
     repositories {
+        // Google/Firebase/GMS/Androidx libraries
+        // Don't use exclusiveContent for androidx libraries so that snapshots work.
+        google {
+            content {
+                includeGroupByRegex("android.*")
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("org\\.chromium.*")
+            }
+        }
         mavenCentral()
     }
 }

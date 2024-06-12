@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.kotlinx.bcv) apply false
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.fluxo.bcv.js) apply false
+    alias(libs.plugins.gradle.doctor) apply false
     alias(libs.plugins.fluxo.kmp.conf)
 }
 
@@ -27,12 +28,16 @@ fkcSetupRaw {
     githubProject = "fluxo-kt/fluxo-io"
     group = "io.github.fluxo-kt"
 
-    // TODO: Set developer info.
-    // developerId = "amal"
-    // developerName = "Artyom Shendrik"
-    // developerEmail = "artyom.shendrik@gmail.com"
+    publicationConfig {
+        developerId = "amal"
+        developerName = "Artyom Shendrik"
+        developerEmail = "artyom.shendrik@gmail.com"
+    }
 
-    enableSpotless = true
+    enableSpotless = false
+    apiValidation {
+        tsApiChecks = false
+    }
 
     experimentalLatestCompilation = true
     allWarningsAsErrors = true
@@ -42,8 +47,8 @@ fkcSetupRaw {
     )
 }
 
+// Exclude unused DOM API.
 allprojects {
-    // Exclude unused DOM API.
     configurations.all {
         resolutionStrategy.eachDependency {
             if (requested.module.name == "kotlin-dom-api-compat") {

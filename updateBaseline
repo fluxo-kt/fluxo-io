@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# SC2086: Double quote to prevent globbing and word splitting.
+# shellcheck disable=SC2086
+
+./gradlew --stop --info
+
+COMMON_TASKS="apiDump dependencyGuardBaseline detektBaselineMerge updateLintBaseline"
+COMMON_TASKS="${COMMON_TASKS} --continue -Dlint.baselines.continue=true"
+export GRADLE_OPTS="${GRADLE_OPTS} -Dorg.gradle.logging.stacktrace=all"
+export GRADLE_OPTS="${GRADLE_OPTS} -Dorg.gradle.caching=false -Dkotlin.incremental=false"
+export CI=true
+export RELEASE=true
+EXIT_CODE=0
+
+echo ""
+echo "===================================="
+echo "======== RUN BASELINE TASKS ========"
+echo "===================================="
+
+# Force re-run for all the tasks
+# -U: Refresh dependencies
+#COMMON_TASKS="${COMMON_TASKS} --rerun-tasks -U"
+
+./gradlew ${COMMON_TASKS} kotlinUpgradeYarnLock || EXIT_CODE=101
+
+
+if [ ${EXIT_CODE} -ne 0 ]; then
+  echo ""
+  echo "================================"
+  echo "== BASELINE TASKS FAILED: ${EXIT_CODE} =="
+  echo "================================"
+  exit ${EXIT_CODE}
+fi

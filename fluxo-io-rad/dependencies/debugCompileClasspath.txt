@@ -1,0 +1,4 @@
+com.google.code.findbugs:jsr305:3.0.2
+org.jetbrains.kotlin:kotlin-stdlib:2.0.0
+org.jetbrains.kotlinx:atomicfu-jvm:0.24.0
+org.jetbrains.kotlinx:atomicfu:0.24.0

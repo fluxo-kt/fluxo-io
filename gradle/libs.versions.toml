@@ -9,7 +9,8 @@
 
 version = "0.1.0-SNAPSHOT"
 
-androidMinSdk = "9"
+# AutoCloseable requires API level 19 (Android 4.4)
+androidMinSdk = "19"
 androidTargetSdk = "34"
 androidCompileSdk = "34"
 androidBuildTools = "34.0.0"
@@ -44,6 +45,17 @@ jmh = "1.37"
 
 [libraries]
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
+
+# https://developer.android.com/jetpack/androidx/releases/annotation
+# https://mvnrepository.com/artifact/androidx.annotation/annotation
+androidx-annotation = { module = "androidx.annotation:annotation", version = "1.8.0" }
+
+# https://mvnrepository.com/artifact/org.jetbrains/annotations
+jetbrains-annotation = { module = "org.jetbrains:annotations", version = "24.1.0" }
+
+# JSR 305: Annotations for Software Defect Detection
+# https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
+jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
 
 plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 plugin-android = { module = "com.android.tools.build:gradle", version.ref = "android-gradle-plugin" }

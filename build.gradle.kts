@@ -21,6 +21,7 @@ fkcSetupRaw {
     // Default KMP setup.
     defaults {
         allDefaultTargets()
+        androidNative()
     }
 
     projectName = "Fluxo IO"

@@ -15,6 +15,9 @@
 
 **⚠ Work-In-Progress**. **API isn’t stable yet!**
 
+Library provides cross-platform `RandomAccessData` abstraction for effective read-only random access to binary data.
+Different platform-specific implementations are provided.
+
 
 |         API | Platform     | Supported for   |
 |------------:|:-------------|:----------------|

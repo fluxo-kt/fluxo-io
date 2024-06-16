@@ -20,7 +20,9 @@ fkcSetupRaw {
 
     // Default KMP setup.
     defaults {
-        allDefaultTargets()
+        allDefaultTargets(
+            // wasmWasi = true // TODO
+        )
         androidNative()
     }
 

@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinx.kover)
-    id("kotlinx-atomicfu")
+    alias(libs.plugins.atomicfu)
 }
 
 fkcSetupMultiplatform(
@@ -11,4 +11,7 @@ fkcSetupMultiplatform(
         addStdlibDependency = true
     },
 ) {
+    common.main.dependencies {
+        implementation(libs.coroutines)
+    }
 }

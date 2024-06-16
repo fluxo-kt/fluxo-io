@@ -46,6 +46,17 @@ jmh = "1.37"
 [libraries]
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
 
+# https://github.com/Kotlin/kotlinx.coroutines/releases
+# https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.9.0-RC" }
+
+# https://mvnrepository.com/artifact/com.squareup.okio/okio
+okio = { module = "com.squareup.okio:okio", version = "3.9.0" }
+
+# https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.4.0" }
+kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version = "0.4.0" }
+
 # https://developer.android.com/jetpack/androidx/releases/annotation
 # https://mvnrepository.com/artifact/androidx.annotation/annotation
 androidx-annotation = { module = "androidx.annotation:annotation", version = "1.8.0" }
@@ -56,9 +67,6 @@ jetbrains-annotation = { module = "org.jetbrains:annotations", version = "24.1.0
 # JSR 305: Annotations for Software Defect Detection
 # https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
 jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
-
-plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-plugin-android = { module = "com.android.tools.build:gradle", version.ref = "android-gradle-plugin" }
 
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
@@ -72,6 +80,8 @@ plugin-kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plug
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 android-lib = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+
+atomicfu = { id = "kotlinx-atomicfu" }
 
 # https://github.com/fluxo-kt/fluxo-bcv-js/releases
 fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", version = "1.0.0" }

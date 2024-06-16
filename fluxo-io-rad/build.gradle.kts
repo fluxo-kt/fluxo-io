@@ -13,5 +13,12 @@ fkcSetupMultiplatform(
 ) {
     common.main.dependencies {
         implementation(libs.coroutines)
+        implementation(libs.kotlinx.io.core)
+    }
+
+    arrayOf(commonJvm, commonApple, commonJs, commonLinux, commonMingw).forEach {
+        it.main.dependencies {
+            implementation(libs.okio)
+        }
     }
 }

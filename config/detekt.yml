@@ -27,6 +27,7 @@ complexity:
   LongParameterList:
     ignoreDefaultParameters: true
   TooManyFunctions:
+    active: false
     ignoreDeprecated: true
     ignoreOverridden: true
     ignoreAnnotatedFunctions: ['Preview']
@@ -38,6 +39,8 @@ empty-blocks:
 naming:
   FunctionNaming:
     ignoreAnnotated: ['Composable']
+  MatchingDeclarationName:
+    active: false
 
 style:
   LoopWithTooManyJumpStatements:

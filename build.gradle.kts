@@ -50,6 +50,41 @@ fkcSetupRaw {
     )
 }
 
+
+/**
+ * Find Android SDK JAR for usage as dependency in non-android modules or source sets.
+ */
+fun findAndroidJar(project: Project, compileSdkVersion: Int): FileCollection {
+    fun getSdkDirFromLocalProperties(): String? {
+        // Get "sdk.dir" property from local.properties file.
+        return project.file("local.properties")
+            .takeIf { it.exists() }
+            ?.run {
+                readLines().firstOrNull { it.startsWith("sdk.dir=") }
+                    ?.substringAfter("sdk.dir=")
+            }
+    }
+
+    fun findAndroidSdkDir(): String? {
+        // https://developer.android.com/studio/command-line/variables
+        return getSdkDirFromLocalProperties()
+            ?: System.getenv("ANDROID_SDK_ROOT")
+            ?: System.getenv("ANDROID_HOME")
+            ?: System.getProperty("android.home")
+    }
+
+    // References:
+    // https://android.googlesource.com/platform/tools/base/+/f6bef46dc8/build-system/gradle-core/src/main/java/com/android/build/gradle/internal/SdkHandler.java#319
+    // https://github.com/stepango/android-jar
+    val androidSdkDir = findAndroidSdkDir()
+        ?: throw java.io.FileNotFoundException("Can't locate Android SDK path")
+
+    return project.files("$androidSdkDir/platforms/android-$compileSdkVersion/android.jar")
+}
+
+extra["androidJar"] = findAndroidJar(project, libs.versions.androidCompileSdk.get().toInt())
+
+
 // Exclude unused DOM API.
 allprojects {
     configurations.all {

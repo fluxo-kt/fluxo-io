@@ -5,6 +5,10 @@ plugins {
 
 fkcSetupMultiplatform(
     namespace = "kt.fluxo.io.rad",
+    optIns = listOf(
+        "kotlin.ExperimentalSubclassOptIn",
+        "fluxo.io.internal.InternalForInheritanceApi",
+    ),
     config = {
         setupCoroutines = true
         setupDependencies = true

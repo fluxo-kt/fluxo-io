@@ -45,5 +45,12 @@ internal fun Long.toIntChecked(): Int {
     return result
 }
 
+/**
+ * Ensures that the value lies in the specified range [min]..[max].
+ *
+ * Seems a bit faster on phones, than "Math.min/max"-based implementation.
+ *
+ * @see kotlin.ranges.coerceIn
+ */
 internal fun norm(num: Long, min: Long, max: Long) =
     if (num >= max) max else if (num >= min) num else min

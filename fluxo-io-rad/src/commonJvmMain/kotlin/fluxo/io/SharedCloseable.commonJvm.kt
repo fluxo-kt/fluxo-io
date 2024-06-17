@@ -7,6 +7,7 @@ import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.Job
+import kotlinx.io.IOException
 
 @ThreadSafe
 public actual abstract class SharedCloseable : Closeable, AutoCloseable {
@@ -31,6 +32,7 @@ public actual abstract class SharedCloseable : Closeable, AutoCloseable {
         }
     }
 
+    @Throws(IOException::class)
     protected actual abstract fun onSharedClose()
 
     public actual fun onSharedClose(cb: CompletionHandler): DisposableHandle =

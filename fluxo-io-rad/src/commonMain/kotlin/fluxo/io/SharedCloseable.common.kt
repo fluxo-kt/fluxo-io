@@ -5,6 +5,7 @@ package fluxo.io
 import fluxo.io.internal.ThreadSafe
 import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.DisposableHandle
+import kotlinx.io.IOException
 
 /**
  * A [SharedCloseable] is a resource that can be shared between multiple consumers.
@@ -19,6 +20,7 @@ public expect abstract class SharedCloseable : AutoCloseable {
 
     final override fun close()
 
+    @Throws(IOException::class)
     protected abstract fun onSharedClose()
 
     public fun onSharedClose(cb: CompletionHandler): DisposableHandle

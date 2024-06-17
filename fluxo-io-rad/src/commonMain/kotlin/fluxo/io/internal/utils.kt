@@ -20,3 +20,16 @@ internal fun checkOffsetAndCount(dataLength: Int, offset: Int, count: Int) {
         )
     }
 }
+
+/**
+ * Helper method for bound check.
+ *
+ * @see java.util.Arrays.checkOffsetAndCount
+ */
+internal fun checkOffsetAndCount(dataLength: Long, offset: Long, count: Long) {
+    if (offset or count < 0L || offset > dataLength || dataLength - offset < count) {
+        throw IndexOutOfBoundsException(
+                "dataLength=$dataLength; regionStart=$offset; regionLength=$count",
+        )
+    }
+}

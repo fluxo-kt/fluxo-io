@@ -52,5 +52,8 @@ internal fun Long.toIntChecked(): Int {
  *
  * @see kotlin.ranges.coerceIn
  */
-internal fun norm(num: Long, min: Long, max: Long) =
-    if (num >= max) max else if (num >= min) num else min
+internal fun Long.normIn(min: Long, max: Long) =
+    if (this >= max) max else if (this >= min) this else min
+
+
+internal const val MAX_INT_LONG = Int.MAX_VALUE.toLong()

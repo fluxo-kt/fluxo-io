@@ -1,6 +1,7 @@
 package fluxo.io.rad
 
-import fluxo.io.internal.norm
+import fluxo.io.internal.MAX_INT_LONG
+import fluxo.io.internal.normIn
 import java.io.InputStream
 import javax.annotation.concurrent.NotThreadSafe
 import kotlin.math.min
@@ -28,7 +29,8 @@ public class InputStreamFromRad(
     private var mark = 0L
 
     override fun available(): Int {
-        return norm(rad.size - position, 0L, Int.MAX_VALUE.toLong()).toInt()
+        // TODO: Can it cause Int overflow?
+        return (rad.size - position).normIn(0L, MAX_INT_LONG).toInt()
     }
 
     @Throws(IOException::class)

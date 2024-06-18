@@ -6,7 +6,7 @@ plugins {
 fkcSetupMultiplatform(
     namespace = "kt.fluxo.io.rad",
     optIns = listOf(
-        "fluxo.io.internal.InternalForInheritanceApi",
+        "fluxo.io.internal.InternalFluxoIoApi",
         "kotlin.ExperimentalMultiplatform",
         "kotlin.ExperimentalSubclassOptIn",
     ),

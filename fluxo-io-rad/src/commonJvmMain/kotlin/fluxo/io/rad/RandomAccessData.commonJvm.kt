@@ -4,7 +4,7 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
+import fluxo.io.internal.InternalFluxoIoApi
 import fluxo.io.internal.ThreadSafe
 import java.io.Closeable
 import java.io.InputStream
@@ -13,7 +13,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.WritableByteChannel
 
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
+@SubclassOptInRequired(InternalFluxoIoApi::class)
 public actual interface RandomAccessData : Closeable, AutoCloseable {
 
     public actual val size: Long

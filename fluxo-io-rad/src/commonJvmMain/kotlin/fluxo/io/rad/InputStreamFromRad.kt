@@ -1,11 +1,11 @@
 package fluxo.io.rad
 
+import fluxo.io.IOException
 import fluxo.io.internal.MAX_INT_LONG
 import fluxo.io.internal.normIn
 import java.io.InputStream
 import javax.annotation.concurrent.NotThreadSafe
 import kotlin.math.min
-import kotlinx.io.IOException
 
 
 @Deprecated(

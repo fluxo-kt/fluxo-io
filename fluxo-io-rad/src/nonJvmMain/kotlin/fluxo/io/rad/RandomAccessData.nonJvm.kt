@@ -4,11 +4,11 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
+import fluxo.io.internal.InternalFluxoIoApi
 import fluxo.io.internal.ThreadSafe
 
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
+@SubclassOptInRequired(InternalFluxoIoApi::class)
 public actual interface RandomAccessData : AutoCloseable {
 
     public actual val size: Long

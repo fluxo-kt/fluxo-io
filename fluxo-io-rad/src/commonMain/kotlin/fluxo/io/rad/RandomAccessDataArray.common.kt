@@ -1,5 +1,6 @@
 package fluxo.io.rad
 
+import fluxo.io.internal.BasicRad
 import fluxo.io.internal.ThreadSafe
 
 /**
@@ -10,8 +11,8 @@ import fluxo.io.internal.ThreadSafe
  * @param length the length of the section
  */
 @ThreadSafe
-public expect class RandomAccessDataArray(
+internal expect class RandomAccessDataArray(
     array: ByteArray,
-    offset: Int = 0,
-    length: Int = array.size - offset,
+    offset: Int,
+    length: Int,
 ) : BasicRad

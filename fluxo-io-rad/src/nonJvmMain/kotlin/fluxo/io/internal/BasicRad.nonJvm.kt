@@ -1,20 +1,15 @@
 @file:Suppress("RedundantSuppression")
 
-package fluxo.io.rad
+package fluxo.io.internal
 
-import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
-import fluxo.io.internal.ThreadSafe
-import fluxo.io.internal.readAllBytesImpl
-import fluxo.io.internal.readFullyAsyncImpl
-import fluxo.io.internal.readFullyImpl
+import fluxo.io.rad.RandomAccessData
 
 /**
  * Common logic for [RandomAccessData] implementations
  */
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
-public actual abstract class BasicRad : RandomAccessData {
+@InternalFluxoIoApi
+internal actual abstract class BasicRad : RandomAccessData {
 
     @Blocking
     actual override fun readAllBytes(): ByteArray = readAllBytesImpl()

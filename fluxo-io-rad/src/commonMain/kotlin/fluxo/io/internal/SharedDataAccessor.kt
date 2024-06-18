@@ -1,16 +1,13 @@
-package fluxo.io.rad
+package fluxo.io.internal
 
 import fluxo.io.IOException
 import fluxo.io.SharedCloseable
-import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
-import fluxo.io.internal.ThreadSafe
 
 /**
  * Shared accessor for read-only thread-safe random reads from underlying data.
  */
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
+@SubclassOptInRequired(InternalFluxoIoApi::class)
 internal abstract class SharedDataAccessor
 internal constructor() : SharedCloseable() {
 

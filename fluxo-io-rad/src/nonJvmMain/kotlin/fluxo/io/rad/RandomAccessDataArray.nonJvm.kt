@@ -1,5 +1,6 @@
 package fluxo.io.rad
 
+import fluxo.io.internal.BasicRad
 import fluxo.io.internal.EMPTY_BYTE_ARRAY
 import fluxo.io.internal.ThreadSafe
 import fluxo.io.internal.checkOffsetAndCount
@@ -16,7 +17,7 @@ import kotlin.math.min
  * @param length the length of the section
  */
 @ThreadSafe
-public actual class RandomAccessDataArray
+internal actual class RandomAccessDataArray
 actual constructor(
     private val array: ByteArray,
     private val offset: Int,
@@ -30,7 +31,7 @@ actual constructor(
     }
 
 
-    override fun getSubsection(position: Long, length: Long): RandomAccessDataArray {
+    override fun getSubsection(position: Long, length: Long): RandomAccessData {
         checkOffsetAndCount(size, position, length)
         return RandomAccessDataArray(array, offset + position.toIntChecked(), length.toInt())
     }

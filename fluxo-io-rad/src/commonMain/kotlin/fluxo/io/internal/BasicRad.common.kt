@@ -1,16 +1,14 @@
-package fluxo.io.rad
+package fluxo.io.internal
 
-import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
-import fluxo.io.internal.ThreadSafe
+import fluxo.io.rad.RandomAccessData
 
 /**
  * Common methods for [RandomAccessData] implementations.
  */
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
-public expect abstract class BasicRad
-public constructor() : RandomAccessData {
+@InternalFluxoIoApi
+internal expect abstract class BasicRad
+internal constructor() : RandomAccessData {
 
     @Blocking
     override fun readAllBytes(): ByteArray

@@ -4,7 +4,7 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
+import fluxo.io.internal.InternalFluxoIoApi
 import fluxo.io.internal.ThreadSafe
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -20,7 +20,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * @see org.springframework.boot.loader.data.RandomAccessData
  */
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
+@SubclassOptInRequired(InternalFluxoIoApi::class)
 public expect interface RandomAccessData : AutoCloseable {
 
     /**

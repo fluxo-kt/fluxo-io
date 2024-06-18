@@ -1,16 +1,12 @@
-package fluxo.io.rad
+package fluxo.io.internal
 
 import fluxo.io.IOException
-import fluxo.io.internal.Blocking
-import fluxo.io.internal.InternalForInheritanceApi
-import fluxo.io.internal.ThreadSafe
-import fluxo.io.internal.readAllBytesImpl
-import fluxo.io.internal.readFullyAsyncImpl
-import fluxo.io.internal.readFullyImpl
 import fluxo.io.nio.BufferUtil
 import fluxo.io.nio.clearCompat
 import fluxo.io.nio.flipCompat
 import fluxo.io.nio.positionCompat
+import fluxo.io.rad.InputStreamFromRad
+import fluxo.io.rad.RandomAccessData
 import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
@@ -23,8 +19,8 @@ import kotlin.math.min
  * Common logic for [RandomAccessData] implementations
  */
 @ThreadSafe
-@SubclassOptInRequired(InternalForInheritanceApi::class)
-public actual abstract class BasicRad : RandomAccessData {
+@InternalFluxoIoApi
+internal actual abstract class BasicRad : RandomAccessData {
 
     override fun getInputStream(): InputStream =
         InputStreamFromRad(this)

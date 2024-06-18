@@ -3,7 +3,7 @@
 # https://github.com/detekt/detekt/blob/main/detekt-formatting/src/main/resources/config/config.yml
 
 config:
-  validation: true
+  validation: false
   warningsAsErrors: false
   checkExhaustiveness: false
 

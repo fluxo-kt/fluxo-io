@@ -18,9 +18,10 @@ androidBuildTools = "34.0.0"
 javaLangTarget = "1.8"
 kotlinLangVersion = "2.0"
 
+# https://github.com/JetBrains/kotlin/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin
 # WARN: Don't forget to update kotlin version badge in ../README.md
-kotlin = "2.0.0"
+kotlin = "2.0.20-Beta1"
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
@@ -31,12 +32,16 @@ coroutines = "1.9.0-RC"
 # https://maven.google.com/web/index.html#com.android.tools.build:gradle
 # https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
 # https://developer.android.com/build/releases/gradle-plugin#updating-plugin
-android-gradle-plugin = "8.2.2"
+android-gradle-plugin = "8.5.0"
 
 # Kotlin code coverage plugin
 # https://github.com/Kotlin/kotlinx-kover/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx.kover/org.jetbrains.kotlinx.kover.gradle.plugin
 kover = "0.8.1"
+
+# AtomicFU: The idiomatic way to use atomic operations in Kotlin
+# https://github.com/Kotlin/kotlinx-atomicfu/releases.
+atomicfu = "0.24.0"
 
 # Java Microbenchmark Harness (JMH)
 # https://github.com/openjdk/jmh/tags
@@ -48,11 +53,13 @@ kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.r
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.9.0-RC" }
+coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
+# https://github.com/square/okio/tags
 # https://mvnrepository.com/artifact/com.squareup.okio/okio
 okio = { module = "com.squareup.okio:okio", version = "3.9.0" }
 
+# https://github.com/Kotlin/kotlinx-io/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.4.0" }
 kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version = "0.4.0" }
@@ -71,9 +78,8 @@ jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 
-# AtomicFU: The idiomatic way to use atomic operations in Kotlin
-# https://github.com/Kotlin/kotlinx-atomicfu/releases.
-plugin-kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version = "0.24.0" }
+plugin-kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref="atomicfu" }
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref="atomicfu" }
 
 
 [plugins]

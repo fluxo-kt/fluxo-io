@@ -8,7 +8,6 @@ import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.Job
-import kotlinx.io.IOException
 
 /**
  * A [SharedCloseable] is a resource that can be shared between multiple consumers.
@@ -40,6 +39,13 @@ public abstract class SharedCloseable : Closeable {
         }
     }
 
+    /**
+     * Called at most once when the last consumer releases the resource.
+     *
+     * Implementations should release any resources held by the instance.
+     *
+     * Can throw an exception, it will be properly propagated to the caller.
+     */
     @Throws(IOException::class)
     protected abstract fun onSharedClose()
 
@@ -47,9 +53,14 @@ public abstract class SharedCloseable : Closeable {
         job.invokeOnCompletion(cb)
 
     public fun retain() {
-        check(retainsCount.getAndIncrement() > 0) {
-            retainsCount.decrementAndGet()
-            "Attempt to retain an already released instance: $this"
+        while (true) {
+            val count = retainsCount.value
+            check(count > 0) {
+                "Attempt to retain an already released instance: $this"
+            }
+            if (retainsCount.compareAndSet(expect = count, update = count + 1)) {
+                return
+            }
         }
     }
 }

@@ -8,4 +8,4 @@ package fluxo.io.internal
     level = RequiresOptIn.Level.WARNING,
     message = "API that is not intended to be inherited from.",
 )
-public annotation class InternalForInheritanceApi
+internal annotation class InternalForInheritanceApi

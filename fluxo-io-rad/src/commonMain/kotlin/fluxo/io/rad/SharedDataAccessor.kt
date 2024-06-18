@@ -1,19 +1,26 @@
 package fluxo.io.rad
 
+import fluxo.io.IOException
 import fluxo.io.SharedCloseable
+import fluxo.io.internal.Blocking
 import fluxo.io.internal.InternalForInheritanceApi
-import kotlinx.io.IOException
+import fluxo.io.internal.ThreadSafe
 
+/**
+ * Shared accessor for read-only thread-safe random reads from underlying data.
+ */
+@ThreadSafe
 @SubclassOptInRequired(InternalForInheritanceApi::class)
-public abstract class AbstractRadAccess
+internal abstract class SharedDataAccessor
 internal constructor() : SharedCloseable() {
 
     protected abstract val api: AutoCloseable
 
-    public abstract val size: Long
+    abstract val size: Long
 
+    @Blocking
     @Throws(IOException::class)
-    public abstract fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int
+    abstract fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int
 
     /**
      *

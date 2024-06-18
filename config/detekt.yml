@@ -49,6 +49,10 @@ style:
     ignoreAnnotation: true
   MaxLineLength:
     maxLineLength: 100
+  ReturnCount:
+    max: 3
+    excludeLabeled: true
+    excludeGuardClauses: true
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview']
 

@@ -19,7 +19,6 @@ package fluxo.io.internal
  */
 @MustBeDocumented
 @OptionalExpectation
-@OptIn(ExperimentalMultiplatform::class)
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
 @Suppress("GrazieInspection")

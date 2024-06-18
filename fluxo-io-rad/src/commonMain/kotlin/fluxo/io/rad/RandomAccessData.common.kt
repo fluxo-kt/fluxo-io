@@ -2,9 +2,11 @@
 
 package fluxo.io.rad
 
+import fluxo.io.IOException
+import fluxo.io.internal.Blocking
+import fluxo.io.internal.InternalForInheritanceApi
 import fluxo.io.internal.ThreadSafe
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.io.IOException
 
 /**
  * Interface that provides read-only random access to some underlying data.
@@ -13,9 +15,12 @@ import kotlinx.io.IOException
  * See [RandomAccessDataBenchmark] findings if you want to choose implementation
  * rationally for your use case.
  *
+ * All implementations should be thread-safe!
+ *
  * @see org.springframework.boot.loader.data.RandomAccessData
  */
 @ThreadSafe
+@SubclassOptInRequired(InternalForInheritanceApi::class)
 public expect interface RandomAccessData : AutoCloseable {
 
     /**
@@ -34,7 +39,10 @@ public expect interface RandomAccessData : AutoCloseable {
      *
      * @throws IndexOutOfBoundsException if the [position] or [length] are invalid
      */
-    public fun getSubsection(position: Long, length: Long): RandomAccessData
+    public fun getSubsection(
+        position: Long,
+        length: Long = size - position,
+    ): RandomAccessData
 
 
     /**
@@ -46,6 +54,7 @@ public expect interface RandomAccessData : AutoCloseable {
      *
      * @see java.io.InputStream.readAllBytes
      */
+    @Blocking
     @Throws(IOException::class)
     public fun readAllBytes(): ByteArray
 
@@ -64,6 +73,7 @@ public expect interface RandomAccessData : AutoCloseable {
      *
      * @see org.springframework.boot.loader.data.RandomAccessData.read
      */
+    @Blocking
     @Throws(IOException::class)
     public fun readFrom(position: Long, maxLength: Int = Int.MAX_VALUE): ByteArray
 
@@ -85,6 +95,7 @@ public expect interface RandomAccessData : AutoCloseable {
      * @see java.io.RandomAccessFile.read
      * @see java.nio.channels.FileChannel.read
      */
+    @Blocking
     @Throws(IOException::class)
     public fun read(
         buffer: ByteArray,
@@ -112,6 +123,7 @@ public expect interface RandomAccessData : AutoCloseable {
      * @see java.io.DataInput.readFully
      * @see java.io.InputStream.readNBytes
      */
+    @Blocking
     @Throws(IOException::class)
     public fun readFully(
         buffer: ByteArray,
@@ -120,8 +132,15 @@ public expect interface RandomAccessData : AutoCloseable {
         maxLength: Int = Int.MAX_VALUE,
     ): Int
 
+
     /**
-     * Reads up to the [maxLength] bytes of data starting at the given [position].
+     * Reads up to the [maxLength] bytes of data starting at the given [position]
+     * asynchronously suspending until the operation is complete if possible.
+     *
+     * DOES NOT switch to the IO dispatcher by itself.
+     * Caller SHOULD take care of it.
+     *
+     * Can be blocking if the implementation does not support non-blocking reads!
      *
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
@@ -148,7 +167,13 @@ public expect interface RandomAccessData : AutoCloseable {
 
     /**
      * Reads as much as possible up to the [maxLength] bytes from this file into the byte array,
-     * starting at the given [position].
+     * starting at the given [position] asynchronously suspending
+     * until the operation is complete if possible.
+     *
+     * DOES NOT switch to the IO dispatcher by itself.
+     * Caller SHOULD take care of it.
+     *
+     * Can be blocking if the implementation does not support non-blocking reads!
      *
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
@@ -172,24 +197,4 @@ public expect interface RandomAccessData : AutoCloseable {
         offset: Int = 0,
         maxLength: Int = Int.MAX_VALUE,
     ): Int
-
-
-    /**
-     * Reads a byte of data. The byte is returned as an integer in the range 0 to 255 (0x00-0x0ff).
-     * This method blocks if no input is yet available. Method behaves in exactly the same way as
-     * the [InputStream.read] method.
-     *
-     * @param position the position from which data should be read
-     *
-     * @return the next byte of data as an integer, or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
-     *
-     * @throws IOException if the data cannot be read
-     * @throws IndexOutOfBoundsException if the [position] is invalid
-     *
-     * @see java.io.InputStream.read
-     * @see java.io.RandomAccessFile.read
-     */
-    @Throws(IOException::class)
-    public fun readByteAt(position: Long): Int
 }

@@ -2,15 +2,18 @@
 
 package fluxo.io.rad
 
+import fluxo.io.IOException
+import fluxo.io.internal.Blocking
+import fluxo.io.internal.InternalForInheritanceApi
 import fluxo.io.internal.ThreadSafe
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.WritableByteChannel
-import kotlinx.io.IOException
 
 @ThreadSafe
+@SubclassOptInRequired(InternalForInheritanceApi::class)
 public actual interface RandomAccessData : Closeable, AutoCloseable {
 
     public actual val size: Long
@@ -29,13 +32,16 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     public actual fun getSubsection(position: Long, length: Long): RandomAccessData
 
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun readAllBytes(): ByteArray
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun readFrom(position: Long, maxLength: Int): ByteArray
 
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun read(
         buffer: ByteArray,
@@ -44,6 +50,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
         maxLength: Int,
     ): Int
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun readFully(
         buffer: ByteArray,
@@ -51,6 +58,32 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
         offset: Int,
         maxLength: Int,
     ): Int
+
+    /**
+     * Reads a single byte of data.
+     * The byte is returned as an integer in the range 0 to 255 (`0x00..0x0ff`).
+     * This method blocks if no input is yet available. Method behaves in exactly the same way as
+     * the [InputStream.read] method.
+     *
+     * Note that this method can be highly inefficient for some implementations!
+     * If multiple bytes are to be read, it is generally
+     * more efficient to use [read] or [readFully].
+     *
+     * @param position the position from which data should be read
+     *
+     * @return the next byte of data as an integer, or `-1` if the given position is
+     *  greater than or equal to the data size at the time that the read is attempted.
+     *
+     * @throws IOException if the data cannot be read
+     * @throws IndexOutOfBoundsException if the [position] is invalid
+     *
+     * @see java.io.InputStream.read
+     * @see java.io.RandomAccessFile.read
+     */
+    @Blocking
+    @Throws(IOException::class)
+    public fun readByteAt(position: Long): Int
+
 
     public actual suspend fun readAsync(
         buffer: ByteArray,
@@ -65,10 +98,6 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
         offset: Int,
         maxLength: Int,
     ): Int
-
-
-    @Throws(IOException::class)
-    public actual fun readByteAt(position: Long): Int
 
 
     /**
@@ -88,6 +117,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.nio.channels.FileChannel.read
      * @see java.nio.channels.AsynchronousByteChannel.read
      */
+    @Blocking
     @Throws(IOException::class)
     public fun read(buffer: ByteBuffer, position: Long): Int
 
@@ -108,7 +138,6 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.nio.channels.AsynchronousFileChannel.read
      * @see java.nio.channels.AsynchronousByteChannel.read
      */
-    @Throws(IOException::class)
     public suspend fun readAsync(buffer: ByteBuffer, position: Long): Int
 
 
@@ -137,6 +166,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.nio.channels.FileChannel.transferTo
      * @see java.io.InputStream.transferTo
      */
+    @Blocking
     @Throws(IOException::class)
     public fun transferTo(
         channel: WritableByteChannel,
@@ -161,6 +191,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see azagroup.io.readBytesExact
      * @see azagroup.io.readBytesFully
      */
+    @Blocking
     @Throws(IOException::class)
     public fun transferTo(stream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long
 

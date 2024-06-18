@@ -2,10 +2,13 @@
 
 package fluxo.io.rad
 
+import fluxo.io.IOException
+import fluxo.io.internal.Blocking
+import fluxo.io.internal.InternalForInheritanceApi
 import fluxo.io.internal.ThreadSafe
-import kotlinx.io.IOException
 
 @ThreadSafe
+@SubclassOptInRequired(InternalForInheritanceApi::class)
 public actual interface RandomAccessData : AutoCloseable {
 
     public actual val size: Long
@@ -14,13 +17,16 @@ public actual interface RandomAccessData : AutoCloseable {
     public actual fun getSubsection(position: Long, length: Long): RandomAccessData
 
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun readAllBytes(): ByteArray
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun readFrom(position: Long, maxLength: Int): ByteArray
 
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun read(
         buffer: ByteArray,
@@ -29,6 +35,7 @@ public actual interface RandomAccessData : AutoCloseable {
         maxLength: Int,
     ): Int
 
+    @Blocking
     @Throws(IOException::class)
     public actual fun readFully(
         buffer: ByteArray,
@@ -36,6 +43,7 @@ public actual interface RandomAccessData : AutoCloseable {
         offset: Int,
         maxLength: Int,
     ): Int
+
 
     public actual suspend fun readAsync(
         buffer: ByteArray,
@@ -50,8 +58,4 @@ public actual interface RandomAccessData : AutoCloseable {
         offset: Int,
         maxLength: Int,
     ): Int
-
-
-    @Throws(IOException::class)
-    public actual fun readByteAt(position: Long): Int
 }

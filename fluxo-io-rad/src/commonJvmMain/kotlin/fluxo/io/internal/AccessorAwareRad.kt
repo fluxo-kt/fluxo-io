@@ -20,7 +20,7 @@ internal constructor(
         checkOffsetAndCount(access.size, offset, size)
     }
 
-    override fun getSubsection(position: Long, length: Long): R {
+    override fun subsection(position: Long, length: Long): R {
         checkOffsetAndCount(size, position, length)
         access.retain()
         return getSubsection0(access, offset + position, length)

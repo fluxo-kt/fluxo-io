@@ -1,79 +1,45 @@
 package fluxo.io.rad
 
+import fluxo.io.Closeable
+import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.internal.toIntChecked
-import fluxo.io.nio.*
-import fluxo.io.rad.RandomAccessDataByteBuffer.ByteBufferAccess
-import java.io.*
+import fluxo.io.nio.BufferUtil
+import fluxo.io.nio.limitCompat
+import fluxo.io.nio.positionCompat
+import fluxo.io.rad.ByteBufferRad.ByteBufferAccess
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.nio.channels.FileChannel.MapMode
 import java.nio.channels.WritableByteChannel
 import javax.annotation.concurrent.ThreadSafe
 import kotlin.math.min
 
 /**
  * [RandomAccessData] implementation backed by a [ByteBuffer].
+ * Can be used for memory-mapped IO via [FileChannel] or direct buffer access.
  *
  * @param access provides access to the underlying buffer
  * @param offset the offset of the section
  * @param size the length of the section
  */
 @ThreadSafe
-internal class RandomAccessDataByteBuffer
+internal class ByteBufferRad
 private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
-    AccessorAwareRad<ByteBufferAccess, RandomAccessDataByteBuffer>(
+    AccessorAwareRad<ByteBufferAccess, ByteBufferRad>(
         access, offset.toLong(), size.toLong(),
     ) {
 
-    /**
-     * Create a new [RandomAccessDataByteBuffer] backed by the specified [array].
-     * @param array the underlying array
-     */
-    constructor(array: ByteArray, offset: Int = 0, size: Int = array.size - offset)
+    constructor(array: ByteArray, offset: Int, size: Int)
         : this(ByteBuffer.wrap(array), offset, size, null)
 
-    /**
-     * Create a new [RandomAccessDataByteBuffer] backed by the specified [buffer].
-     * @param buffer the underlying buffer
-     */
-    constructor(
-        buffer: ByteBuffer,
-        offset: Int = buffer.position(),
-        size: Int = buffer.limit() - offset,
-        resource: Closeable? = null,
-    ) : this(ByteBufferAccess(buffer, resource), offset, size)
-
-    /**
-     * Create a new [RandomAccessDataByteBuffer] backed by the memory mapped [channel].
-     * @param channel the underlying channel
-     */
-    constructor(channel: FileChannel, offset: Int = 0, size: Int = channel.size().toIntChecked()) :
-        this(
-            ByteBufferAccess(
-                channel.map(MapMode.READ_ONLY, offset.toLong(), size.toLong()), channel,
-            ),
-            offset, size,
-        )
-
-    /**
-     * Create a new [RandomAccessDataByteBuffer] backed by the memory mapped [FileDescriptor].
-     * @param fd the underlying channel
-     */
-    constructor(fd: FileDescriptor, offset: Int = 0) : this(FileInputStream(fd).channel, offset)
-
-    /**
-     * Create a new [RandomAccessDataByteBuffer] backed by the memory mapped [file].
-     * @param file the underlying file
-     */
-    constructor(file: File, offset: Int = 0, size: Int = file.length().toIntChecked())
-        : this(file.inputStream().channel, offset, size)
+    constructor(buffer: ByteBuffer, offset: Int, size: Int, resource: Closeable?)
+        : this(ByteBufferAccess(buffer, resource), offset, size)
 
 
     override fun getSubsection0(
         access: ByteBufferAccess, globalPosition: Long, length: Long,
-    ) = RandomAccessDataByteBuffer(access, globalPosition.toInt(), length.toInt())
+    ) = ByteBufferRad(access, globalPosition.toInt(), length.toInt())
 
 
     private fun toAccessPos(position: Long) = (offset + position).toIntChecked()

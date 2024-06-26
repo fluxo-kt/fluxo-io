@@ -7,21 +7,13 @@ import java.io.InputStream
 import javax.annotation.concurrent.NotThreadSafe
 import kotlin.math.min
 
-
-@Deprecated(
-    message = "Use InputStreamFromRad instead",
-    replaceWith = ReplaceWith("InputStreamFromRad"),
-)
-public typealias RadInputStream = InputStreamFromRad
-
-
 /**
- * [InputStream] implementation wrapping the [RandomAccessData].
+ * [InputStream] implementation wrapping the [RadByteArrayAccessor].
  *
  * @see java.io.ByteArrayInputStream
  */
 @NotThreadSafe
-public class InputStreamFromRad(
+internal class InputStreamRad(
     private val rad: RandomAccessData,
 ) : InputStream() {
 

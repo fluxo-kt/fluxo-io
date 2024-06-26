@@ -3,7 +3,7 @@ package fluxo.io.rad
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
-import fluxo.io.rad.RandomAccessDataFileChannel.FileChannelAccess
+import fluxo.io.rad.FileChannelRad.FileChannelAccess
 import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
@@ -15,41 +15,41 @@ import javax.annotation.concurrent.ThreadSafe
 
 
 /**
- * [RandomAccessData] implementation backed by a [FileChannel].
+ * [RadByteArrayAccessor] implementation backed by a [FileChannel].
  *
  * @param access provides access to the underlying channel
  * @param offset the offset of the section
  * @param size the length of the section
  */
 @ThreadSafe
-internal class RandomAccessDataFileChannel
+internal class FileChannelRad
 private constructor(access: FileChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<FileChannelAccess, RandomAccessDataFileChannel>(
+    AccessorAwareRad<FileChannelAccess, FileChannelRad>(
         access, offset, size,
     ) {
 
     /**
-     * Create a new [RandomAccessDataFileChannel] backed by the specified [channel].
+     * Create a new [FileChannelRad] backed by the specified [channel].
      * @param channel the underlying channel
      */
     constructor(channel: FileChannel, offset: Long = 0L, size: Long = channel.size() - offset)
         : this(FileChannelAccess(channel), offset, size)
 
     /**
-     * Create a new [RandomAccessDataFileChannel] backed by the channel for specified [stream].
+     * Create a new [FileChannelRad] backed by the channel for specified [stream].
      * @param stream file stream to create a channel from
      */
     constructor(stream: FileInputStream, offset: Long = 0L) : this(stream.channel, offset)
 
     /**
-     * Create a new [RandomAccessDataFileChannel] backed by the channel for specified [FileDescriptor].
+     * Create a new [FileChannelRad] backed by the channel for specified [FileDescriptor].
      * @param fd file descriptor to open channel from
      */
     constructor(fd: FileDescriptor, offset: Long = 0L)
         : this(FileInputStream(fd).channel, offset)
 
     /**
-     * Create a new [RandomAccessDataFileChannel] backed by the channel for specified [file].
+     * Create a new [FileChannelRad] backed by the channel for specified [file].
      * @param file the file to open channel from
      */
     constructor(file: File, offset: Long = 0L, size: Long = file.length() - offset)
@@ -58,7 +58,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
 
     override fun getSubsection0(
         access: FileChannelAccess, globalPosition: Long, length: Long,
-    ) = RandomAccessDataFileChannel(access, globalPosition, length)
+    ) = FileChannelRad(access, globalPosition, length)
 
 
     @Throws(IOException::class)

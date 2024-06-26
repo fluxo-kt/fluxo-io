@@ -14,7 +14,7 @@ public actual interface RandomAccessData : AutoCloseable {
     public actual val size: Long
 
 
-    public actual fun getSubsection(position: Long, length: Long): RandomAccessData
+    public actual fun subsection(position: Long, length: Long): RandomAccessData
 
 
     @Blocking

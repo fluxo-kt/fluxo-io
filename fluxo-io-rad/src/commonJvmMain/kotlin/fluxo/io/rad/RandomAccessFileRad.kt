@@ -5,17 +5,17 @@ package fluxo.io.rad
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.rad.RandomAccessDataRaf.RafAccess
+import fluxo.io.rad.RandomAccessFileRad.RafAccess
 import java.io.File
 import java.io.RandomAccessFile
 import java.util.concurrent.Semaphore
 import javax.annotation.concurrent.ThreadSafe
 
 /**
- * [RandomAccessData] implementation backed by a [RandomAccessFile].
+ * [RadByteArrayAccessor] implementation backed by a [RandomAccessFile].
  *
  * WARNING: [RandomAccessFile] cannot always work reliably under a concurrent load!
- * [RandomAccessDataRaf] tries to control it, but it can lead to performance slowdown
+ * [RandomAccessFileRad] tries to control it, but it can lead to performance slowdown
  * or even deadlocks sometimes!
  *
  * @param access provides access to the underlying file
@@ -25,12 +25,12 @@ import javax.annotation.concurrent.ThreadSafe
  * @see org.springframework.boot.loader.data.RandomAccessDataFile
  */
 @ThreadSafe
-internal class RandomAccessDataRaf
+internal class RandomAccessFileRad
 private constructor(access: RafAccess, offset: Long, size: Long) :
-    AccessorAwareRad<RafAccess, RandomAccessDataRaf>(access, offset, size) {
+    AccessorAwareRad<RafAccess, RandomAccessFileRad>(access, offset, size) {
 
     /**
-     * Create a new [RandomAccessDataRaf] backed by the specified [file].
+     * Create a new [RandomAccessFileRad] backed by the specified [file].
      * @param file the underlying file
      * @throws IllegalArgumentException if the file is null or does not exist
      */
@@ -38,7 +38,7 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
         : this(RandomAccessFile(file, "r"), offset, size)
 
     /**
-     * Create a new [RandomAccessDataRaf] backed by the specified [RandomAccessFile].
+     * Create a new [RandomAccessFileRad] backed by the specified [RandomAccessFile].
      * @param raf the underlying [RandomAccessFile]
      */
     constructor(raf: RandomAccessFile, offset: Long = 0L, size: Long = raf.length() - offset)
@@ -47,7 +47,7 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
 
     override fun getSubsection0(
         access: RafAccess, globalPosition: Long, length: Long,
-    ) = RandomAccessDataRaf(access, globalPosition, length)
+    ) = RandomAccessFileRad(access, globalPosition, length)
 
 
     override fun readByteAt0(position: Long): Int {

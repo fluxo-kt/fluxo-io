@@ -11,11 +11,15 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Interface that provides read-only random access to some underlying data.
  * Implementations must allow concurrent reads in a thread-safe manner.
+ * Instances can be shared, [subsectioned][subsection], and closed independently.
+ *
+ * **The caller is responsible for [closing][close] when it is finished!**
  *
  * See [RandomAccessDataBenchmark] findings if you want to choose implementation
  * rationally for your use case.
  *
- * All implementations should be thread-safe!
+ * All implementations are thread-safe!
+ * For JVM and Android, it also implements [java.io.Closeable] interface.
  *
  * @see org.springframework.boot.loader.data.RandomAccessData
  */
@@ -30,7 +34,7 @@ public expect interface RandomAccessData : AutoCloseable {
 
 
     /**
-     * Returns a new [RandomAccessData] for a specific subsection of this data.
+     * Returns a new [RadByteArrayAccessor] for a specific subsection of this data.
      *
      * @param position the position of the subsection
      * @param length the length of the subsection
@@ -39,7 +43,7 @@ public expect interface RandomAccessData : AutoCloseable {
      *
      * @throws IndexOutOfBoundsException if the [position] or [length] are invalid
      */
-    public fun getSubsection(
+    public fun subsection(
         position: Long,
         length: Long = size - position,
     ): RandomAccessData

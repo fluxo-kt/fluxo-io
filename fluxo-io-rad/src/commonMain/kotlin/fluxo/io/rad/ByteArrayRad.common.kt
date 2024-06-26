@@ -11,7 +11,7 @@ import fluxo.io.internal.ThreadSafe
  * @param length the length of the section
  */
 @ThreadSafe
-internal expect class RandomAccessDataArray(
+internal expect class ByteArrayRad(
     array: ByteArray,
     offset: Int,
     length: Int,

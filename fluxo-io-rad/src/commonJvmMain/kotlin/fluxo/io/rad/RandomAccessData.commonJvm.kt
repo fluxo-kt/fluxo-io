@@ -20,16 +20,17 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
 
 
     /**
-     * Returns an [InputStream] that can be used to read the underlying data. The
-     * caller is responsible for closing the stream when it is finished.
+     * Returns an new [InputStream] that can be used to read the underlying data.
+     *
+     * **The caller is responsible for closing the stream when it is finished!**
      *
      * @return a new input stream that can be used to read the underlying data.
      * @throws IOException if the stream cannot be opened
      */
     @Throws(IOException::class)
-    public fun getInputStream(): InputStream
+    public fun asInputStream(): InputStream
 
-    public actual fun getSubsection(position: Long, length: Long): RandomAccessData
+    public actual fun subsection(position: Long, length: Long): RandomAccessData
 
 
     @Blocking

@@ -5,8 +5,9 @@ import fluxo.io.nio.BufferUtil
 import fluxo.io.nio.clearCompat
 import fluxo.io.nio.flipCompat
 import fluxo.io.nio.positionCompat
-import fluxo.io.rad.InputStreamFromRad
+import fluxo.io.rad.InputStreamRad
 import fluxo.io.rad.RandomAccessData
+import fluxo.io.rad.RadByteArrayAccessor
 import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
@@ -16,14 +17,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Common logic for [RandomAccessData] implementations
+ * Common logic for [RadByteArrayAccessor] implementations
  */
 @ThreadSafe
 @InternalFluxoIoApi
 internal actual abstract class BasicRad : RandomAccessData {
 
-    override fun getInputStream(): InputStream =
-        InputStreamFromRad(this)
+    override fun asInputStream(): InputStream =
+        InputStreamRad(this)
 
 
     @Blocking
@@ -49,7 +50,7 @@ internal actual abstract class BasicRad : RandomAccessData {
     }
 
     /**
-     * Default naive inefficient implementation of [RandomAccessData.readByteAt].
+     * Default naive inefficient implementation of [RadByteArrayAccessor.readByteAt].
      * No bounds check here!
      */
     @Suppress("MagicNumber")

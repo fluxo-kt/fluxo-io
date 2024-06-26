@@ -3,9 +3,10 @@
 package fluxo.io.internal
 
 import fluxo.io.rad.RandomAccessData
+import fluxo.io.rad.RadByteArrayAccessor
 
 /**
- * Common logic for [RandomAccessData] implementations
+ * Common logic for [RadByteArrayAccessor] implementations
  */
 @ThreadSafe
 @InternalFluxoIoApi

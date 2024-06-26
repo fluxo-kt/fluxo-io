@@ -5,8 +5,8 @@ import fluxo.io.EOFException
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.rad.RandomAccessDataStreamFactory.StreamFactory
-import fluxo.io.rad.RandomAccessDataStreamFactory.StreamFactoryAccess
+import fluxo.io.rad.StreamFactoryRad.StreamFactory
+import fluxo.io.rad.StreamFactoryRad.StreamFactoryAccess
 import java.io.DataInput
 import java.io.File
 import java.io.InputStream
@@ -18,7 +18,7 @@ import javax.annotation.concurrent.ThreadSafe
 // FIXME: Use own BufferedInputStream heir to gain better random access performance?
 
 /**
- * [RandomAccessData] implementation backed by a [StreamFactory] ([InputStream], [DataInput], etc.).
+ * [RadByteArrayAccessor] implementation backed by a [StreamFactory] ([InputStream], [DataInput], etc.).
  * It provides random data access by creating dynamic pool of data streams.
  *
  * @param access provides access to the underlying data
@@ -29,14 +29,14 @@ import javax.annotation.concurrent.ThreadSafe
  */
 @ThreadSafe
 @Suppress("KDocUnresolvedReference")
-internal class RandomAccessDataStreamFactory
+internal class StreamFactoryRad
 private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
-    AccessorAwareRad<StreamFactoryAccess, RandomAccessDataStreamFactory>(
+    AccessorAwareRad<StreamFactoryAccess, StreamFactoryRad>(
         access, offset, size,
     ) {
 
     /**
-     * Create a new [RandomAccessDataStreamFactory] backed by a [factory].
+     * Create a new [StreamFactoryRad] backed by a [factory].
      */
     public constructor(
         factory: StreamFactory<*>,
@@ -45,7 +45,7 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
     ) : this(StreamFactoryAccess(factory), offset, size)
 
     /**
-     * Create a new [RandomAccessDataStreamFactory] backed by a [file].
+     * Create a new [StreamFactoryRad] backed by a [file].
      */
     public constructor(
         file: File,
@@ -56,8 +56,8 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
 
     override fun getSubsection0(
         access: StreamFactoryAccess, globalPosition: Long, length: Long,
-    ): RandomAccessDataStreamFactory =
-        RandomAccessDataStreamFactory(access, globalPosition, length)
+    ): StreamFactoryRad =
+        StreamFactoryRad(access, globalPosition, length)
 
 
     public class StreamFactoryAccess
@@ -308,24 +308,24 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
             offset: Long = 0,
             size: Long = this.size - offset,
             factory: () -> InputStream,
-        ): RandomAccessDataStreamFactory {
-            return RandomAccessDataStreamFactory(InputStreamFactory(size, factory), offset, size)
+        ): StreamFactoryRad {
+            return StreamFactoryRad(InputStreamFactory(size, factory), offset, size)
         }
 
         fun buildForDataInput(
             offset: Long = 0,
             size: Long = this.size - offset,
             factory: () -> DataInput,
-        ): RandomAccessDataStreamFactory {
-            return RandomAccessDataStreamFactory(DataInputFactory(size, factory), offset, size)
+        ): StreamFactoryRad {
+            return StreamFactoryRad(DataInputFactory(size, factory), offset, size)
         }
 
         fun buildForByteChannel(
             offset: Long = 0,
             size: Long = this.size - offset,
             factory: () -> ReadableByteChannel,
-        ): RandomAccessDataStreamFactory {
-            return RandomAccessDataStreamFactory(ByteChannelFactory(size, factory), offset, size)
+        ): StreamFactoryRad {
+            return StreamFactoryRad(ByteChannelFactory(size, factory), offset, size)
         }
     }
 }

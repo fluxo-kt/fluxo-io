@@ -10,14 +10,14 @@ import fluxo.io.internal.toIntChecked
 import kotlin.math.min
 
 /**
- * [RandomAccessData] implementation backed by a [ByteArray].
+ * [RadByteArrayAccessor] implementation backed by a [ByteArray].
  *
  * @param array the underlying data
  * @param offset the offset of the section
  * @param length the length of the section
  */
 @ThreadSafe
-internal actual class RandomAccessDataArray
+internal actual class ByteArrayRad
 actual constructor(
     private val array: ByteArray,
     private val offset: Int,
@@ -31,9 +31,9 @@ actual constructor(
     }
 
 
-    override fun getSubsection(position: Long, length: Long): RandomAccessData {
+    override fun subsection(position: Long, length: Long): RandomAccessData {
         checkOffsetAndCount(size, position, length)
-        return RandomAccessDataArray(array, offset + position.toIntChecked(), length.toInt())
+        return ByteArrayRad(array, offset + position.toIntChecked(), length.toInt())
     }
 
 

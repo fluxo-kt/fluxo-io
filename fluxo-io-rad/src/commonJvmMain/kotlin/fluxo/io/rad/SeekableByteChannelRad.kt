@@ -4,7 +4,7 @@ import androidx.annotation.RequiresApi
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
-import fluxo.io.rad.RandomAccessDataSeekByteChannel.SeekableChannelAccess
+import fluxo.io.rad.SeekableByteChannelRad.SeekableChannelAccess
 import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
@@ -16,7 +16,7 @@ import javax.annotation.concurrent.ThreadSafe
 import kotlin.math.min
 
 /**
- * [RandomAccessData] implementation backed by a [SeekableByteChannel].
+ * [RadByteArrayAccessor] implementation backed by a [SeekableByteChannel].
  *
  * @param access provides access to the underlying channel
  * @param offset the offset of the section
@@ -24,14 +24,14 @@ import kotlin.math.min
  */
 @ThreadSafe
 @RequiresApi(24)
-internal class RandomAccessDataSeekByteChannel
+internal class SeekableByteChannelRad
 private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<SeekableChannelAccess, RandomAccessDataSeekByteChannel>(
+    AccessorAwareRad<SeekableChannelAccess, SeekableByteChannelRad>(
         access, offset, size,
     ) {
 
     /**
-     * Create a new [RandomAccessDataSeekByteChannel] backed by the specified [channel].
+     * Create a new [SeekableByteChannelRad] backed by the specified [channel].
      * @param channel the underlying channel
      */
     constructor(
@@ -41,7 +41,7 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
     ) : this(SeekableChannelAccess(channel), offset, size)
 
     /**
-     * Create a new [RandomAccessDataSeekByteChannel] backed
+     * Create a new [SeekableByteChannelRad] backed
      * by the channel for specified [stream].
      *
      * @param stream file stream to create a channel from.
@@ -49,7 +49,7 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
     constructor(stream: FileInputStream, offset: Long = 0L) : this(stream.channel, offset)
 
     /**
-     * Create a new [RandomAccessDataSeekByteChannel] backed
+     * Create a new [SeekableByteChannelRad] backed
      * by the channel for specified [FileDescriptor].
      *
      * @param fd the underlying file stream
@@ -58,7 +58,7 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
         : this(FileInputStream(fd).channel, offset)
 
     /**
-     * Create a new [RandomAccessDataSeekByteChannel] backed
+     * Create a new [SeekableByteChannelRad] backed
      * by the channel for specified [file].
      *
      * @param file the file to open a channel from.
@@ -69,8 +69,8 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
 
     override fun getSubsection0(
         access: SeekableChannelAccess, globalPosition: Long, length: Long,
-    ): RandomAccessDataSeekByteChannel =
-        RandomAccessDataSeekByteChannel(access, globalPosition, length)
+    ): SeekableByteChannelRad =
+        SeekableByteChannelRad(access, globalPosition, length)
 
 
     @Suppress("ReturnCount")

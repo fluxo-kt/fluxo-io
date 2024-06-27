@@ -1,13 +1,12 @@
+@file:JvmMultifileClass
 @file:JvmName("Rad")
 @file:Suppress("FunctionName")
 
 package fluxo.io.rad
 
+import kotlin.jvm.JvmMultifileClass
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
-
-
-// RandomAccessData constructors
 
 
 /**

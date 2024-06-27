@@ -4,18 +4,15 @@ import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
 import fluxo.io.rad.FileChannelRad.FileChannelAccess
-import java.io.File
-import java.io.FileDescriptor
-import java.io.FileInputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.WritableByteChannel
 import javax.annotation.concurrent.ThreadSafe
-
+import kotlin.math.min
 
 /**
- * [RadByteArrayAccessor] implementation backed by a [FileChannel].
+ * [RandomAccessData] implementation backed by a [FileChannel].
  *
  * @param access provides access to the underlying channel
  * @param offset the offset of the section
@@ -24,36 +21,14 @@ import javax.annotation.concurrent.ThreadSafe
 @ThreadSafe
 internal class FileChannelRad
 private constructor(access: FileChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<FileChannelAccess, FileChannelRad>(
-        access, offset, size,
-    ) {
+    AccessorAwareRad<FileChannelAccess>(access, offset, size) {
 
-    /**
-     * Create a new [FileChannelRad] backed by the specified [channel].
-     * @param channel the underlying channel
-     */
-    constructor(channel: FileChannel, offset: Long = 0L, size: Long = channel.size() - offset)
-        : this(FileChannelAccess(channel), offset, size)
-
-    /**
-     * Create a new [FileChannelRad] backed by the channel for specified [stream].
-     * @param stream file stream to create a channel from
-     */
-    constructor(stream: FileInputStream, offset: Long = 0L) : this(stream.channel, offset)
-
-    /**
-     * Create a new [FileChannelRad] backed by the channel for specified [FileDescriptor].
-     * @param fd file descriptor to open channel from
-     */
-    constructor(fd: FileDescriptor, offset: Long = 0L)
-        : this(FileInputStream(fd).channel, offset)
-
-    /**
-     * Create a new [FileChannelRad] backed by the channel for specified [file].
-     * @param file the file to open channel from
-     */
-    constructor(file: File, offset: Long = 0L, size: Long = file.length() - offset)
-        : this(FileInputStream(file).channel, offset, size)
+    constructor(
+        channel: FileChannel,
+        offset: Long,
+        size: Long,
+        resources: Array<out AutoCloseable>,
+    ) : this(FileChannelAccess(channel, resources), offset, size)
 
 
     override fun getSubsection0(
@@ -73,7 +48,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
         val bufLimit = buffer.limit()
         val bufPos = buffer.position()
         val destLen = (bufLimit - bufPos).toLong()
-        val len = Math.min(srcLen - position, destLen)
+        val len = min(srcLen - position, destLen)
         if (len <= 0L) {
             return 0
         }
@@ -110,14 +85,15 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
     }
 
 
-    internal class FileChannelAccess
-    internal constructor(public override val api: FileChannel) : SharedDataAccessor() {
+    internal class FileChannelAccess(
+        @JvmField val api: FileChannel,
+        resources: Array<out AutoCloseable>,
+    ) : SharedDataAccessor(resources) {
 
         override val size: Long get() = api.size()
 
         @Throws(IOException::class)
-        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            return api.read(ByteBuffer.wrap(bytes, offset, length), position)
-        }
+        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+            api.read(ByteBuffer.wrap(bytes, offset, length), position)
     }
 }

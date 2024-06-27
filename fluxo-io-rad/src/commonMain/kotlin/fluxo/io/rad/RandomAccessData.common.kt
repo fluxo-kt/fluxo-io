@@ -13,13 +13,14 @@ import kotlin.coroutines.cancellation.CancellationException
  * Implementations must allow concurrent reads in a thread-safe manner.
  * Instances can be shared, [subsectioned][subsection], and closed independently.
  *
- * **The caller is responsible for [closing][close] when it is finished!**
- *
- * See [RandomAccessDataBenchmark] findings if you want to choose implementation
- * rationally for your use case.
+ * **WARNING: Remember to close the [RandomAccessData] when finished
+ * to properly release resources!*
  *
  * All implementations are thread-safe!
  * For JVM and Android, it also implements [java.io.Closeable] interface.
+ *
+ * See [RandomAccessDataBenchmark] findings if you want to choose implementation
+ * rationally for your use case.
  *
  * @see org.springframework.boot.loader.data.RandomAccessData
  */
@@ -34,14 +35,16 @@ public expect interface RandomAccessData : AutoCloseable {
 
 
     /**
-     * Returns a new [RadByteArrayAccessor] for a specific subsection of this data.
+     * Returns a new [RandomAccessData] for a specific subsection of this data.
+     * Underlying resources are properly shared between the original and the new data.
+     * No data is copied for the subsection.
      *
      * @param position the position of the subsection
      * @param length the length of the subsection
      *
-     * @return the subsection data
+     * @return a new subsection [RandomAccessData].
      *
-     * @throws IndexOutOfBoundsException if the [position] or [length] are invalid
+     * @throws IndexOutOfBoundsException if the [position] or [length] is invalid
      */
     public fun subsection(
         position: Long,
@@ -50,11 +53,13 @@ public expect interface RandomAccessData : AutoCloseable {
 
 
     /**
-     * Reads all the data and returns it as a byte array.
+     * Reads all bytes from the underlying data and returns it as a byte array.
      *
      * @return the data
      *
-     * @throws IOException if the data cannot be read.
+     * @throws IOException if the data can't be read.
+     * @throws ArithmeticException if length of the data exceeds [Int.MAX_VALUE] and data
+     *  can't be read into a single byte array.
      *
      * @see java.io.InputStream.readAllBytes
      */
@@ -70,7 +75,7 @@ public expect interface RandomAccessData : AutoCloseable {
      *
      * @return a newly created array with data.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position] is invalid
      * @throws EOFException if offset plus length is greater than the length of the file
      * or subsection.
@@ -90,10 +95,10 @@ public expect interface RandomAccessData : AutoCloseable {
      * @param offset the start offset in [buffer] at which the data is written
      * @param maxLength the maximum number of bytes to be read
      *
-     * @return number of bytes read or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
+     * @return number of bytes read
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position], [offset] or [maxLength] are invalid
      *
      * @see java.io.RandomAccessFile.read
@@ -117,10 +122,10 @@ public expect interface RandomAccessData : AutoCloseable {
      * @param offset the start offset in [buffer] at which the data is written
      * @param maxLength the maximum number of bytes to be read
      *
-     * @return number of bytes read or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
+     * @return number of bytes read
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position], [offset] or [maxLength] are invalid
      *
      * @see java.io.RandomAccessFile.readFully
@@ -141,20 +146,20 @@ public expect interface RandomAccessData : AutoCloseable {
      * Reads up to the [maxLength] bytes of data starting at the given [position]
      * asynchronously suspending until the operation is complete if possible.
      *
-     * DOES NOT switch to the IO dispatcher by itself.
+     * DOESN'T switch to the IO dispatcher by itself.
      * Caller SHOULD take care of it.
      *
-     * Can be blocking if the implementation does not support non-blocking reads!
+     * Can be blocking if the implementation doesn't support non-blocking reads!
      *
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
      * @param offset the start offset in [buffer] at which the data is written
      * @param maxLength the maximum number of bytes to be read
      *
-     * @return number of bytes read or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
+     * @return number of bytes read
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position], [offset] or [maxLength] are invalid
      * @throws CancellationException
      *
@@ -174,20 +179,20 @@ public expect interface RandomAccessData : AutoCloseable {
      * starting at the given [position] asynchronously suspending
      * until the operation is complete if possible.
      *
-     * DOES NOT switch to the IO dispatcher by itself.
+     * DOESN'T switch to the IO dispatcher by itself.
      * Caller SHOULD take care of it.
      *
-     * Can be blocking if the implementation does not support non-blocking reads!
+     * Can be blocking if the implementation doesn't support non-blocking reads!
      *
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
      * @param offset the start offset in [buffer] at which the data is written
      * @param maxLength the maximum number of bytes to be read
      *
-     * @return number of bytes read or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
+     * @return number of bytes read
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position], [offset] or [maxLength] are invalid
      * @throws CancellationException
      *

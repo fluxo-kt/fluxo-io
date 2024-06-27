@@ -1,19 +1,19 @@
 package fluxo.io.rad
 
 import fluxo.io.IOException
-import fluxo.io.internal.MAX_INT_LONG
-import fluxo.io.internal.normIn
+import fluxo.io.util.MAX_INT_LONG
+import fluxo.io.util.normIn
 import java.io.InputStream
 import javax.annotation.concurrent.NotThreadSafe
 import kotlin.math.min
 
 /**
- * [InputStream] implementation wrapping the [RadByteArrayAccessor].
+ * [InputStream] implementation that wraps the [RadByteArrayAccessor].
  *
  * @see java.io.ByteArrayInputStream
  */
 @NotThreadSafe
-internal class InputStreamRad(
+internal class RandomAccessDataInputStream(
     private val rad: RandomAccessData,
 ) : InputStream() {
 
@@ -68,7 +68,7 @@ internal class InputStreamRad(
 
 
     /**
-     * Cap the specified value such that it cannot exceed the number of bytes remaining.
+     * Cap the specified value such that it can't exceed the number of bytes remaining.
      * @param n the value to cap
      * @return the capped value
      */

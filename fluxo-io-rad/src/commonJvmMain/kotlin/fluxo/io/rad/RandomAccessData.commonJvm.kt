@@ -25,7 +25,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * **The caller is responsible for closing the stream when it is finished!**
      *
      * @return a new input stream that can be used to read the underlying data.
-     * @throws IOException if the stream cannot be opened
+     * @throws IOException if the stream can't be opened
      */
     @Throws(IOException::class)
     public fun asInputStream(): InputStream
@@ -72,10 +72,10 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      *
      * @param position the position from which data should be read
      *
-     * @return the next byte of data as an integer, or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
+     * @return the next byte of data as an integer
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position] is invalid
      *
      * @see java.io.InputStream.read
@@ -109,10 +109,10 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
      *
-     * @return number of bytes read or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted
+     * @return number of bytes read
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position] is invalid
      *
      * @see java.nio.channels.FileChannel.read
@@ -124,16 +124,15 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
 
     /**
      * Reads a sequence of bytes of data starting at the given [position].
-     * If the given [position] is greater than the data size at the time that the read is attempted
-     * then no bytes are read.
+     * If the given [position] is greater than the data size no bytes are read.
      *
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
      *
-     * @return number of bytes read or `-1` if the given position is
-     *  greater than or equal to the data size at the time that the read is attempted.
+     * @return number of bytes read
+     *  or `-1` if the given position is greater than or equal to the data size.
      *
-     * @throws IOException if the data cannot be read
+     * @throws IOException if the data can't be read
      * @throws IndexOutOfBoundsException if the [position] is invalid
      *
      * @see java.nio.channels.AsynchronousFileChannel.read

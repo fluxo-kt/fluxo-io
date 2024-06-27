@@ -1,16 +1,16 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.BasicRad
-import fluxo.io.internal.EMPTY_BYTE_ARRAY
+import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.internal.ThreadSafe
-import fluxo.io.internal.checkOffsetAndCount
-import fluxo.io.internal.checkPosOffsetAndMaxLength
-import fluxo.io.internal.checkPositionAndMaxLength
-import fluxo.io.internal.toIntChecked
+import fluxo.io.util.checkOffsetAndCount
+import fluxo.io.util.checkPosOffsetAndMaxLength
+import fluxo.io.util.checkPositionAndMaxLength
+import fluxo.io.util.toIntChecked
 import kotlin.math.min
 
 /**
- * [RadByteArrayAccessor] implementation backed by a [ByteArray].
+ * [RandomAccessData] implementation backed by a [ByteArray].
  *
  * @param array the underlying data
  * @param offset the offset of the section

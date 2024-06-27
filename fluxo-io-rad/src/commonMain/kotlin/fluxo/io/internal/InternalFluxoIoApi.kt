@@ -1,7 +1,7 @@
 package fluxo.io.internal
 
 /**
- * Marks declarations that cannot be safely used and/or inherited from.
+ * Marks declarations that can't be safely used and/or inherited from.
  */
 @Target(AnnotationTarget.CLASS)
 @RequiresOptIn(

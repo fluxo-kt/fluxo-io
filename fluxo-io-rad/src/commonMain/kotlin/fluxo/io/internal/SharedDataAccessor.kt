@@ -9,9 +9,9 @@ import fluxo.io.SharedCloseable
 @ThreadSafe
 @SubclassOptInRequired(InternalFluxoIoApi::class)
 internal abstract class SharedDataAccessor
-internal constructor() : SharedCloseable() {
-
-    protected abstract val api: AutoCloseable
+protected constructor(
+    private val resources: Array<out AutoCloseable>
+) : SharedCloseable() {
 
     abstract val size: Long
 
@@ -24,7 +24,19 @@ internal constructor() : SharedCloseable() {
      * Note: Can be non-synchronized as guarded by [SharedCloseable]
      * and normally by the object itself.
      */
+    @CallSuper
     override fun onSharedClose() {
-        api.close()
+        var t: Throwable? = null
+        for (resource in resources) {
+            try {
+                resource.close()
+            } catch (e: Throwable) {
+                if (t != null) e.addSuppressed(t)
+                t = e
+            }
+        }
+        if (t != null) {
+            throw t
+        }
     }
 }

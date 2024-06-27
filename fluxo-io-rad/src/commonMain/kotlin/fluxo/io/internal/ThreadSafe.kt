@@ -13,7 +13,7 @@ package fluxo.io.internal
  * on the part of the caller.
  *
  * This annotation is a hint to the compiler and the developer.
- * It does not enforce any thread-safety guarantees by itself.
+ * It doesn't enforce any thread-safety guarantees by itself.
  *
  * @see javax.annotation.concurrent.ThreadSafe
  */

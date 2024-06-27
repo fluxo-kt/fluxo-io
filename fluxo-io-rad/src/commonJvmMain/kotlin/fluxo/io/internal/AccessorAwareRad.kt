@@ -2,10 +2,15 @@ package fluxo.io.internal
 
 import fluxo.io.EOFException
 import fluxo.io.IOException
+import fluxo.io.rad.RandomAccessData
+import fluxo.io.util.EMPTY_BYTE_ARRAY
+import fluxo.io.util.calcLength
+import fluxo.io.util.checkOffsetAndCount
+import fluxo.io.util.checkPositionAndMaxLength
 import kotlin.math.min
 
 @ThreadSafe
-internal abstract class AccessorAwareRad<A : SharedDataAccessor, R : AccessorAwareRad<A, R>>
+internal abstract class AccessorAwareRad<A : SharedDataAccessor>
 internal constructor(
     @JvmField
     protected val access: A,
@@ -20,13 +25,17 @@ internal constructor(
         checkOffsetAndCount(access.size, offset, size)
     }
 
-    override fun subsection(position: Long, length: Long): R {
+    override fun subsection(position: Long, length: Long): RandomAccessData {
         checkOffsetAndCount(size, position, length)
         access.retain()
         return getSubsection0(access, offset + position, length)
     }
 
-    protected abstract fun getSubsection0(access: A, globalPosition: Long, length: Long): R
+    protected abstract fun getSubsection0(
+        access: A,
+        globalPosition: Long,
+        length: Long,
+    ): RandomAccessData
 
 
     @Throws(IOException::class)

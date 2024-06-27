@@ -4,7 +4,7 @@ import fluxo.io.rad.RandomAccessData
 import fluxo.io.rad.RadByteArrayAccessor
 
 /**
- * Common methods for [RadByteArrayAccessor] implementations.
+ * Common methods for [RandomAccessData] implementations.
  */
 @ThreadSafe
 @InternalFluxoIoApi

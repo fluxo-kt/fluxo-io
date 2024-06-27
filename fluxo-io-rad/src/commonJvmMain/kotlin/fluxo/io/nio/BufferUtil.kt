@@ -1,56 +1,86 @@
+@file:JvmName("BufferUtil")
+@file:Suppress("KDocUnresolvedReference")
+
 package fluxo.io.nio
 
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import fluxo.io.internal.EMPTY_BYTE_ARRAY
+import fluxo.io.LOGGER
 import fluxo.io.internal.IS_ANDROID
 import fluxo.io.internal.classForNameOrNull
 import fluxo.io.internal.getStaticField
 import fluxo.io.internal.invokeStaticMethod
 import fluxo.io.internal.reflectionMethodOrNull
+import fluxo.io.util.EMPTY_BYTE_ARRAY
 import java.lang.reflect.Method
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.security.PrivilegedActionException
 import java.security.PrivilegedExceptionAction
-import kotlinx.atomicfu.atomic
-
-public object BufferUtil {
-
-    @JvmField
-    public val EMPTY_BYTE_BUFFER: ByteBuffer = ByteBuffer.wrap(EMPTY_BYTE_ARRAY)
 
 
-    private val logger = atomic<((String, Throwable?) -> Unit)?>(initial = null)
-
-    public fun setLogger(logger: (String, Throwable?) -> Unit) {
-        this.logger.value = logger
-    }
+@JvmField
+public val EMPTY_BYTE_BUFFER: ByteBuffer = ByteBuffer.wrap(EMPTY_BYTE_ARRAY)
 
 
-    // Proper cleanup for DirectBuffer
-    //
-    // A mapped byte buffer, and the file mapping that it represents remain valid
-    //  until the buffer itself is garbage-collected.
-    // Especially important on Windows as memory mapped can't be deleted or renamed.
-    //
-    // See:
-    // https://stackoverflow.com/a/5036003/1816338
-    // https://stackoverflow.com/a/19447758/1816338
-    // https://bugs.java.com/bugdatabase/view_bug.do?bug_id=4715154
-    // https://bitbucket.org/vladimir.dolzhenko/gflogger/src/366fd4ee/core/src/main/java/org/gflogger/util/DirectBufferUtils.java
-    // https://github.com/cddesire/hoss/blob/4a97dc0/src/hdfs/org/apache/hadoop/hdfs/hoss/meta/ByteBufferCleaner.java
-    // https://github.com/graphhopper/graphhopper/blob/d310f63/core/src/main/java/com/graphhopper/storage/MMapDataAccess.java#L83
-    // https://github.com/graphhopper/graphhopper/issues/933
+// Proper cleanup for DirectBuffer
+//
+// A mapped byte buffer, and the file mapping that it represents remain valid
+//  until the buffer itself is garbage-collected.
+// Especially important on Windows as memory-mapped file can't be deleted or renamed.
+//
+// See:
+// https://stackoverflow.com/a/5036003/1816338
+// https://stackoverflow.com/a/19447758/1816338
+// https://bugs.java.com/bugdatabase/view_bug.do?bug_id=4715154
+// https://bitbucket.org/vladimir.dolzhenko/gflogger/src/366fd4ee/core/src/main/java/org/gflogger/util/DirectBufferUtils.java
+// https://github.com/cddesire/hoss/blob/4a97dc0/src/hdfs/org/apache/hadoop/hdfs/hoss/meta/ByteBufferCleaner.java
+// https://github.com/graphhopper/graphhopper/blob/d310f63/core/src/main/java/com/graphhopper/storage/MMapDataAccess.java#L83
+// https://github.com/graphhopper/graphhopper/issues/933.
+
+private object BufferUtil0 {
+
+    /** @see sun.nio.ch.DirectBuffer */
     private val DIRECT_BYTE_BUFFER_CLASS: Class<*>?
+
+    /** @see android.os.SharedMemory.unmap(ByteBuffer) */
     private val UNMAP_METHOD: Method?
+
+    /** @see java.nio.NioUtils.freeDirectBuffer(ByteBuffer) */
     private val FREE_DIRECT_BUFFER_METHOD: Method?
+
+    /**
+     * @see sun.nio.ch.DirectBuffer.cleaner
+     * @see java.nio.DirectByteBuffer.cleaner
+     */
     private val CLEANER_METHOD: Method?
+
+    /**
+     * @see jdk.internal.ref.Cleaner.clean
+     * @see sun.misc.Cleaner.clean
+     */
     private val CLEAN_METHOD: Method?
-    private var ATTACHMENT_METHOD: Method?
+
+    /**
+     * @see sun.nio.ch.DirectBuffer.attachment
+     * @see sun.nio.ch.DirectBuffer.viewedBuffer
+     */
+    private val ATTACHMENT_METHOD: Method?
+
+    /**
+     * @see jdk.internal.misc.Unsafe.invokeCleaner
+     * @see sun.misc.Unsafe.invokeCleaner
+     */
     private val UNSAFE_CLEAN_METHOD: Method?
+
+    /** @see java.nio.MappedByteBufferAdapter */
     private val MAPPED_BYTE_BUFFER_ADAPTER_CLASS: Class<*>?
+
+    /**
+     * @see jdk.internal.misc.Unsafe
+     * @see sun.misc.Unsafe
+     */
     private val UNSAFE: Any?
 
     init {
@@ -85,10 +115,10 @@ public object BufferUtil {
 
 
         // Oracle JRE 9+ / OpenJDK 9+
-        val unsafe = classForNameOrNull("sun.misc.Unsafe") ?:
-        // jdk.internal.misc.Unsafe doesn't yet have an invokeCleaner() method,
-        // but that method should be added if sun.misc.Unsafe is removed.
-        classForNameOrNull("jdk.internal.misc.Unsafe")
+        val unsafe = classForNameOrNull("sun.misc.Unsafe")
+            // jdk.internal.misc.Unsafe doesn't yet have an invokeCleaner() method,
+            // but that method should be added if sun.misc.Unsafe is removed.
+            ?: classForNameOrNull("jdk.internal.misc.Unsafe")
 
         UNSAFE = try {
             unsafe?.getStaticField<Any?>("theUnsafe")
@@ -109,23 +139,14 @@ public object BufferUtil {
         MAPPED_BYTE_BUFFER_ADAPTER_CLASS = classForNameOrNull("java.nio.MappedByteBufferAdapter")
     }
 
-
-    /**
-     * Proper cleanup for [sun.nio.ch.DirectBuffer]
-     *
-     * @param buffer Any [Buffer]
-     *
-     * @return the [EMPTY_BYTE_BUFFER]
-     */
-    @JvmStatic
     @RequiresApi(9)
-    public fun releaseBuffer(buffer: Buffer?): ByteBuffer {
+    fun releaseBuffer(buffer: Buffer?): ByteBuffer {
         if (buffer != null && buffer.isDirect) {
-            val exceptions = ArrayList<Throwable>()
-            if (!releaseBuffer(buffer, exceptions)) {
-                logger.value?.invoke(
+            val throwables = ArrayList<Throwable>()
+            if (!releaseBuffer(buffer, throwables)) {
+                LOGGER?.invoke(
                     "Can't release direct buffer: $buffer",
-                    exceptions.reduceOrNull { e, e2 ->
+                    throwables.reduceOrNull { e, e2 ->
                         e.addSuppressed(e2)
                         e
                     },
@@ -142,25 +163,25 @@ public object BufferUtil {
         return EMPTY_BYTE_BUFFER
     }
 
-    private fun releaseBuffer(buffer: Buffer, exc: ArrayList<Throwable>): Boolean {
+    private fun releaseBuffer(buffer: Buffer, throwables: ArrayList<Throwable>): Boolean {
         return try {
             @Suppress("DEPRECATION")
             java.security.AccessController.doPrivileged(
                 PrivilegedExceptionAction {
-                    releaseBuffer0(buffer, exc)
+                    releaseBuffer0(buffer, throwables)
                 },
             )
         } catch (e: PrivilegedActionException) {
-            exc.add(e.cause ?: e)
+            throwables.add(e.cause ?: e)
             false
         } catch (e: Throwable) {
-            exc.add(e)
-            releaseBuffer0(buffer, exc)
+            throwables.add(e)
+            releaseBuffer0(buffer, throwables)
         }
     }
 
     @Suppress("ReturnCount", "CyclomaticComplexMethod", "NestedBlockDepth", "LongMethod")
-    private fun releaseBuffer0(buffer: Buffer, exc: ArrayList<Throwable>): Boolean {
+    private fun releaseBuffer0(buffer: Buffer, throwables: ArrayList<Throwable>): Boolean {
         try {
             // Android API level 27+, public API!
             // android.os.SharedMemory { public static void unmap (ByteBuffer buffer) }
@@ -170,7 +191,7 @@ public object BufferUtil {
                     UNMAP_METHOD.invoke(buffer)
                     return true
                 } catch (e: Throwable) {
-                    exc.add(e)
+                    throwables.add(e)
                 }
             }
 
@@ -182,7 +203,7 @@ public object BufferUtil {
                     FREE_DIRECT_BUFFER_METHOD.invoke(buffer)
                     return true
                 } catch (e: Throwable) {
-                    exc.add(e)
+                    throwables.add(e)
                 }
             }
 
@@ -193,7 +214,7 @@ public object BufferUtil {
                     UNSAFE_CLEAN_METHOD.invoke(UNSAFE, buffer)
                     return true
                 } catch (e: Throwable) {
-                    exc.add(e)
+                    throwables.add(e)
                 }
             }
 
@@ -205,7 +226,7 @@ public object BufferUtil {
                         return true
                     }
                 } catch (e: Throwable) {
-                    exc.add(e)
+                    throwables.add(e)
                 }
             }
 
@@ -217,17 +238,17 @@ public object BufferUtil {
                     return true
                 }
             } catch (e: Throwable) {
-                exc.add(e)
+                throwables.add(e)
             }
 
             // Alternate approach of getting the viewed buffer
             try {
                 val viewedBuffer: Any? = ATTACHMENT_METHOD?.invoke(buffer)
-                if (viewedBuffer != null && releaseBuffer(viewedBuffer as Buffer, exc)) {
+                if (viewedBuffer != null && releaseBuffer(viewedBuffer as Buffer, throwables)) {
                     return true
                 }
             } catch (e: Throwable) {
-                exc.add(e)
+                throwables.add(e)
             }
 
             // Android 5.1.1
@@ -240,12 +261,12 @@ public object BufferUtil {
                     return true
                 }
             } catch (e: Throwable) {
-                exc.add(e)
+                throwables.add(e)
             }
 
             return false
         } catch (e: Throwable) {
-            exc.add(e)
+            throwables.add(e)
         }
 
         return false
@@ -262,3 +283,22 @@ public object BufferUtil {
         return false
     }
 }
+
+
+/**
+ * Proper cleanup for the [sun.nio.ch.DirectBuffer].
+ *
+ * @receiver Any [Buffer]
+ *
+ * @return the [empty ByteBuffer][EMPTY_BYTE_BUFFER]
+ *
+ * @see android.os.SharedMemory.unmap (Android API level 27+)
+ * @see java.nio.NioUtils.freeDirectBuffer (Android API, grey list)
+ * @see sun.misc.Unsafe.invokeCleaner (Oracle JRE 9+ / OpenJDK 9+)
+ * @see java.nio.MappedByteBufferAdapter.free (Android 4.1)
+ * @see org.apache.harmony.nio.internal.DirectBuffer.free (Apache Harmony)
+ * @see sun.misc.Cleaner.clean (Oracle JRE 6-8 / OpenJDK 6-8)
+ */
+@RequiresApi(9)
+public fun Buffer?.releaseCompat(): ByteBuffer =
+    BufferUtil0.releaseBuffer(this)

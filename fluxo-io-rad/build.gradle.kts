@@ -24,6 +24,8 @@ fkcSetupMultiplatform(
     val commonJvm = commonJvm
     commonJvm.main.dependencies {
         compileOnly(rootProject.extra["androidJar"]!!)
+        compileOnly(libs.androidx.annotation)
+        compileOnly(libs.jetbrains.annotation)
     }
 
     val commonJs = commonJs

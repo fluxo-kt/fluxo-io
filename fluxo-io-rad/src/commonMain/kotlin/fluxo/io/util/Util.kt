@@ -1,17 +1,23 @@
+@file:JvmName("Util")
+
 @file:Suppress("KDocUnresolvedReference")
 
-package fluxo.io.internal
+package fluxo.io.util
 
 import fluxo.io.EOFException
 import fluxo.io.rad.RandomAccessData
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.jvm.JvmField
+import kotlin.jvm.JvmName
 import kotlin.math.min
 
 
 @JvmField
-internal val EMPTY_BYTE_ARRAY = ByteArray(0)
+public val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
+
+@JvmField
+public val EMPTY_AUTO_CLOSEABLE_ARRAY: Array<AutoCloseable> = emptyArray()
 
 
 /**
@@ -19,7 +25,7 @@ internal val EMPTY_BYTE_ARRAY = ByteArray(0)
  *
  * @see java.util.Arrays.checkOffsetAndCount
  */
-internal fun checkOffsetAndCount(dataLength: Int, offset: Int, count: Int) {
+public fun checkOffsetAndCount(dataLength: Int, offset: Int, count: Int) {
     if (offset or count < 0 || offset > dataLength || dataLength - offset < count) {
         throw IndexOutOfBoundsException(
             "dataLength=$dataLength; regionStart=$offset; regionLength=$count",
@@ -32,7 +38,7 @@ internal fun checkOffsetAndCount(dataLength: Int, offset: Int, count: Int) {
  *
  * @see java.util.Arrays.checkOffsetAndCount
  */
-internal fun checkOffsetAndCount(dataLength: Long, offset: Long, count: Long) {
+public fun checkOffsetAndCount(dataLength: Long, offset: Long, count: Long) {
     if (offset or count < 0L || offset > dataLength || dataLength - offset < count) {
         throw IndexOutOfBoundsException(
             "dataLength=$dataLength; regionStart=$offset; regionLength=$count",
@@ -155,9 +161,12 @@ internal fun Long.toIntChecked(): Int {
 /**
  * Ensures that the value lies in the specified range [min]..[max].
  *
- * Seems a bit faster on phones than "Math.min/max"-based implementation.
+ * * A bit faster on phones than "[min][kotlin.math.min]/[max][kotlin.math.max]"-based
+ *  implementation.
+ * * One less operation than in [kotlin.ranges.coerceIn].
  *
  * @see kotlin.ranges.coerceIn
+ * @see kotlin.math.min
  */
 internal fun Long.normIn(min: Long, max: Long) =
     if (this >= max) max else if (this >= min) this else min

@@ -1,13 +1,16 @@
 package fluxo.io.internal
 
 import fluxo.io.IOException
-import fluxo.io.nio.BufferUtil
 import fluxo.io.nio.clearCompat
 import fluxo.io.nio.flipCompat
 import fluxo.io.nio.positionCompat
-import fluxo.io.rad.InputStreamRad
-import fluxo.io.rad.RandomAccessData
+import fluxo.io.nio.releaseCompat
+import fluxo.io.rad.InputStreamFromRad
 import fluxo.io.rad.RadByteArrayAccessor
+import fluxo.io.rad.RandomAccessData
+import fluxo.io.util.readAllBytesImpl
+import fluxo.io.util.readFullyAsyncImpl
+import fluxo.io.util.readFullyImpl
 import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
@@ -17,14 +20,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Common logic for [RadByteArrayAccessor] implementations
+ * Common logic for [RandomAccessData] implementations
  */
 @ThreadSafe
 @InternalFluxoIoApi
 internal actual abstract class BasicRad : RandomAccessData {
 
     override fun asInputStream(): InputStream =
-        InputStreamRad(this)
+        InputStreamFromRad(this)
 
 
     @Blocking
@@ -150,7 +153,7 @@ internal actual abstract class BasicRad : RandomAccessData {
                 buffer.clearCompat()
             }
         } finally {
-            BufferUtil.releaseBuffer(buffer)
+            buffer?.releaseCompat()
         }
     }
 

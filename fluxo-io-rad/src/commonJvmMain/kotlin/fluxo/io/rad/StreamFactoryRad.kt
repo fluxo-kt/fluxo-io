@@ -7,8 +7,8 @@ import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.rad.StreamFactoryRad.StreamFactory
 import fluxo.io.rad.StreamFactoryRad.StreamFactoryAccess
+import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
 import java.io.DataInput
-import java.io.File
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
@@ -18,8 +18,8 @@ import javax.annotation.concurrent.ThreadSafe
 // FIXME: Use own BufferedInputStream heir to gain better random access performance?
 
 /**
- * [RadByteArrayAccessor] implementation backed by a [StreamFactory] ([InputStream], [DataInput], etc.).
- * It provides random data access by creating dynamic pool of data streams.
+ * [RandomAccessData] implementation backed by a [StreamFactory] ([InputStream], [DataInput], etc.).
+ * It provides random data access by creating a dynamic pool of data streams.
  *
  * @param access provides access to the underlying data
  * @param offset the offset of the section
@@ -31,47 +31,35 @@ import javax.annotation.concurrent.ThreadSafe
 @Suppress("KDocUnresolvedReference")
 internal class StreamFactoryRad
 private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
-    AccessorAwareRad<StreamFactoryAccess, StreamFactoryRad>(
-        access, offset, size,
-    ) {
+    AccessorAwareRad<StreamFactoryAccess>(access, offset, size) {
 
-    /**
-     * Create a new [StreamFactoryRad] backed by a [factory].
-     */
-    public constructor(
+    constructor(
         factory: StreamFactory<*>,
-        offset: Long = 0L,
-        size: Long = factory.size - offset,
-    ) : this(StreamFactoryAccess(factory), offset, size)
-
-    /**
-     * Create a new [StreamFactoryRad] backed by a [file].
-     */
-    public constructor(
-        file: File,
-        offset: Long = 0L,
-        size: Long = file.length() - offset,
-    ) : this(InputStreamFactory(file.length()) { file.inputStream() }, offset, size)
+        offset: Long,
+        size: Long,
+        maxPoolSize: Int,
+    ) : this(StreamFactoryAccess(factory, maxPoolSize), offset, size)
 
 
     override fun getSubsection0(
         access: StreamFactoryAccess, globalPosition: Long, length: Long,
-    ): StreamFactoryRad =
-        StreamFactoryRad(access, globalPosition, length)
+    ) = StreamFactoryRad(access, globalPosition, length)
 
 
-    public class StreamFactoryAccess
-    internal constructor(
-        override val api: StreamFactory<*>,
-    ) : SharedDataAccessor() {
+    internal class StreamFactoryAccess(
+        private val factory: StreamFactory<*>,
+        private val maxPoolSize: Int,
+    ) : SharedDataAccessor(resources = EMPTY_AUTO_CLOSEABLE_ARRAY) {
 
-        private companion object {
-            private const val MAX_POOL_SIZE = 15
-        }
-
+        /**
+         * Pool of opened streams.
+         * Also, used as a lock for synchronization.
+         *
+         * Key: the current position of the stream in the source data.
+         */
         private val pool = TreeMap<Long, PooledStream<*>>()
 
-        override val size: Long get() = api.size
+        override val size: Long get() = factory.size
 
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
             // Try to find a suitable stream in the pool or open new.
@@ -85,7 +73,7 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                 streamOffset = key!!
                 pool.remove(key)
                 entry.value
-            } ?: api.invoke()
+            } ?: factory()
 
             val read: Int
             var closeStream = true
@@ -105,19 +93,20 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                             val prev = pool.put(newPosition, stream)
                             closeStream = false
 
-                            // close other stream with exactly same position (if exists)
-                            prev?.closeQuietly()
+                            // Close another stream with exactly same position (if exists).
+                            // Can't have two streams with the same position in the pool.
+                            prev?.close()
 
                             // Don't allow pool to overgrow
-                            while (pool.size > MAX_POOL_SIZE) {
-                                pool.pollLastEntry()?.value?.closeQuietly()
+                            while (pool.size > maxPoolSize) {
+                                pool.pollLastEntry()?.value?.close()
                             }
                         }
                     }
                 }
             } finally {
                 if (closeStream) {
-                    stream.closeQuietly()
+                    stream.close()
                 }
             }
 
@@ -127,29 +116,24 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
         override fun onSharedClose() {
             val pool = pool
             synchronized(pool) {
+                var t: Throwable? = null
                 val iterator = pool.values.iterator()
                 for (stream in iterator) {
                     iterator.remove()
-                    stream.closeQuietly()
+                    try {
+                        stream.close()
+                    } catch (e: Throwable) {
+                        t?.let { e.addSuppressed(it) }
+                        t = e
+                    }
                 }
+                t?.let { throw it }
             }
         }
     }
 
 
-    internal interface StreamFactory<T> : Closeable {
-
-        val size: Long
-
-        /**
-         * Opens new [PooledStream]
-         */
-        @Throws(IOException::class)
-        operator fun invoke(): PooledStream<T>
-
-        override fun close() {
-        }
-    }
+    // region PooledStream
 
     internal abstract class PooledStream<T>(
         @JvmField
@@ -163,10 +147,10 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
          * @param offset the start offset in [buffer] at which the data is written
          * @param length the maximum number of bytes to be read
          *
-         * @return number of bytes read or `-1` if the given position is
-         *  greater than or equal to the data size at the time that the read is attempted
+         * @return number of bytes read
+         *  or `-1` if the given position is greater than or equal to the data size.
          *
-         * @throws IOException if the data cannot be read
+         * @throws IOException if the data can't be read
          * @throws IndexOutOfBoundsException if the [offset] or [length] are invalid
          *
          * @see java.io.InputStream.read
@@ -197,9 +181,9 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
         /**
          * Skips over and discards exactly [length] bytes of data from this stream.
          *
-         * @param length the number of bytes to be skipped, should be positive
+         * @param length the number of bytes to be skipped. Should be positive.
          *
-         * @throws IOException if an I/O error occurs or end of stream reached
+         * @throws IOException if an I/O error occurs, or the end of stream reached.
          *
          * @see skip
          * @see java.io.InputStream.skip
@@ -207,8 +191,9 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
          */
         @Throws(IOException::class)
         open fun skipFully(length: Long) {
+            check(length >= 0L) { "Length must be positive: $length" }
             var idles = 0
-            var toSkip: Long = length.positiveChecked()
+            var toSkip: Long = length
             while (toSkip > 0L) {
                 val skipped = skip(toSkip)
                 if (skipped > 0L) {
@@ -219,53 +204,18 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                 }
             }
         }
-
-        @Throws(IOException::class)
-        override fun close() {
-            api.close()
-        }
     }
-
-
-    internal class InputStreamFactory(
-        override val size: Long,
-        private val factory: () -> InputStream,
-    ) : StreamFactory<InputStream> {
-
-        override fun invoke(): PooledStream<InputStream> {
-            return PooledInputStream(factory())
-        }
-    }
-
-    internal class DataInputFactory(
-        override val size: Long,
-        private val factory: () -> DataInput,
-    ) : StreamFactory<DataInput> {
-
-        override fun invoke(): PooledStream<DataInput> {
-            return PooledDataInput(factory())
-        }
-    }
-
-    internal class ByteChannelFactory(
-        override val size: Long,
-        private val factory: () -> ReadableByteChannel,
-    ) : StreamFactory<ReadableByteChannel> {
-
-        override fun invoke(): PooledStream<ReadableByteChannel> {
-            return PooledByteChannel(factory())
-        }
-    }
-
 
     private class PooledInputStream(api: InputStream) : PooledStream<InputStream>(api) {
 
-        override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-            return api.read(buffer, offset, length)
-        }
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+            api.read(buffer, offset, length)
 
-        override fun skip(length: Long): Long {
-            return api.skip(length)
+        override fun skip(length: Long): Long =
+            api.skip(length)
+
+        override fun close() {
+            api.close()
         }
     }
 
@@ -283,14 +233,17 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
             val len = if (length >= Int.MAX_VALUE) Int.MAX_VALUE else length.toInt()
             return api.skipBytes(len).toLong()
         }
+
+        override fun close() {
+            (api as? AutoCloseable)?.close()
+        }
     }
 
     private class PooledByteChannel(api: ReadableByteChannel) :
         PooledStream<ReadableByteChannel>(api) {
 
-        override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
-            return api.read(ByteBuffer.wrap(buffer, offset, length))
-        }
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+            api.read(ByteBuffer.wrap(buffer, offset, length))
 
         override fun skip(length: Long): Long {
             if (length <= 0) {
@@ -299,33 +252,55 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
             val len = if (length >= DEFAULT_BUFFER_SIZE) DEFAULT_BUFFER_SIZE else length.toInt()
             return read(ByteArray(len), 0, len).toLong()
         }
-    }
 
-
-    internal class Builder(private val size: Long) {
-
-        fun build(
-            offset: Long = 0,
-            size: Long = this.size - offset,
-            factory: () -> InputStream,
-        ): StreamFactoryRad {
-            return StreamFactoryRad(InputStreamFactory(size, factory), offset, size)
-        }
-
-        fun buildForDataInput(
-            offset: Long = 0,
-            size: Long = this.size - offset,
-            factory: () -> DataInput,
-        ): StreamFactoryRad {
-            return StreamFactoryRad(DataInputFactory(size, factory), offset, size)
-        }
-
-        fun buildForByteChannel(
-            offset: Long = 0,
-            size: Long = this.size - offset,
-            factory: () -> ReadableByteChannel,
-        ): StreamFactoryRad {
-            return StreamFactoryRad(ByteChannelFactory(size, factory), offset, size)
+        override fun close() {
+            api.close()
         }
     }
+
+    // endregion PooledStream
+
+
+    // region StreamFactory
+
+    internal interface StreamFactory<T> {
+
+        /**
+         * The size of the data stream in bytes.
+         * Not necessarily the full size of the underlying data source.
+         */
+        val size: Long
+
+        /**
+         * Opens new [PooledStream]
+         */
+        @Throws(IOException::class)
+        operator fun invoke(): PooledStream<T>
+    }
+
+    internal class InputStreamFactory(
+        override val size: Long,
+        private val factory: () -> InputStream,
+    ) : StreamFactory<InputStream> {
+
+        override fun invoke(): PooledStream<InputStream> = PooledInputStream(factory())
+    }
+
+    internal class DataInputFactory(
+        override val size: Long,
+        private val factory: () -> DataInput,
+    ) : StreamFactory<DataInput> {
+
+        override fun invoke(): PooledStream<DataInput> = PooledDataInput(factory())
+    }
+
+    internal class ByteChannelFactory(
+        override val size: Long,
+        private val factory: () -> ReadableByteChannel,
+    ) : StreamFactory<ReadableByteChannel> {
+
+        override fun invoke(): PooledStream<ReadableByteChannel> = PooledByteChannel(factory())
+    }
+
+    // endregion StreamFactory
 }

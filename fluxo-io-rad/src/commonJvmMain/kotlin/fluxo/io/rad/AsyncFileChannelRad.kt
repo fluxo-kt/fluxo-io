@@ -5,10 +5,10 @@ package fluxo.io.rad
 import androidx.annotation.RequiresApi
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.internal.checkPosOffsetAndMaxLength
 import fluxo.io.nio.aRead
 import fluxo.io.nio.limitCompat
 import fluxo.io.rad.AsyncFileChannelRad.AsyncFileChannelAccess
+import fluxo.io.util.checkPosOffsetAndMaxLength
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -17,8 +17,10 @@ import javax.annotation.concurrent.ThreadSafe
 import kotlin.math.min
 import kotlinx.coroutines.runBlocking
 
+// TODO: Avoid runBlocking usage, block without coroutine suspension (use Semaphore?)
+
 /**
- * [RadByteArrayAccessor] implementation backed by a [AsynchronousFileChannel].
+ * [RandomAccessData] implementation backed by a [AsynchronousFileChannel].
  *
  * WARNING: [AsynchronousFileChannel] is super slow for all platforms.
  * Seems to be the slowest possible IO API for JVM/Android.
@@ -33,16 +35,17 @@ import kotlinx.coroutines.runBlocking
 @Deprecated("Not recommended for usage, it's super slow and often has OOM problems.")
 internal class AsyncFileChannelRad
 private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<AsyncFileChannelAccess, AsyncFileChannelRad>(
-        access, offset, size,
-    ) {
+    AccessorAwareRad<AsyncFileChannelAccess>(access, offset, size) {
 
     /**
      * Create a new [AsyncFileChannelRad] backed by the specified [channel].
      * @param channel the underlying channel
      */
-    constructor(channel: AsynchronousFileChannel, offset: Long, size: Long) :
-        this(AsyncFileChannelAccess(channel), offset, size)
+    constructor(
+        channel: AsynchronousFileChannel,
+        offset: Long,
+        size: Long,
+    ) : this(AsyncFileChannelAccess(channel), offset, size)
 
     /**
      * Create a new [AsyncFileChannelRad]
@@ -99,8 +102,9 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
     }
 
 
-    class AsyncFileChannelAccess
-    internal constructor(public override val api: AsynchronousFileChannel) : SharedDataAccessor() {
+    internal class AsyncFileChannelAccess(
+        @JvmField val api: AsynchronousFileChannel,
+    ) : SharedDataAccessor(resources = arrayOf(api)) {
 
         override val size: Long get() = api.size()
 

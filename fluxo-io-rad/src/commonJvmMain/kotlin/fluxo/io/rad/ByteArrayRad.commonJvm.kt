@@ -1,8 +1,9 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.BasicRad
-import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.internal.ThreadSafe
+import fluxo.io.util.EMPTY_BYTE_ARRAY
+import fluxo.io.util.MAX_BYTE
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPosOffsetAndMaxLength
 import fluxo.io.util.checkPositionAndMaxLength
@@ -80,7 +81,7 @@ actual constructor(
 
     @Suppress("MagicNumber")
     override fun readByteAt0(position: Long): Int =
-        array[offset + position.toInt()].toInt() and 0xFF
+        array[offset + position.toInt()].toInt() and MAX_BYTE
 
 
     override fun read(buffer: ByteBuffer, position: Long): Int {

@@ -1,3 +1,4 @@
+@file:JvmName("AsynchronousFileChannelUtil")
 @file:Suppress("KDocUnresolvedReference")
 
 package fluxo.io.nio
@@ -31,6 +32,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousFileChannel.aLock(): FileLock =
     suspendCancellableCoroutine { cont ->
@@ -45,6 +47,7 @@ public suspend fun AsynchronousFileChannel.aLock(): FileLock =
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousFileChannel.aLock(
     position: Long,
@@ -62,6 +65,7 @@ public suspend fun AsynchronousFileChannel.aLock(
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer, position: Long): Int =
     suspendCancellableCoroutine { cont ->
@@ -76,6 +80,7 @@ public suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer, position: Long
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousFileChannel.aWrite(buf: ByteBuffer, position: Long): Int =
     suspendCancellableCoroutine { cont ->
@@ -90,6 +95,7 @@ public suspend fun AsynchronousFileChannel.aWrite(buf: ByteBuffer, position: Lon
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousServerSocketChannel.aAccept(): AsynchronousSocketChannel =
     suspendCancellableCoroutine { cont ->
@@ -104,6 +110,7 @@ public suspend fun AsynchronousServerSocketChannel.aAccept(): AsynchronousSocket
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousSocketChannel.aConnect(socketAddress: SocketAddress): Unit =
     suspendCancellableCoroutine { cont ->
@@ -118,6 +125,7 @@ public suspend fun AsynchronousSocketChannel.aConnect(socketAddress: SocketAddre
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousSocketChannel.aRead(
     buf: ByteBuffer, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.MILLISECONDS,
@@ -133,6 +141,7 @@ public suspend fun AsynchronousSocketChannel.aRead(
  * is waiting, this function *closes the underlying channel* and immediately resumes
  * with [CancellationException].
  */
+@JvmSynthetic
 @RequiresApi(26)
 public suspend fun AsynchronousSocketChannel.aWrite(
     buf: ByteBuffer, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.MILLISECONDS,

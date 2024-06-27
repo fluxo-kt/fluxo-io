@@ -1,0 +1,50 @@
+// Klib ABI Dump
+// Targets: [androidNativeArm32, androidNativeArm64, androidNativeX64, androidNativeX86, iosArm64, iosSimulatorArm64, iosX64, js, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, watchosArm32, watchosArm64, watchosDeviceArm64, watchosSimulatorArm64, watchosX64]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <io.github.fluxo-kt:fluxo-io-rad>
+abstract interface fluxo.io.rad/RandomAccessData : kotlin/AutoCloseable { // fluxo.io.rad/RandomAccessData|null[0]
+    abstract val size // fluxo.io.rad/RandomAccessData.size|{}size[0]
+        abstract fun <get-size>(): kotlin/Long // fluxo.io.rad/RandomAccessData.size.<get-size>|<get-size>(){}[0]
+
+    abstract fun read(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/RandomAccessData.read|read(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
+    abstract fun readAllBytes(): kotlin/ByteArray // fluxo.io.rad/RandomAccessData.readAllBytes|readAllBytes(){}[0]
+    abstract fun readFrom(kotlin/Long, kotlin/Int = ...): kotlin/ByteArray // fluxo.io.rad/RandomAccessData.readFrom|readFrom(kotlin.Long;kotlin.Int){}[0]
+    abstract fun readFully(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/RandomAccessData.readFully|readFully(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
+    abstract fun subsection(kotlin/Long, kotlin/Long = ...): fluxo.io.rad/RandomAccessData // fluxo.io.rad/RandomAccessData.subsection|subsection(kotlin.Long;kotlin.Long){}[0]
+    abstract suspend fun readAsync(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/RandomAccessData.readAsync|readAsync(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
+    abstract suspend fun readFullyAsync(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/RandomAccessData.readFullyAsync|readFullyAsync(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
+}
+
+abstract class fluxo.io/SharedCloseable : kotlin/AutoCloseable { // fluxo.io/SharedCloseable|null[0]
+    constructor <init>() // fluxo.io/SharedCloseable.<init>|<init>(){}[0]
+
+    final val isOpen // fluxo.io/SharedCloseable.isOpen|{}isOpen[0]
+        final fun <get-isOpen>(): kotlin/Boolean // fluxo.io/SharedCloseable.isOpen.<get-isOpen>|<get-isOpen>(){}[0]
+
+    abstract fun onSharedClose() // fluxo.io/SharedCloseable.onSharedClose|onSharedClose(){}[0]
+    final fun close() // fluxo.io/SharedCloseable.close|close(){}[0]
+    final fun onSharedClose(kotlin/Function1<kotlin/Throwable?, kotlin/Unit>): kotlinx.coroutines/DisposableHandle // fluxo.io/SharedCloseable.onSharedClose|onSharedClose(kotlin.Function1<kotlin.Throwable?,kotlin.Unit>){}[0]
+    final fun retain() // fluxo.io/SharedCloseable.retain|retain(){}[0]
+}
+
+open class fluxo.io/EOFException : fluxo.io/IOException { // fluxo.io/EOFException|null[0]
+    constructor <init>(kotlin/String) // fluxo.io/EOFException.<init>|<init>(kotlin.String){}[0]
+}
+
+open class fluxo.io/IOException : kotlin/Exception { // fluxo.io/IOException|null[0]
+    constructor <init>(kotlin/String) // fluxo.io/IOException.<init>|<init>(kotlin.String){}[0]
+}
+
+final val fluxo.io.util/EMPTY_AUTO_CLOSEABLE_ARRAY // fluxo.io.util/EMPTY_AUTO_CLOSEABLE_ARRAY|{}EMPTY_AUTO_CLOSEABLE_ARRAY[0]
+    final fun <get-EMPTY_AUTO_CLOSEABLE_ARRAY>(): kotlin/Array<kotlin/AutoCloseable> // fluxo.io.util/EMPTY_AUTO_CLOSEABLE_ARRAY.<get-EMPTY_AUTO_CLOSEABLE_ARRAY>|<get-EMPTY_AUTO_CLOSEABLE_ARRAY>(){}[0]
+final val fluxo.io.util/EMPTY_BYTE_ARRAY // fluxo.io.util/EMPTY_BYTE_ARRAY|{}EMPTY_BYTE_ARRAY[0]
+    final fun <get-EMPTY_BYTE_ARRAY>(): kotlin/ByteArray // fluxo.io.util/EMPTY_BYTE_ARRAY.<get-EMPTY_BYTE_ARRAY>|<get-EMPTY_BYTE_ARRAY>(){}[0]
+
+final fun fluxo.io.rad/RadByteArrayAccessor(kotlin/ByteArray, kotlin/Int = ..., kotlin/Int = ...): fluxo.io.rad/RandomAccessData // fluxo.io.rad/RadByteArrayAccessor|RadByteArrayAccessor(kotlin.ByteArray;kotlin.Int;kotlin.Int){}[0]
+final fun fluxo.io.util/checkOffsetAndCount(kotlin/Int, kotlin/Int, kotlin/Int) // fluxo.io.util/checkOffsetAndCount|checkOffsetAndCount(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+final fun fluxo.io.util/checkOffsetAndCount(kotlin/Long, kotlin/Long, kotlin/Long) // fluxo.io.util/checkOffsetAndCount|checkOffsetAndCount(kotlin.Long;kotlin.Long;kotlin.Long){}[0]
+final fun fluxo.io/setFluxoIoLogger(kotlin/Function2<kotlin/String, kotlin/Throwable?, kotlin/Unit>) // fluxo.io/setFluxoIoLogger|setFluxoIoLogger(kotlin.Function2<kotlin.String,kotlin.Throwable?,kotlin.Unit>){}[0]

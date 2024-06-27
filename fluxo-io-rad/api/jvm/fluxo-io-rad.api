@@ -1,0 +1,174 @@
+public final class fluxo/io/FluxoIoLogger {
+	public static final fun setLogger (Lkotlin/jvm/functions/Function2;)V
+}
+
+public abstract class fluxo/io/SharedCloseable : java/io/Closeable {
+	public fun <init> ()V
+	public final fun close ()V
+	public final fun isOpen ()Z
+	protected abstract fun onSharedClose ()V
+	public final fun onSharedClose (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
+	public final fun retain ()V
+}
+
+public final class fluxo/io/nio/AsynchronousFileChannelUtil {
+	public static final synthetic fun aAccept (Ljava/nio/channels/AsynchronousServerSocketChannel;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun aConnect (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/net/SocketAddress;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun aLock (Ljava/nio/channels/AsynchronousFileChannel;JJZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun aLock (Ljava/nio/channels/AsynchronousFileChannel;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun aRead (Ljava/nio/channels/AsynchronousFileChannel;Ljava/nio/ByteBuffer;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun aRead (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun aRead$default (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final synthetic fun aWrite (Ljava/nio/channels/AsynchronousFileChannel;Ljava/nio/ByteBuffer;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun aWrite (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun aWrite$default (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class fluxo/io/nio/BufferUtil {
+	public static final field EMPTY_BYTE_BUFFER Ljava/nio/ByteBuffer;
+	public static final fun releaseCompat (Ljava/nio/Buffer;)Ljava/nio/ByteBuffer;
+}
+
+public final class fluxo/io/rad/Rad {
+	public static final fun asInputStream (Lfluxo/io/rad/RandomAccessData;)Ljava/io/InputStream;
+	public static final fun asInputStreamOld (Lfluxo/io/rad/RandomAccessData;)Ljava/io/InputStream;
+	public static final fun forArray ([B)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forArray ([BI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forArray ([BII)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forArray$default ([BIIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forAsyncFileChannel (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forAsyncFileChannel (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forAsyncFileChannel (Ljava/io/File;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forAsyncFileChannel (Ljava/nio/channels/AsynchronousFileChannel;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forAsyncFileChannel (Ljava/nio/channels/AsynchronousFileChannel;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forAsyncFileChannel (Ljava/nio/channels/AsynchronousFileChannel;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forAsyncFileChannel$default (Ljava/io/File;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forAsyncFileChannel$default (Ljava/nio/channels/AsynchronousFileChannel;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/File;JI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/FileDescriptor;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/FileDescriptor;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/FileDescriptor;JI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/FileInputStream;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/FileInputStream;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/io/FileInputStream;JI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/nio/ByteBuffer;II[Ljava/lang/AutoCloseable;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/nio/ByteBuffer;I[Ljava/lang/AutoCloseable;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/nio/ByteBuffer;[Ljava/lang/AutoCloseable;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/nio/channels/FileChannel;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/nio/channels/FileChannel;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer (Ljava/nio/channels/FileChannel;JI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer ([B)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer ([BI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteBuffer ([BII)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteBuffer$default (Ljava/io/File;JIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteBuffer$default (Ljava/io/FileDescriptor;JIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteBuffer$default (Ljava/io/FileInputStream;JIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteBuffer$default (Ljava/nio/ByteBuffer;II[Ljava/lang/AutoCloseable;ILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteBuffer$default (Ljava/nio/channels/FileChannel;JIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteBuffer$default ([BIIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteChannelFactory (JJJILkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteChannelFactory (JJJLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteChannelFactory (JJLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forByteChannelFactory (JLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forByteChannelFactory$default (JJJILkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forDataInputFactory (JJJILkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forDataInputFactory (JJJLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forDataInputFactory (JJLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forDataInputFactory (JLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forDataInputFactory$default (JJJILkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/File;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/File;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/FileDescriptor;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/FileDescriptor;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/FileDescriptor;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/FileInputStream;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/FileInputStream;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/FileInputStream;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/RandomAccessFile;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/RandomAccessFile;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/io/RandomAccessFile;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/nio/channels/FileChannel;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/nio/channels/FileChannel;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/nio/channels/FileChannel;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forFileChannel (Ljava/nio/channels/FileChannel;JJ[Ljava/lang/AutoCloseable;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forFileChannel$default (Ljava/io/File;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forFileChannel$default (Ljava/io/File;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forFileChannel$default (Ljava/io/FileDescriptor;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forFileChannel$default (Ljava/io/FileInputStream;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forFileChannel$default (Ljava/io/RandomAccessFile;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forFileChannel$default (Ljava/nio/channels/FileChannel;JJ[Ljava/lang/AutoCloseable;ILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forInputStreamFactory (JJJILkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forInputStreamFactory (JJJLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forInputStreamFactory (JJLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forInputStreamFactory (JLkotlin/jvm/functions/Function0;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forInputStreamFactory$default (JJJILkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forMemoryMappedFile (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forMemoryMappedFile (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forMemoryMappedFile (Ljava/io/File;JI)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forMemoryMappedFile (Ljava/nio/channels/FileChannel;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forMemoryMappedFile (Ljava/nio/channels/FileChannel;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forMemoryMappedFile (Ljava/nio/channels/FileChannel;JI)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forMemoryMappedFile$default (Ljava/io/File;JIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forMemoryMappedFile$default (Ljava/nio/channels/FileChannel;JIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/File;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/FileDescriptor;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/FileDescriptor;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/FileDescriptor;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/FileInputStream;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/FileInputStream;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/io/FileInputStream;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/nio/channels/SeekableByteChannel;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/nio/channels/SeekableByteChannel;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/nio/channels/SeekableByteChannel;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forSeekableByteChannel (Ljava/nio/channels/SeekableByteChannel;JJ[Ljava/lang/AutoCloseable;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forSeekableByteChannel$default (Ljava/io/File;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forSeekableByteChannel$default (Ljava/io/FileDescriptor;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forSeekableByteChannel$default (Ljava/io/FileInputStream;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forSeekableByteChannel$default (Ljava/nio/channels/SeekableByteChannel;JJ[Ljava/lang/AutoCloseable;ILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forStreamFactory (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forStreamFactory (Ljava/io/File;J)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forStreamFactory (Ljava/io/File;JJ)Lfluxo/io/rad/RandomAccessData;
+	public static final fun forStreamFactory (Ljava/io/File;JJI)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun forStreamFactory$default (Ljava/io/File;JJIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+}
+
+public abstract interface class fluxo/io/rad/RandomAccessData : java/io/Closeable, java/lang/AutoCloseable {
+	public abstract fun asInputStream ()Ljava/io/InputStream;
+	public abstract fun getSize ()J
+	public abstract fun read (Ljava/nio/ByteBuffer;J)I
+	public abstract fun read ([BJII)I
+	public static synthetic fun read$default (Lfluxo/io/rad/RandomAccessData;[BJIIILjava/lang/Object;)I
+	public abstract fun readAllBytes ()[B
+	public abstract synthetic fun readAsync (Ljava/nio/ByteBuffer;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract synthetic fun readAsync ([BJIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readAsync$default (Lfluxo/io/rad/RandomAccessData;[BJIILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun readByteAt (J)I
+	public abstract fun readFrom (JI)[B
+	public static synthetic fun readFrom$default (Lfluxo/io/rad/RandomAccessData;JIILjava/lang/Object;)[B
+	public abstract fun readFully ([BJII)I
+	public static synthetic fun readFully$default (Lfluxo/io/rad/RandomAccessData;[BJIIILjava/lang/Object;)I
+	public abstract synthetic fun readFullyAsync ([BJIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readFullyAsync$default (Lfluxo/io/rad/RandomAccessData;[BJIILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun subsection (JJ)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun subsection$default (Lfluxo/io/rad/RandomAccessData;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
+	public abstract fun transferTo (Ljava/io/OutputStream;I)J
+	public abstract fun transferTo (Ljava/nio/channels/WritableByteChannel;IZ)J
+	public static synthetic fun transferTo$default (Lfluxo/io/rad/RandomAccessData;Ljava/io/OutputStream;IILjava/lang/Object;)J
+	public static synthetic fun transferTo$default (Lfluxo/io/rad/RandomAccessData;Ljava/nio/channels/WritableByteChannel;IZILjava/lang/Object;)J
+}
+
+public final class fluxo/io/util/IoUtil {
+	public static final field EMPTY_AUTO_CLOSEABLE_ARRAY [Ljava/lang/AutoCloseable;
+	public static final field EMPTY_BYTE_ARRAY [B
+	public static final fun checkOffsetAndCount (III)V
+	public static final fun checkOffsetAndCount (JJJ)V
+}
+

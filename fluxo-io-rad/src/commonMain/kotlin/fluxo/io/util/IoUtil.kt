@@ -1,5 +1,4 @@
-@file:JvmName("Util")
-
+@file:JvmName("IoUtil")
 @file:Suppress("KDocUnresolvedReference")
 
 package fluxo.io.util
@@ -18,6 +17,8 @@ public val EMPTY_BYTE_ARRAY: ByteArray = ByteArray(0)
 
 @JvmField
 public val EMPTY_AUTO_CLOSEABLE_ARRAY: Array<AutoCloseable> = emptyArray()
+
+internal const val MAX_BYTE: Int = 0xFF
 
 
 /**

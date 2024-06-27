@@ -27,6 +27,14 @@ kotlin = "2.0.20-Beta1"
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
 coroutines = "1.9.0-RC"
 
+# https://github.com/square/okio/tags
+# https://mvnrepository.com/artifact/com.squareup.okio/okio
+okio = "3.9.0"
+
+# https://github.com/Kotlin/kotlinx-io/releases
+# https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core
+kotlinx-io = "0.4.0"
+
 # Android Plugin for Gradle.
 # Note: R8 version can be updated independently in settings.gradle.kts
 # https://maven.google.com/web/index.html#com.android.tools.build:gradle
@@ -51,18 +59,12 @@ jmh = "1.37"
 [libraries]
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
 
-# https://github.com/Kotlin/kotlinx.coroutines/releases
-# https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
 coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
-# https://github.com/square/okio/tags
-# https://mvnrepository.com/artifact/com.squareup.okio/okio
-okio = { module = "com.squareup.okio:okio", version = "3.9.0" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
-# https://github.com/Kotlin/kotlinx-io/releases
-# https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core
-kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.4.0" }
-kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version = "0.4.0" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version.ref = "kotlinx-io" }
 
 # https://developer.android.com/jetpack/androidx/releases/annotation
 # https://mvnrepository.com/artifact/androidx.annotation/annotation
@@ -94,7 +96,7 @@ fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", ve
 
 # Public API management tool
 # https://github.com/Kotlin/binary-compatibility-validator/releases
-kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.15.0-Beta.2" }
+kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.15.0-Beta.3" }
 
 # https://github.com/fluxo-kt/fluxo-kmp-conf/releases
 fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.11.0" }

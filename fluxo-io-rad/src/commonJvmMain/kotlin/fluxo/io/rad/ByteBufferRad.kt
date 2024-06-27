@@ -8,6 +8,7 @@ import fluxo.io.nio.positionCompat
 import fluxo.io.nio.releaseCompat
 import fluxo.io.rad.ByteBufferRad.ByteBufferAccess
 import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
+import fluxo.io.util.MAX_BYTE
 import fluxo.io.util.toIntChecked
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -48,7 +49,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
 
 
     override fun readByteAt0(position: Long): Int =
-        access.api.get(toAccessPos(position)).toInt() and 0xFF
+        access.api.get(toAccessPos(position)).toInt() and MAX_BYTE
 
     @Throws(IOException::class)
     override fun read(buffer: ByteBuffer, position: Long): Int {

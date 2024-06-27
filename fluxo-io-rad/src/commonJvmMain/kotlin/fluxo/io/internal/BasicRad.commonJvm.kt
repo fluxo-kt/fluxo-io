@@ -6,8 +6,8 @@ import fluxo.io.nio.flipCompat
 import fluxo.io.nio.positionCompat
 import fluxo.io.nio.releaseCompat
 import fluxo.io.rad.InputStreamFromRad
-import fluxo.io.rad.RadByteArrayAccessor
 import fluxo.io.rad.RandomAccessData
+import fluxo.io.util.MAX_BYTE
 import fluxo.io.util.readAllBytesImpl
 import fluxo.io.util.readFullyAsyncImpl
 import fluxo.io.util.readFullyImpl
@@ -53,12 +53,14 @@ internal actual abstract class BasicRad : RandomAccessData {
     }
 
     /**
-     * Default naive inefficient implementation of [RadByteArrayAccessor.readByteAt].
-     * No bounds check here!
+     * Default naive inefficient implementation for the [readByteAt].
+     *
+     * _No bounds check here!
+     * Already done in the [readByteAt] method._
      */
     @Suppress("MagicNumber")
     protected open fun readByteAt0(position: Long): Int =
-        readFrom(position, maxLength = 1)[0].toInt() and 0xFF
+        readFrom(position, maxLength = 1)[0].toInt() and MAX_BYTE
 
 
     @Blocking

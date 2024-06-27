@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinx.kover)
+    alias(libs.plugins.kotlinx.bcv)
     alias(libs.plugins.atomicfu)
 }
 
@@ -14,6 +15,11 @@ fkcSetupMultiplatform(
         setupCoroutines = true
         setupDependencies = true
         addStdlibDependency = true
+        apiValidation {
+            @Suppress("UnstableApiUsage")
+            klibValidationEnabled = false
+            tsApiChecks = false
+        }
     },
 ) {
     common.main.dependencies {
@@ -30,12 +36,21 @@ fkcSetupMultiplatform(
 
     val commonJs = commonJs
     commonJs.main.dependencies {
-        implementation(libs.kotlinx.atomicfu)
+        api(libs.kotlinx.atomicfu)
     }
 
     arrayOf(commonJvm, commonApple, commonJs, commonLinux, commonMingw).forEach {
         it.main.dependencies {
             // implementation(libs.okio)
         }
+    }
+}
+
+apiValidation {
+    ignoredPackages.add("fluxo.io.internal")
+
+    @Suppress("OPT_IN_USAGE")
+    klib {
+        enabled = true
     }
 }

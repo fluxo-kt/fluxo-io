@@ -86,6 +86,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     public fun readByteAt(position: Long): Int
 
 
+    @JvmSynthetic
     public actual suspend fun readAsync(
         buffer: ByteArray,
         position: Long,
@@ -93,6 +94,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
         maxLength: Int,
     ): Int
 
+    @JvmSynthetic
     public actual suspend fun readFullyAsync(
         buffer: ByteArray,
         position: Long,
@@ -138,6 +140,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.nio.channels.AsynchronousFileChannel.read
      * @see java.nio.channels.AsynchronousByteChannel.read
      */
+    @JvmSynthetic
     public suspend fun readAsync(buffer: ByteBuffer, position: Long): Int
 
 

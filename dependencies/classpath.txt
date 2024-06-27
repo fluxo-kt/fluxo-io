@@ -185,11 +185,11 @@ org.jetbrains.kotlin:kotlin-stdlib:1.9.22
 org.jetbrains.kotlin:kotlin-tooling-core:2.0.20-Beta1
 org.jetbrains.kotlin:kotlin-util-io:2.0.20-Beta1
 org.jetbrains.kotlin:kotlin-util-klib:2.0.20-Beta1
-org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.15.0-Beta.2
+org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.15.0-Beta.3
 org.jetbrains.kotlinx.kover:org.jetbrains.kotlinx.kover.gradle.plugin:0.8.1
 org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.24.0
 org.jetbrains.kotlinx:atomicfu-transformer:0.24.0
-org.jetbrains.kotlinx:binary-compatibility-validator:0.15.0-Beta.2
+org.jetbrains.kotlinx:binary-compatibility-validator:0.15.0-Beta.3
 org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0
 org.jetbrains.kotlinx:kotlinx-html-jvm:0.8.1
 org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.7.0

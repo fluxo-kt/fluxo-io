@@ -199,7 +199,7 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                 if (skipped > 0L) {
                     toSkip -= skipped
                     idles = 0
-                } else if (++idles >= 3) {
+                } else if (++idles >= @Suppress("MagicNumber") 3) {
                     throw EOFException("Can't skip enough bytes ($length). 3 idle skips")
                 }
             }

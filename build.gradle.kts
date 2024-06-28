@@ -78,15 +78,3 @@ fun findAndroidJar(project: Project, compileSdkVersion: Int): FileCollection {
 }
 
 extra["androidJar"] = findAndroidJar(project, libs.versions.androidCompileSdk.get().toInt())
-
-
-// Exclude unused DOM API.
-allprojects {
-    configurations.all {
-        resolutionStrategy.eachDependency {
-            if (requested.module.name == "kotlin-dom-api-compat") {
-                useTarget(libs.kotlin.stdlib.js)
-            }
-        }
-    }
-}

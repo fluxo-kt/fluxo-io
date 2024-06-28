@@ -1,3 +1,4 @@
+org.jetbrains.kotlin:kotlin-dom-api-compat:2.0.20-Beta1
 org.jetbrains.kotlin:kotlin-stdlib-js:2.0.20-Beta1
 org.jetbrains.kotlin:kotlin-stdlib:2.0.20-Beta1
 org.jetbrains.kotlin:kotlinx-atomicfu-runtime:2.0.20-Beta1

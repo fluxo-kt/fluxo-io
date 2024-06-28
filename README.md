@@ -23,10 +23,9 @@ abstraction for effective read-only random access to binary data.
 Both suspend and blocking APIs are provided.
 Different platform-specific implementations are provided.
 
-
 > [!TIP]
 > For JVM and Android, compatibility with `ByteBuffer` reads and writes is provided.<br>
-> An `InputStream' view is also provided for compatibility with existing APIs.
+> An `InputStream` view is also provided for compatibility with existing APIs.
 
 
 |                                        API | Platform     | Supported for |
@@ -42,7 +41,7 @@ Different platform-specific implementations are provided.
 |        [() -> ReadableByteChannel] Factory | JVM, Android | JVM, Android  |
 |                  [AsynchronousFileChannel] | JVM, Android | JVM, Android  |
 
-[RandomAccessData]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RandomAccessData.common.kt#29
+[RandomAccessData]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RandomAccessData.common.kt#L29
 
 [ByteArray]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RadByteArrayAccessor.kt#L21
 [ByteBuffer]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/ByteBufferRadAccessor.kt#L30
@@ -53,10 +52,10 @@ Different platform-specific implementations are provided.
 [() -> InputStream]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L62
 [() -> DataInput]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L92
 [() -> ReadableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L122
-[AsynchronousFileChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/AsyncFileChannelRadAccessor.kt#32
+[AsynchronousFileChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/AsyncFileChannelRadAccessor.kt#L32
 
 _The first steps of the implementation were dated 2021-03-31 (2d87ec044f5801cd3ad8cc31ac380b17fa31d44a)._<br>
-_Open-source since 2024-06._
+_Open-source since 2024-06-16._
 
 ### Versioning
 

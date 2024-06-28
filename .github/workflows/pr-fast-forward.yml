@@ -1,0 +1,52 @@
+name: PR Fast-Forward Merge
+
+on:
+  issue_comment:
+    types: [ created ]
+
+permissions:
+  contents: write
+  # We appear to need write permission for both pull-requests and
+  # issues to post a comment to a pull request.
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr-fast-forward:
+    # Only run if the PR comment contains the '/fast-forward' command or equals a '/ff' command.
+    # Only run if a user with write permissions made the comment.
+    if: |
+      github.event.issue.pull_request &&
+      (github.event.comment.body == '/ff' || contains(github.event.comment.body, '/fast-forward')) &&
+      (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: React to the comment right away
+        uses: dkershner6/reaction-action@v2
+        continue-on-error: true
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          reaction: "rocket"
+
+      - name: Fast-forward and push
+        uses: sequoia-pgp/fast-forward@v1
+        with:
+          merge: true
+          # To reduce the workflow's verbosity, use 'on-error'
+          # to only post a comment when an error occurs, or 'never' to
+          # never post a comment.
+          # (Information is always available in the step's summary.)
+          comment: always

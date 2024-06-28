@@ -1,0 +1,40 @@
+name: Validate Gradle Wrapper
+
+on:
+  pull_request:
+    paths:
+      - '**/gradle-wrapper-validation.yml'
+      - '**/gradle/wrapper/'
+      - '**/gradle-wrapper.jar'
+      - '**/gradle*.properties'
+      - '**/gradlew*'
+  push:
+    paths:
+      - '**/gradle-wrapper-validation.yml'
+      - '**/gradle/wrapper/'
+      - '**/gradle-wrapper.jar'
+      - '**/gradle*.properties'
+      - '**/gradlew*'
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: "Validate Gradle Wrapper"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            downloads.gradle-dn.com:443
+            downloads.gradle.org:443
+            services.gradle.org:443
+
+      - uses: actions/checkout@v4
+      - uses: gradle/wrapper-validation-action@v3

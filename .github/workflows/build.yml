@@ -1,0 +1,184 @@
+name: Build
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**-validation.yml'
+      - '**.*ignore'
+      - '**.md'
+      - '**.txt'
+      - '**/actionlint**'
+      - '**/pr-**.yml'
+      - '**/release.yml'
+      - '**dependabot.yml'
+    # Avoid useless and/or duplicate runs.
+    # Also, we merge with --ff-only,
+    # so we don't need to run on the merge commit.
+    branches-ignore:
+      # Dependabot creates both branch and PR. Avoid running twice.
+      - 'dependabot/**'
+      - 'dev'
+      - 'feat*/**'
+      - 'fix/**'
+      - 'mr/**'
+      - 'pr/**'
+      - 'pull/**'
+      - 'wip/**'
+  push:
+    paths-ignore:
+      - '**-validation.yml'
+      - '**.*ignore'
+      - '**.md'
+      - '**.txt'
+      - '**/actionlint**'
+      - '**/pr-**.yml'
+      - '**/release.yml'
+      - '**dependabot.yml'
+
+permissions:
+  contents: write
+  # required for all workflows (CodeQL)
+  security-events: write
+  # required for workflows in private repositories (CodeQL)
+  actions: read
+  # We appear to need write permission for both pull-requests and
+  # issues to post a comment to a pull request.
+  pull-requests: write
+  issues: write
+
+env:
+  CI: true
+  BUILD_NUMBER: ${{ github.run_number }}
+  SCM_TAG: ${{ github.sha }}
+  #GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: "^(?!(classpath)).*"
+  DEPENDENCY_GRAPH_INCLUDE_PROJECTS: "^:(?!(buildSrc|test|check)).*"
+  IS_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+jobs:
+  buildAndCheck:
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ '22' ]
+        os: [ 'macos', 'windows', 'ubuntu' ]
+        # CodeQL supports ['c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift']
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support.
+        language: [ 'java-kotlin' ]
+
+    name: 'Build and check on ${{ matrix.os }}'
+    timeout-minutes: 30
+    runs-on: '${{ matrix.os }}-latest'
+    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
+    env:
+      GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: false
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f086349bfa2bd1361f7909c78558e816508cdc10 # v2.8.0
+        with:
+          disable-sudo: true
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 'Set up JDK ${{ matrix.java }}'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '${{ matrix.java }}'
+
+      - name: 'Cached KMP things (Konan, Node, Yarn, Binaryen)'
+        if: false # Seems slower than without it.
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle/yarn
+            ~/.gradle/nodejs
+            ~/.gradle/binaryen
+          key: "${{ runner.os }}-kmp-2.0.20"
+          restore-keys: |
+            ${{ runner.os }}-kmp-
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+          cache-disabled: ${{ matrix.os == 'windows' }} # super slow on Windows.
+          cache-encryption-key: "${{ secrets.GRADLE_ENCRYPTION_KEY }}"
+          cache-read-only: ${{ !env.IS_DEFAULT_BRANCH }}
+          dependency-graph: ${{ env.IS_DEFAULT_BRANCH && 'generate-and-submit' || 'disabled'}}
+          add-job-summary-as-pr-comment: on-failure
+          artifact-retention-days: 1
+
+      # TODO: If it's a "build(deps): ..." commit, then run the dependency review actions,
+      #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results
+
+      - name: Initialize CodeQL
+        if: matrix.os == 'ubuntu'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # If you wish to specify custom queries, you can do so here or in a config file.
+          # By default, queries listed here will override any specified in a config file.
+          # Prefix the list with "+" to use these queries, and those in the config file.
+          #
+          # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+          # queries: security-extended, security-and-quality
+
+      - name: 'Build and check'
+        timeout-minutes: 18
+        run: ./gradlew build assemble check --continue --stacktrace --scan
+
+      - name: Upload sarif report (Detekt)
+        if: always() && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH)
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: build/detekt-merged.sarif
+          category: detekt
+
+      - name: Upload sarif report (Lint)
+        if: always() && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH)
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: build/lint-merged.sarif
+          category: lint
+
+      - name: Upload the build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: '${{ matrix.os }}-build-report'
+          path: |
+            **/build/logs/
+            **/build/reports/
+            **/build/output/
+            build/*-merged.*
+          compression-level: 9
+
+      - name: Perform CodeQL Analysis
+        if: matrix.os == 'ubuntu'
+        timeout-minutes: 6
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+      - name: "Post result in PR comment"
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request' && failure()
+        env:
+          OS: ${{ matrix.os }}
+          GH_WORKFLOW: ${{ github.workflow }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { OS, GH_WORKFLOW, RUN_URL } = process.env
+            github.rest.issues.createComment({
+              issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo,
+              body: `❌ ${GH_WORKFLOW} [failed](${RUN_URL}) on ${OS}.`,
+            })

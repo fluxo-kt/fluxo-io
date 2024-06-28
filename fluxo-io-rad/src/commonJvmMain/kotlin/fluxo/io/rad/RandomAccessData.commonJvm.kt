@@ -20,7 +20,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
 
 
     /**
-     * Returns an new [InputStream] that can be used to read the underlying data.
+     * Returns a new [InputStream] that can be used to read the underlying data.
      *
      * **The caller is responsible for closing the stream when it is finished!**
      *
@@ -63,8 +63,8 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     /**
      * Reads a single byte of data.
      * The byte is returned as an integer in the range 0 to 255 (`0x00..0x0ff`).
-     * This method blocks if no input is yet available. Method behaves in exactly the same way as
-     * the [InputStream.read] method.
+     * This method blocks if no input is yet available.
+     * Method behaves in the same way as the [InputStream.read] method.
      *
      * Note that this method can be highly inefficient for some implementations!
      * If multiple bytes are to be read, it is generally
@@ -104,9 +104,8 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
 
 
     /**
-     * Reads a sequence of bytes of data starting at the given [position].
-     * If the given [position] is greater than the data size at the time that the read is
-     * attempted then no bytes are read.
+     * Reads a sequence of data bytes starting at the given [position].
+     * If the given [position] is greater than the data size no bytes are read.
      *
      * @param buffer the buffer into which bytes are to be transferred
      * @param position the position from which data should be read
@@ -125,7 +124,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     public fun read(buffer: ByteBuffer, position: Long): Int
 
     /**
-     * Reads a sequence of bytes of data starting at the given [position].
+     * Reads a sequence of data bytes starting at the given [position].
      * If the given [position] is greater than the data size no bytes are read.
      *
      * @param buffer the buffer into which bytes are to be transferred

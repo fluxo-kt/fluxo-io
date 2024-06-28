@@ -1,12 +1,7 @@
-buildscript {
-    dependencies {
-        classpath(libs.plugin.kotlinx.atomicfu)
-    }
-}
-
 plugins {
     alias(libs.plugins.android.lib) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.atomicfu) apply false
     alias(libs.plugins.kotlinx.bcv) apply false
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.fluxo.bcv.js) apply false

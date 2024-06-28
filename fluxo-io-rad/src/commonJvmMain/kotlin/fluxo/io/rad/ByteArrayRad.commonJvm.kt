@@ -1,6 +1,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.BasicRad
+import fluxo.io.internal.Blocking
 import fluxo.io.internal.ThreadSafe
 import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.MAX_BYTE
@@ -31,7 +32,7 @@ actual constructor(
     private val length: Int,
 ) : BasicRad() {
 
-    override val size: Long get() = length.toLong()
+    actual override val size: Long get() = length.toLong()
 
     init {
         checkOffsetAndCount(array.size, offset, length)
@@ -41,16 +42,19 @@ actual constructor(
     override fun asInputStream(): InputStream =
         ByteArrayInputStream(array, offset, length)
 
-    override fun subsection(position: Long, length: Long): RandomAccessData {
+    @Blocking
+    actual override fun subsection(position: Long, length: Long): RandomAccessData {
         checkOffsetAndCount(size, position, length)
         return ByteArrayRad(array, offset + position.toIntChecked(), length.toInt())
     }
 
 
-    override fun readAllBytes(): ByteArray =
+    @Blocking
+    actual override fun readAllBytes(): ByteArray =
         Arrays.copyOfRange(array, offset, offset + length)
 
-    override fun readFrom(position: Long, maxLength: Int): ByteArray {
+    @Blocking
+    actual override fun readFrom(position: Long, maxLength: Int): ByteArray {
         checkPositionAndMaxLength(size = size, position = position, maxLength = maxLength)
         val positionInt = position.toInt()
         val len = min(maxLength, length - positionInt)
@@ -61,7 +65,8 @@ actual constructor(
         return Arrays.copyOfRange(array, pos, pos + len)
     }
 
-    override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
+    @Blocking
+    actual override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
         checkPosOffsetAndMaxLength(size, buffer, position, offset, maxLength)
         val srcLen = length
         if (position >= srcLen) {
@@ -84,6 +89,7 @@ actual constructor(
         array[offset + position.toInt()].toInt() and MAX_BYTE
 
 
+    @Blocking
     override fun read(buffer: ByteBuffer, position: Long): Int {
         val srcLen = length
         if (position < 0L) {

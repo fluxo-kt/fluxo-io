@@ -1,8 +1,9 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.BasicRad
-import fluxo.io.util.EMPTY_BYTE_ARRAY
+import fluxo.io.internal.Blocking
 import fluxo.io.internal.ThreadSafe
+import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPosOffsetAndMaxLength
 import fluxo.io.util.checkPositionAndMaxLength
@@ -24,23 +25,26 @@ actual constructor(
     private val length: Int,
 ) : BasicRad() {
 
-    override val size: Long get() = length.toLong()
+    actual override val size: Long get() = length.toLong()
 
     init {
         checkOffsetAndCount(array.size, offset, length)
     }
 
 
-    override fun subsection(position: Long, length: Long): RandomAccessData {
+    @Blocking
+    actual override fun subsection(position: Long, length: Long): RandomAccessData {
         checkOffsetAndCount(size, position, length)
         return ByteArrayRad(array, offset + position.toIntChecked(), length.toInt())
     }
 
 
-    override fun readAllBytes(): ByteArray =
+    @Blocking
+    actual override fun readAllBytes(): ByteArray =
         array.copyOfRange(offset, offset + length)
 
-    override fun readFrom(position: Long, maxLength: Int): ByteArray {
+    @Blocking
+    actual override fun readFrom(position: Long, maxLength: Int): ByteArray {
         checkPositionAndMaxLength(size = size, position = position, maxLength = maxLength)
         val positionInt = position.toInt()
         val len = min(maxLength, length - positionInt)
@@ -51,7 +55,8 @@ actual constructor(
         return array.copyOfRange(pos, pos + len)
     }
 
-    override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
+    @Blocking
+    actual override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
         checkPosOffsetAndMaxLength(size, buffer, position, offset, maxLength)
         val srcLen = length
         if (position >= srcLen) {

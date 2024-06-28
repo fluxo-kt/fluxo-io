@@ -31,4 +31,6 @@ internal expect class ByteArrayRad(
 
     @Blocking
     override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int
+
+    override fun close()
 }

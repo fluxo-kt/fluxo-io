@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.toIntChecked
 import java.io.File
 import java.io.FileDescriptor
@@ -50,13 +51,15 @@ public fun RadByteBufferAccessor(
 ): RandomAccessData = ByteBufferRad(data, offset = offset, size = size)
 
 
-private fun byteBufferRad0(
+private fun byteBufferMmapRad0(
     channel: FileChannel,
     offset: Long,
     size: Int,
     vararg resources: AutoCloseable,
 ): RandomAccessData {
-    val size0 = if (size == -1) (channel.size() - offset).toIntChecked() else size
+    val dataLength = channel.size()
+    val size0 = if (size == -1) (dataLength - offset).toIntChecked() else size
+    checkOffsetAndCount(dataLength, offset, size0.toLong())
     val byteBuffer = channel.map(MapMode.READ_ONLY, offset, size0.toLong())
     return ByteBufferRad(byteBuffer, offset = 0, size = size0, resources = resources)
 }
@@ -75,7 +78,7 @@ private fun byteBufferRad0(
  *
  * @param data the underlying [FileInputStream]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  *
  * @see java.nio.channels.FileChannel.map
  */
@@ -88,7 +91,7 @@ public fun RadByteBufferAccessor(
     size: Int = -1,
 ): RandomAccessData {
     val channel = data.channel
-    return byteBufferRad0(channel, offset = offset, size = size, channel, data)
+    return byteBufferMmapRad0(channel, offset = offset, size = size, channel, data)
 }
 
 /**
@@ -105,7 +108,7 @@ public fun RadByteBufferAccessor(
  *
  * @param data the underlying [FileChannel]
  * @param offset the offset of the section
- * @param size the length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  *
  * @see java.nio.channels.FileChannel.map
  */
@@ -116,7 +119,7 @@ public fun RadByteBufferAccessor(
     data: FileChannel,
     offset: Long = 0L,
     size: Int = -1,
-): RandomAccessData = byteBufferRad0(data, offset = offset, size = size, data)
+): RandomAccessData = byteBufferMmapRad0(data, offset = offset, size = size, data)
 
 /**
  * Creates a new memory-mapping [ByteBuffer]-based [RandomAccessData] instance
@@ -132,9 +135,7 @@ public fun RadByteBufferAccessor(
  *
  * @param data the underlying [File]
  * @param offset the offset of the section
- * @param size the length of the section
- *
- * @TODO: Would it be better to use [FileChannel.size] instead of [File.length]?
+ * @param size the optional length of the section. -1 means the rest of the file.
  *
  * @see java.nio.channels.FileChannel.map
  */
@@ -144,11 +145,11 @@ public fun RadByteBufferAccessor(
 public fun RadByteBufferAccessor(
     data: File,
     offset: Long = 0L,
-    size: Int = (data.length() - offset).toIntChecked(),
+    size: Int = -1,
 ): RandomAccessData {
     val stream = FileInputStream(data)
     val channel = stream.channel
-    return byteBufferRad0(channel, offset = offset, size = size, channel, stream)
+    return byteBufferMmapRad0(channel, offset = offset, size = size, channel, stream)
 }
 
 /**
@@ -165,7 +166,7 @@ public fun RadByteBufferAccessor(
  *
  * @param data the underlying [FileDescriptor]
  * @param offset the offset of the section
- * @param size the length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  *
  * @see java.nio.channels.FileChannel.map
  */
@@ -179,7 +180,7 @@ public fun RadByteBufferAccessor(
 ): RandomAccessData {
     val stream = FileInputStream(data)
     val channel = stream.channel
-    return byteBufferRad0(channel, offset = offset, size = size, channel, stream)
+    return byteBufferMmapRad0(channel, offset = offset, size = size, channel, stream)
 }
 
 

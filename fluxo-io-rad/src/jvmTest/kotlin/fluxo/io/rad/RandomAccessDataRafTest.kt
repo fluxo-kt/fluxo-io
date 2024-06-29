@@ -44,8 +44,8 @@ internal class RandomAccessDataRafTest(
 
         assertIOB { RandomAccessFileRadAccessor(tempFile, -1, 0) }
         assertIOB { RandomAccessFileRadAccessor(tempFile, -1, 1) }
-        assertIOB { RandomAccessFileRadAccessor(tempFile, 0, -1) }
-        assertIOB { RandomAccessFileRadAccessor(tempFile, 1, -1) }
+        assertIOB { RandomAccessFileRadAccessor(tempFile, 0, -2) }
+        assertIOB { RandomAccessFileRadAccessor(tempFile, 1, -2) }
         assertIOB { RandomAccessFileRadAccessor(tempFile, BYTES.size + 1L) }
         assertIOB { RandomAccessFileRadAccessor(tempFile, BYTES.size.toLong(), 1L) }
         assertIOB { RandomAccessFileRadAccessor(tempFile, BYTES.size + 1L, 1L) }

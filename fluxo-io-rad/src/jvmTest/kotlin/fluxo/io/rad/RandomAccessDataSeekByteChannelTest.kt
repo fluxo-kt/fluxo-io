@@ -51,8 +51,8 @@ internal class RadSeekableByteChannelAccessorTest(
 
         assertIOB { RadSeekableByteChannelAccessor(tempFile, -1, 0) }
         assertIOB { RadSeekableByteChannelAccessor(tempFile, -1, 1) }
-        assertIOB { RadSeekableByteChannelAccessor(tempFile, 0, -1) }
-        assertIOB { RadSeekableByteChannelAccessor(tempFile, 1, -1) }
+        assertIOB { RadSeekableByteChannelAccessor(tempFile, 0, -2) }
+        assertIOB { RadSeekableByteChannelAccessor(tempFile, 1, -2) }
         assertIOB { RadSeekableByteChannelAccessor(tempFile, BYTES.size + 1L) }
         assertIOB { RadSeekableByteChannelAccessor(tempFile, BYTES.size.toLong(), 1L) }
         assertIOB { RadSeekableByteChannelAccessor(tempFile, BYTES.size + 1L, 1L) }

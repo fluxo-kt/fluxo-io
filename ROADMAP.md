@@ -5,7 +5,6 @@
 <details>
   <summary>Show</summary>
 
-* Port tests.
 * Set up code coverage.
 * Port benchmarks.
 * Set up multiplatform benchmarks.

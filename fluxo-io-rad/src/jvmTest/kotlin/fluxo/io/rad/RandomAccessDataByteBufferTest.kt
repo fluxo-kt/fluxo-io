@@ -58,8 +58,8 @@ internal class RadByteBufferAccessorTest(
 
         assertIOB { RadByteBufferAccessor(tempFile, -1, 0) }
         assertIOB { RadByteBufferAccessor(tempFile, -1, 1) }
-        assertIOB { RadByteBufferAccessor(tempFile, 0, -1) }
-        assertIOB { RadByteBufferAccessor(tempFile, 1, -1) }
+        assertIOB { RadByteBufferAccessor(tempFile, 0, -2) }
+        assertIOB { RadByteBufferAccessor(tempFile, 1, -2) }
         assertIOB { RadByteBufferAccessor(tempFile, BYTES.size + 1L) }
         assertIOB { RadByteBufferAccessor(tempFile, BYTES.size.toLong(), 1) }
         assertIOB { RadByteBufferAccessor(tempFile, BYTES.size + 1L, 1) }

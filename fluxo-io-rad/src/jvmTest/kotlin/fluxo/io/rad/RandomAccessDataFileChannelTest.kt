@@ -48,8 +48,8 @@ internal class RandomAccessDataFileChannelTest(
 
         assertIOB { RadFileChannelAccessor(tempFile, -1, 0) }
         assertIOB { RadFileChannelAccessor(tempFile, -1, 1) }
-        assertIOB { RadFileChannelAccessor(tempFile, 0, -1) }
-        assertIOB { RadFileChannelAccessor(tempFile, 1, -1) }
+        assertIOB { RadFileChannelAccessor(tempFile, 0, -2) }
+        assertIOB { RadFileChannelAccessor(tempFile, 1, -2) }
         assertIOB { RadFileChannelAccessor(tempFile, BYTES.size + 1L) }
         assertIOB { RadFileChannelAccessor(tempFile, BYTES.size.toLong(), 1L) }
         assertIOB { RadFileChannelAccessor(tempFile, BYTES.size + 1L, 1L) }

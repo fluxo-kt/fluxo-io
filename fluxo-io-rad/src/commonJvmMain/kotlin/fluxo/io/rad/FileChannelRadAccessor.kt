@@ -19,7 +19,7 @@ import java.nio.channels.FileChannel
  *
  * @param data the underlying [FileChannel]
  * @param offset the offset of the section
- * @param size the length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  * @param resources the optional resources to close when finished
  */
 @Blocking
@@ -44,7 +44,7 @@ public fun RadFileChannelAccessor(
  *
  * @param data the underlying [FileInputStream]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads
@@ -67,9 +67,7 @@ public fun RadFileChannelAccessor(
  *
  * @param data the underlying [File]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
- *
- * @TODO: Would it be better to use [FileChannel.size] instead of [File.length]?
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads
@@ -77,7 +75,7 @@ public fun RadFileChannelAccessor(
 public fun RadFileChannelAccessor(
     data: File,
     offset: Long = 0L,
-    size: Long = data.length() - offset,
+    size: Long = -1L,
 ): RandomAccessData = RadFileChannelAccessor(FileInputStream(data), offset = offset, size = size)
 
 /**
@@ -89,7 +87,7 @@ public fun RadFileChannelAccessor(
  *
  * @param data the underlying [FileDescriptor]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads

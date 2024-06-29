@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.checkOffsetAndCount
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
@@ -21,7 +22,7 @@ import java.io.RandomAccessFile
  *
  * @param data the underlying [RandomAccessFile]
  * @param offset the offset of the section
- * @param size the length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads
@@ -31,7 +32,9 @@ public fun RandomAccessFileRadAccessor(
     offset: Long = 0L,
     size: Long = -1L,
 ): RandomAccessData {
-    val size0 = if (size == -1L) data.length() - offset else size
+    val dataLength = data.length()
+    val size0 = if (size == -1L) dataLength - offset else size
+    checkOffsetAndCount(dataLength, offset, size0)
     return RandomAccessFileRad(data, offset = offset, size = size0)
 }
 
@@ -47,9 +50,7 @@ public fun RandomAccessFileRadAccessor(
  *
  * @param data the underlying [File]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
- *
- * @TODO: Would it be better to use [RandomAccessFile.length] instead of [File.length]?
+ * @param size the optional length of the section. -1 means the rest of the file.
  *
  * @throws IllegalArgumentException if the file doesn't exist
  */
@@ -60,6 +61,6 @@ public fun RandomAccessFileRadAccessor(
 public fun RandomAccessFileRadAccessor(
     data: File,
     offset: Long = 0L,
-    size: Long = data.length() - offset,
+    size: Long = -1L,
 ): RandomAccessData =
     RandomAccessFileRadAccessor(RandomAccessFile(data, "r"), offset = offset, size = size)

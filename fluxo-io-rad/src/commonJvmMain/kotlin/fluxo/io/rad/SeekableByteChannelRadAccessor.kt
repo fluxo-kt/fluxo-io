@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.checkOffsetAndCount
 import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
@@ -22,7 +23,7 @@ import java.nio.channels.SeekableByteChannel
  *
  * @param data the underlying [SeekableByteChannel]
  * @param offset the offset of the section
- * @param size the length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  * @param resources the optional resources to close when finished
  *
  * @see java.nio.channels.FileChannel
@@ -37,7 +38,9 @@ public fun RadSeekableByteChannelAccessor(
     size: Long = -1L,
     vararg resources: AutoCloseable = arrayOf(data),
 ): RandomAccessData {
-    val size0 = if (size == -1L) data.size() - offset else size
+    val dataLength = data.size()
+    val size0 = if (size == -1L) dataLength - offset else size
+    checkOffsetAndCount(dataLength, offset, size0)
     return SeekableByteChannelRad(data, offset = offset, size = size0, resources = resources)
 }
 
@@ -53,7 +56,7 @@ public fun RadSeekableByteChannelAccessor(
  *
  * @param data the underlying [FileInputStream]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads
@@ -79,9 +82,7 @@ public fun RadSeekableByteChannelAccessor(
  *
  * @param data the underlying [File]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
- *
- * @TODO: Would it be better to use [SeekableByteChannel.size] instead of [File.length]?
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads
@@ -89,7 +90,7 @@ public fun RadSeekableByteChannelAccessor(
 public fun RadSeekableByteChannelAccessor(
     data: File,
     offset: Long = 0L,
-    size: Long = data.length() - offset,
+    size: Long = -1L,
 ): RandomAccessData =
     RadSeekableByteChannelAccessor(FileInputStream(data), offset = offset, size = size)
 
@@ -105,7 +106,7 @@ public fun RadSeekableByteChannelAccessor(
  *
  * @param data the underlying [FileDescriptor]
  * @param offset the optional offset of the section
- * @param size the optional length of the section
+ * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
 @JvmOverloads

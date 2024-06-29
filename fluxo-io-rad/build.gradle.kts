@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlinx.kover)
-    alias(libs.plugins.kotlinx.bcv)
     alias(libs.plugins.atomicfu)
 }
 
@@ -17,8 +16,9 @@ fkcSetupMultiplatform(
         addStdlibDependency = true
         enablePublication = false
         apiValidation {
+            ignoredPackages.add("fluxo.io.internal")
             @Suppress("UnstableApiUsage")
-            klibValidationEnabled = false
+            klibValidationEnabled = true
             tsApiChecks = false
         }
     },
@@ -42,14 +42,5 @@ fkcSetupMultiplatform(
 
     commonNative.main.dependencies {
         implementation(libs.stately.concurrent.collections)
-    }
-}
-
-apiValidation {
-    ignoredPackages.add("fluxo.io.internal")
-
-    @Suppress("OPT_IN_USAGE")
-    klib {
-        enabled = true
     }
 }

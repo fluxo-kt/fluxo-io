@@ -100,7 +100,7 @@ fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", ve
 kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.15.0-Beta.3" }
 
 # https://github.com/fluxo-kt/fluxo-kmp-conf/releases
-fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.11.0" }
+fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.12.0" }
 
 # Gradle Doctor: helps diagnose and fix common build problems.
 # https://runningcode.github.io/gradle-doctor/

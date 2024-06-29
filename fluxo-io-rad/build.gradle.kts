@@ -15,6 +15,7 @@ fkcSetupMultiplatform(
         setupCoroutines = true
         setupDependencies = true
         addStdlibDependency = true
+        enablePublication = false
         apiValidation {
             @Suppress("UnstableApiUsage")
             klibValidationEnabled = false

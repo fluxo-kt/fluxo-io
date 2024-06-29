@@ -26,8 +26,9 @@ abstract class fluxo.io/SharedCloseable : kotlin/AutoCloseable { // fluxo.io/Sha
         final fun <get-isOpen>(): kotlin/Boolean // fluxo.io/SharedCloseable.isOpen.<get-isOpen>|<get-isOpen>(){}[0]
 
     abstract fun onSharedClose() // fluxo.io/SharedCloseable.onSharedClose|onSharedClose(){}[0]
+    final fun addOnSharedCloseListener(kotlin/Function1<kotlin/Throwable?, kotlin/Unit>) // fluxo.io/SharedCloseable.addOnSharedCloseListener|addOnSharedCloseListener(kotlin.Function1<kotlin.Throwable?,kotlin.Unit>){}[0]
     final fun close() // fluxo.io/SharedCloseable.close|close(){}[0]
-    final fun onSharedClose(kotlin/Function1<kotlin/Throwable?, kotlin/Unit>): kotlinx.coroutines/DisposableHandle // fluxo.io/SharedCloseable.onSharedClose|onSharedClose(kotlin.Function1<kotlin.Throwable?,kotlin.Unit>){}[0]
+    final fun removeOnSharedCloseListener(kotlin/Function1<kotlin/Throwable?, kotlin/Unit>) // fluxo.io/SharedCloseable.removeOnSharedCloseListener|removeOnSharedCloseListener(kotlin.Function1<kotlin.Throwable?,kotlin.Unit>){}[0]
     final fun retain() // fluxo.io/SharedCloseable.retain|retain(){}[0]
 }
 

@@ -3,11 +3,8 @@
 package fluxo.io
 
 import fluxo.io.internal.ThreadSafe
+import fluxo.io.util.ConcurrentHashMap
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CompletableJob
-import kotlinx.coroutines.CompletionHandler
-import kotlinx.coroutines.DisposableHandle
-import kotlinx.coroutines.Job
 
 /**
  * A [SharedCloseable] is a resource that can be shared between multiple consumers.
@@ -23,19 +20,45 @@ public abstract class SharedCloseable : Closeable {
     public val isOpen: Boolean
         get() = retainsCount.value > 0
 
-    // Job is used to handle shared close listeners.
-    private val job: CompletableJob = Job()
+
+    private val sharedCloseListeners = ConcurrentHashMap<(cause: Throwable?) -> Unit, Boolean>()
+
+    public fun addOnSharedCloseListener(cb: (cause: Throwable?) -> Unit) {
+        sharedCloseListeners[cb] = true
+    }
+
+    public fun removeOnSharedCloseListener(cb: (cause: Throwable?) -> Unit) {
+        sharedCloseListeners.remove(cb)
+    }
+
 
     public final override fun close() {
-        if (retainsCount.decrementAndGet() == 0) {
-            @Suppress("TooGenericExceptionCaught")
-            try {
-                onSharedClose()
-                job.complete()
-            } catch (e: Throwable) {
-                job.completeExceptionally(e)
-                throw e
+        if (retainsCount.decrementAndGet() != 0) {
+            return
+        }
+
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            onSharedClose()
+            notifyListenersOnce(e = null)
+        } catch (e: Throwable) {
+            while (true) {
+                try {
+                    notifyListenersOnce(e)
+                    break
+                } catch (e2: Throwable) {
+                    e.addSuppressed(e2)
+                }
             }
+            throw e
+        }
+    }
+
+    private fun notifyListenersOnce(e: Throwable?) {
+        val iterator = sharedCloseListeners.keys.iterator()
+        for (listener in iterator) {
+            iterator.remove()
+            listener(e)
         }
     }
 
@@ -49,8 +72,6 @@ public abstract class SharedCloseable : Closeable {
     @Throws(IOException::class)
     protected abstract fun onSharedClose()
 
-    public fun onSharedClose(cb: CompletionHandler): DisposableHandle =
-        job.invokeOnCompletion(cb)
 
     public fun retain() {
         while (true) {

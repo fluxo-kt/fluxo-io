@@ -41,6 +41,10 @@ Different platform-specific implementations are provided.
 |        [() -> ReadableByteChannel] Factory | JVM, Android | JVM, Android  |
 |                  [AsynchronousFileChannel] | JVM, Android | JVM, Android  |
 
+
+> [!IMPORTANT]
+> For using [AsynchronousFileChannel], you need to add Kotlin Coroutines dependency to your project.
+
 [RandomAccessData]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RandomAccessData.common.kt#L29
 
 [ByteArray]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RadByteArrayAccessor.kt#L21

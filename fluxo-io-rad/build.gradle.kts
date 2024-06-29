@@ -23,26 +23,24 @@ fkcSetupMultiplatform(
     },
 ) {
     common.main.dependencies {
-        implementation(libs.coroutines)
         // implementation(libs.kotlinx.io.core)
     }
 
-    val commonJvm = commonJvm
     commonJvm.main.dependencies {
         compileOnly(rootProject.extra["androidJar"]!!)
         compileOnly(libs.androidx.annotation)
         compileOnly(libs.jetbrains.annotation)
+        compileOnly(libs.coroutines)
     }
 
     val commonJs = commonJs
     commonJs.main.dependencies {
-        api(libs.kotlinx.atomicfu)
+        // Fix JS build KLIB issue
+        implementation(libs.kotlinx.atomicfu)
     }
 
-    arrayOf(commonJvm, commonApple, commonJs, commonLinux, commonMingw).forEach {
-        it.main.dependencies {
-            // implementation(libs.okio)
-        }
+    commonNative.main.dependencies {
+        implementation(libs.stately.concurrent.collections)
     }
 }
 

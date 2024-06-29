@@ -4,5 +4,3 @@ org.jetbrains.kotlin:kotlin-stdlib:2.0.20-Beta1
 org.jetbrains.kotlin:kotlinx-atomicfu-runtime:2.0.20-Beta1
 org.jetbrains.kotlinx:atomicfu-js:0.25.0
 org.jetbrains.kotlinx:atomicfu:0.25.0
-org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.9.0-RC
-org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC

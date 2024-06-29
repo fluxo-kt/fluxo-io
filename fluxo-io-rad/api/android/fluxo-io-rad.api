@@ -4,10 +4,11 @@ public final class fluxo/io/FluxoIoLogger {
 
 public abstract class fluxo/io/SharedCloseable : java/io/Closeable {
 	public fun <init> ()V
+	public final fun addOnSharedCloseListener (Lkotlin/jvm/functions/Function1;)V
 	public final fun close ()V
 	public final fun isOpen ()Z
 	protected abstract fun onSharedClose ()V
-	public final fun onSharedClose (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
+	public final fun removeOnSharedCloseListener (Lkotlin/jvm/functions/Function1;)V
 	public final fun retain ()V
 }
 

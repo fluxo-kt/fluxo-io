@@ -66,6 +66,8 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version.ref = "kotlinx-io" }
 
+stately-concurrent-collections = { module = "co.touchlab:stately-concurrent-collections", version = "2.0.7" }
+
 # https://developer.android.com/jetpack/androidx/releases/annotation
 # https://mvnrepository.com/artifact/androidx.annotation/annotation
 androidx-annotation = { module = "androidx.annotation:annotation", version = "1.8.0" }

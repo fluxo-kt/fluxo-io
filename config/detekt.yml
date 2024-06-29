@@ -43,9 +43,12 @@ naming:
     active: false
 
 style:
+  ForbiddenComment:
+    excludes: [ '**/*Test/**' ]
   LoopWithTooManyJumpStatements:
     maxJumpCount: 2
   MagicNumber:
+    excludes: [ '**/*Test/**' ]
     ignoreAnnotation: true
   MaxLineLength:
     maxLineLength: 100

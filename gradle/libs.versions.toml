@@ -57,9 +57,11 @@ jmh = "1.37"
 
 
 [libraries]
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
 
 coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
@@ -78,6 +80,8 @@ jetbrains-annotation = { module = "org.jetbrains:annotations", version = "24.1.0
 # JSR 305: Annotations for Software Defect Detection
 # https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
 jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
+
+assertj = { module = "org.assertj:assertj-core", version = "3.25.3" }
 
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }

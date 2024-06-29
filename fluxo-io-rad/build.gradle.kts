@@ -27,11 +27,17 @@ fkcSetupMultiplatform(
         // implementation(libs.kotlinx.io.core)
     }
 
+    val commonJvm = commonJvm
     commonJvm.main.dependencies {
         compileOnly(rootProject.extra["androidJar"]!!)
         compileOnly(libs.androidx.annotation)
         compileOnly(libs.jetbrains.annotation)
         compileOnly(libs.coroutines)
+    }
+    commonJvm.test.dependencies {
+        implementation(libs.kotlin.test.junit)
+        implementation(libs.coroutines.test)
+        implementation(libs.assertj)
     }
 
     val commonJs = commonJs

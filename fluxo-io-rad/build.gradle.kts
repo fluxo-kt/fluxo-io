@@ -40,6 +40,10 @@ fkcSetupMultiplatform(
         implementation(libs.assertj)
     }
 
+    sourceSets.jvmTest.configure {
+        dependsOn(commonJvm.main)
+    }
+
     val commonJs = commonJs
     commonJs.main.dependencies {
         // Fix JS build KLIB issue

@@ -25,7 +25,7 @@ import java.io.RandomAccessFile
  */
 @Blocking
 @JvmOverloads
-@JvmName("forFileChannel")
+@JvmName("forRandomAccessFile")
 public fun RandomAccessFileRadAccessor(
     data: RandomAccessFile,
     offset: Long = 0L,
@@ -55,7 +55,7 @@ public fun RandomAccessFileRadAccessor(
  */
 @Blocking
 @JvmOverloads
-@JvmName("forFileChannel")
+@JvmName("forRandomAccessFile")
 @Throws(FileNotFoundException::class)
 public fun RandomAccessFileRadAccessor(
     data: File,

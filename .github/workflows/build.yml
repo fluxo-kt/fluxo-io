@@ -60,13 +60,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ '22' ]
+        java: [ '22', '11' ]
         os: [ 'macos', 'windows', 'ubuntu' ]
         # CodeQL supports ['c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift']
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support.
         language: [ 'java-kotlin' ]
 
-    name: 'Build and check on ${{ matrix.os }}'
+    name: 'Check ${{ matrix.os }}, JDK ${{ matrix.java }}'
     timeout-minutes: 30
     runs-on: '${{ matrix.os }}-latest'
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
@@ -98,7 +98,7 @@ jobs:
             ~/.gradle/yarn
             ~/.gradle/nodejs
             ~/.gradle/binaryen
-          key: "${{ runner.os }}-kmp-2.0.20"
+          key: "${{ runner.os }}-kmp-2.0.0"
           restore-keys: |
             ${{ runner.os }}-kmp-
 
@@ -117,7 +117,7 @@ jobs:
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results
 
       - name: Initialize CodeQL
-        if: matrix.os == 'ubuntu'
+        if: matrix.os == 'ubuntu' && matrix.java == '22'
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
@@ -133,7 +133,8 @@ jobs:
         run: ./gradlew build assemble check --continue --stacktrace --scan
 
       - name: Upload sarif report (Detekt)
-        if: always() && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH)
+        if: always() && matrix.os == 'macos' && matrix.java == '22'
+          && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH)
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
@@ -141,7 +142,8 @@ jobs:
           category: detekt
 
       - name: Upload sarif report (Lint)
-        if: always() && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH)
+        if: always() && matrix.os == 'macos' && matrix.java == '22'
+          && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH)
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
@@ -161,7 +163,7 @@ jobs:
           compression-level: 9
 
       - name: Perform CodeQL Analysis
-        if: matrix.os == 'ubuntu'
+        if: matrix.os == 'ubuntu' && matrix.java == '22'
         timeout-minutes: 6
         uses: github/codeql-action/analyze@v3
         with:

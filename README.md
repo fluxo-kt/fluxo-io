@@ -58,13 +58,27 @@ Different platform-specific implementations are provided.
 [() -> ReadableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L122
 [AsynchronousFileChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/AsyncFileChannelRadAccessor.kt#L32
 
+<details>
+  <summary>History notes</summary>
+
 _The first steps of the implementation were dated 2021-03-31 (2d87ec044f5801cd3ad8cc31ac380b17fa31d44a)._<br>
 _Open-source since 2024-06-16._
+</details>
+
+
+### Related or alternative projects
+
+* [Okio](https://github.com/square/okio)
+* [Kotlinx IO](https://github.com/Kotlin/kotlinx-io)
+* [Ktor IO](https://github.com/ktorio/ktor/tree/main/ktor-io)
+* [DitchOoM Buffer](https://github.com/DitchOoM/buffer)
+
 
 ### Versioning
 
 Uses [SemVer](http://semver.org/) for versioning. <br>
 For the versions available, see the [tags on this repository](../../tags).
+
 
 ### License
 
@@ -72,6 +86,7 @@ For the versions available, see the [tags on this repository](../../tags).
 
 This project is licensed under the Apache License, Version 2.0 — see the
 [license](LICENSE) file for details.
+
 
 [badge-kotlin]: http://img.shields.io/badge/Kotlin-2.0.0-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
 [badge-kotlin-link]: https://github.com/JetBrains/kotlin/releases

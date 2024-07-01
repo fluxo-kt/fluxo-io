@@ -81,7 +81,7 @@ jetbrains-annotation = { module = "org.jetbrains:annotations", version = "24.1.0
 # https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
 jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
 
-assertj = { module = "org.assertj:assertj-core", version = "3.25.3" }
+assertj = { module = "org.assertj:assertj-core", version = "3.26.0" }
 
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }

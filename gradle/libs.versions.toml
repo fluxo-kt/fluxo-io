@@ -33,7 +33,7 @@ okio = "3.9.0"
 
 # https://github.com/Kotlin/kotlinx-io/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core
-kotlinx-io = "0.4.0"
+kotlinx-io = "0.5.1"
 
 # Android Plugin for Gradle.
 # Note: R8 version can be updated independently in settings.gradle.kts

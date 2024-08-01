@@ -7,5 +7,7 @@
     <ID>ForbiddenComment:RandomAccessFileRad.kt$// TODO: Try to avoiding the excessive `filePointer` usages.</ID>
     <ID>ForbiddenComment:ReflectionUtils.kt$// TODO: Complex search as for dynamic methods ?</ID>
     <ID>ForbiddenComment:StreamFactoryRad.kt$// FIXME: Use own BufferedInputStream heir to gain better random access performance?</ID>
+    <ID>NoNameShadowing:RandomAccessDataByteBufferTest.kt$RadByteBufferAccessorTest.Companion${ it.put(BYTES).flipCompat() }</ID>
+    <ID>UnnecessaryAbstractClass:AbstractRandomAccessDataTest.kt$AbstractRandomAccessDataTest$AbstractRandomAccessDataTest</ID>
   </CurrentIssues>
 </SmellBaseline>

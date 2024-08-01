@@ -101,7 +101,7 @@ fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", ve
 
 # Public API management tool
 # https://github.com/Kotlin/binary-compatibility-validator/releases
-kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.15.0-Beta.3" }
+kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.16.2" }
 
 # https://github.com/fluxo-kt/fluxo-kmp-conf/releases
 fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.12.0" }

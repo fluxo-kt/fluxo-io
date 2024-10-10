@@ -12,7 +12,7 @@ version = "0.1.0-SNAPSHOT"
 # AutoCloseable requires API level 19 (Android 4.4)
 androidMinSdk = "19"
 androidTargetSdk = "35"
-androidCompileSdk = "34"
+androidCompileSdk = "35"
 androidBuildTools = "35.0.0"
 
 javaLangTarget = "1.8"
@@ -21,15 +21,15 @@ kotlinLangVersion = "2.0"
 # https://github.com/JetBrains/kotlin/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin
 # WARN: Don't forget to update kotlin version badge in ../README.md
-kotlin = "2.0.0"
+kotlin = "2.0.21"
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
-coroutines = "1.9.0-RC"
+coroutines = "1.9.0"
 
 # https://github.com/square/okio/tags
 # https://mvnrepository.com/artifact/com.squareup.okio/okio
-okio = "3.9.0"
+okio = "3.9.1"
 
 # https://github.com/Kotlin/kotlinx-io/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core
@@ -40,12 +40,12 @@ kotlinx-io = "0.4.0"
 # https://maven.google.com/web/index.html#com.android.tools.build:gradle
 # https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
 # https://developer.android.com/build/releases/gradle-plugin#updating-plugin
-android-gradle-plugin = "8.5.0"
+android-gradle-plugin = "8.7.0"
 
 # Kotlin code coverage plugin
 # https://github.com/Kotlin/kotlinx-kover/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx.kover/org.jetbrains.kotlinx.kover.gradle.plugin
-kover = "0.8.2"
+kover = "0.8.3"
 
 # AtomicFU: The idiomatic way to use atomic operations in Kotlin
 # https://github.com/Kotlin/kotlinx-atomicfu/releases.
@@ -72,10 +72,10 @@ stately-concurrent-collections = { module = "co.touchlab:stately-concurrent-coll
 
 # https://developer.android.com/jetpack/androidx/releases/annotation
 # https://mvnrepository.com/artifact/androidx.annotation/annotation
-androidx-annotation = { module = "androidx.annotation:annotation", version = "1.8.0" }
+androidx-annotation = { module = "androidx.annotation:annotation", version = "1.8.2" }
 
 # https://mvnrepository.com/artifact/org.jetbrains/annotations
-jetbrains-annotation = { module = "org.jetbrains:annotations", version = "24.1.0" }
+jetbrains-annotation = { module = "org.jetbrains:annotations", version = "26.0.0" }
 
 # JSR 305: Annotations for Software Defect Detection
 # https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
@@ -101,10 +101,10 @@ fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", ve
 
 # Public API management tool
 # https://github.com/Kotlin/binary-compatibility-validator/releases
-kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.15.0-Beta.3" }
+kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.16.3" }
 
 # https://github.com/fluxo-kt/fluxo-kmp-conf/releases
-fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.12.0" }
+fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.12.1" }
 
 # Gradle Doctor: helps diagnose and fix common build problems.
 # https://runningcode.github.io/gradle-doctor/

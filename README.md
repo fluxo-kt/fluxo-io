@@ -18,6 +18,11 @@
 > **API isn’t completely stable yet!**<br>
 > **Benchmarks and complete test coverage are coming.**
 
+
+You can use snapshots from JitPack repository.<br>
+[![JitPack][badge-jitpack]][jitpack]
+
+
 Library provides cross-platform [`RandomAccessData`][RandomAccessData]
 abstraction for effective read-only random access to binary data.
 Both suspend and blocking APIs are provided.
@@ -105,3 +110,6 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [badge-linux]: http://img.shields.io/badge/-Linux-6E1F7C?logo=linux&logoColor=FFF6DB
 [badge-js]: http://img.shields.io/badge/-JavaScript-F8DB5D?logo=javascript&logoColor=312C02
 [badge-wasm]: http://img.shields.io/badge/-WASM.JS-654FF0?logo=webassembly&logoColor=FCFDFD
+
+[jitpack]: https://www.jitpack.io/#fluxo-kt/fluxo-io
+[badge-jitpack]: https://www.jitpack.io/v/fluxo-kt/fluxo-io.svg

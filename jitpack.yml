@@ -1,0 +1,9 @@
+# Configuration file for jitpack.io
+
+# Specify JDK version
+# https://jitpack.io/docs/BUILDING/#java-version
+jdk:
+  - openjdk22
+
+install:
+  - ./gradlew :fluxo-io-rad:publishToMavenLocal --no-configuration-cache --no-build-cache --no-daemon --no-build-cache --no-configuration-cache --no-watch-fs --stacktrace

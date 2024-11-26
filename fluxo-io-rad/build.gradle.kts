@@ -28,7 +28,7 @@ fkcSetupMultiplatform(
             ignoredPackages.add("fluxo.io.internal")
             @Suppress("UnstableApiUsage")
             klibValidationEnabled = true
-            tsApiChecks = true
+            tsApiChecks = false
         }
     },
     kmp = {

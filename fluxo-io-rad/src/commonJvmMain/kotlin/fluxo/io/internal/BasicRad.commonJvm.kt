@@ -39,7 +39,12 @@ internal actual abstract class BasicRad : RandomAccessData {
         position: Long,
         offset: Int,
         maxLength: Int,
-    ): Int = readFullyImpl(buffer, position, offset, maxLength)
+    ): Int {
+        if (Thread.interrupted()) {
+            throw IOException("Thread interrupted")
+        }
+        return readFullyImpl(buffer, position, offset, maxLength)
+    }
 
 
     @Blocking
@@ -48,6 +53,7 @@ internal actual abstract class BasicRad : RandomAccessData {
         return when {
             position >= srcLen -> -1
             position < 0L -> throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")
+            Thread.interrupted() -> throw IOException("Thread interrupted")
             else -> readByteAt0(position)
         }
     }

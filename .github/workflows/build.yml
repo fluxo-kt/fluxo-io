@@ -160,6 +160,38 @@ jobs:
           comment: true
           report_paths: '**/build/test-results/*/TEST-*.xml'
 
+      - name: Upload test results to Codecov
+        continue-on-error: true
+        if: (success() && !cancelled())
+        uses: codecov/test-results-action@v1
+        env:
+          OS: ${{ matrix.os }}
+          JAVA_VERSION: ${{ matrix.java }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: '**/build/test-results/*/TEST-*.xml'
+          env_vars: OS,JAVA_VERSION
+          flags: 'unit-tests,${{ matrix.os }}'
+          name: 'codecov-${{ matrix.os }}'
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload code coverage to Codecov
+        continue-on-error: true
+        if: (success() || failure()) && !contains(github.event.head_commit.message, 'coverage skip')
+        uses: codecov/codecov-action@v5
+        env:
+          OS: ${{ matrix.os }}
+          JAVA_VERSION: ${{ matrix.java }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/reports/kover-merged-report.xml
+          env_vars: OS,JAVA_VERSION
+          flags: 'unit-tests,${{ matrix.os }}'
+          name: 'codecov-${{ matrix.os }}'
+          fail_ci_if_error: false
+          #verbose: true
+
       - name: Publish SNAPSHOT
         id: snapshot
         continue-on-error: true
@@ -178,22 +210,6 @@ jobs:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
           RELEASE: true
         run: ./gradlew publish -DDISABLE_TESTS --no-configuration-cache --stacktrace --scan
-
-      - name: Upload code coverage
-        continue-on-error: true
-        if: (success() || failure()) && !contains(github.event.head_commit.message, 'coverage skip')
-        uses: codecov/codecov-action@v5
-        env:
-          OS: ${{ matrix.os }}
-          JAVA_VERSION: ${{ matrix.java }}
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./build/reports/kover-merged-report.xml
-          env_vars: OS,JAVA_VERSION
-          flags: 'unit-tests,${{ matrix.os }}'
-          name: 'codecov-${{ matrix.os }}'
-          fail_ci_if_error: false
-          verbose: true
 
       - name: Upload the build report
         if: always()

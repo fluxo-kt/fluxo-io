@@ -160,6 +160,7 @@ jobs:
 
       - name: 'Publish SNAPSHOT'
         id: snapshot
+        continue-on-error: true
         if: matrix.os == 'macos' && matrix.java == '23'
           && steps.check.outcome == 'success'&& github.event_name == 'push'
           && env.IS_DEFAULT_REPO && env.IS_DEFAULT_BRANCH
@@ -168,8 +169,12 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USER }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
           RELEASE: true
-        run: ./gradlew publish -DDISABLE_TESTS --rerun-tasks --no-configuration-cache --stacktrace --scan
+        run: ./gradlew publish -DDISABLE_TESTS --no-configuration-cache --stacktrace --scan
 
       - name: Upload the build report
         if: always()

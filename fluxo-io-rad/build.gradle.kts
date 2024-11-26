@@ -32,7 +32,7 @@ fkcSetupMultiplatform(
         }
     },
     kmp = {
-        allDefaultTargets(wasmWasi = true)
+        allDefaultTargets(wasmWasi = false)
         androidNative()
     },
 ) {

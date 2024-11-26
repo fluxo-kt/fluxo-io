@@ -11,7 +11,7 @@
 ![JVM][badge-jvm] ![badge][badge-android] ![badge][badge-android-native]
 ![badge][badge-ios] ![badge][badge-watchos] ![badge][badge-tvos] ![badge][badge-mac]
 ![badge][badge-win] ![badge][badge-linux]
-![badge][badge-js] ![badge][badge-wasm] ![badge][badge-wasi]
+![badge][badge-js] ![badge][badge-wasm]
 
 ---
 

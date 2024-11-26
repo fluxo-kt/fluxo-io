@@ -2,7 +2,6 @@
 
 ![Stability: Alpha](https://kotl.in/badges/alpha.svg)
 [![Version][badge-mvn]][mvn]
-[![Snapshot Version][badge-snapshot]][snapshot]
 [![Kotlin Version][badge-kotlin]][badge-kotlin-link]
 [![Build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
@@ -21,8 +20,22 @@
 > **Benchmarks and complete test coverage are coming.**
 
 
-You can use snapshots from JitPack repository.<br>
-[![JitPack][badge-jitpack]][jitpack]
+### How to use
+
+[![Version][badge-mvn]][mvn]
+
+```kotlin
+// in the `build.gradle.kts` of the target module.
+plugins {
+  kotlin("multiplatform") version "2.0.21"
+}
+dependencies {
+  implementation("io.github.fluxo-kt:fluxo-io:0.1.0") // <-- add here
+}
+```
+
+You can also use snapshots from Maven Central or JitPack:<br>
+[![Snapshot Version][badge-snapshot]][snapshot] [![JitPack][badge-jitpack]][jitpack]
 
 
 Library provides cross-platform [`RandomAccessData`][RandomAccessData]
@@ -115,7 +128,7 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [badge-wasi]: http://img.shields.io/badge/-WASM.WASI-F72585?logo=webassembly&logoColor=FCFDFD
 
 [mvn]: https://mvnrepository.com/artifact/io.github.fluxo-kt/fluxo-io
-[badge-mvn]: https://img.shields.io/maven-central/v/io.github.fluxo-kt/fluxo-io?logo=apachemaven
+[badge-mvn]: https://img.shields.io/maven-central/v/io.github.fluxo-kt/fluxo-io?logo=apachemaven&labelColor=c71a36&color=666
 
 [snapshot]: https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/fluxo-kt/fluxo-io
 [badge-snapshot]: https://img.shields.io/badge/dynamic/xml?color=666&logo=apachemaven&labelColor=c71a36&label=&query=%2F%2Fversion%5Blast%28%29%5D&url=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Fio%2Fgithub%2Ffluxo-kt%2Ffluxo-io%2Fmaven-metadata.xml

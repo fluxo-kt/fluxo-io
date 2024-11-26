@@ -171,7 +171,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: '**/build/test-results/*/TEST-*.xml'
           env_vars: OS,JAVA_VERSION
-          flags: 'unit-tests,${{ matrix.os }}'
+          flags: '${{ matrix.os }}'
           name: 'codecov-${{ matrix.os }}'
           fail_ci_if_error: false
           verbose: true
@@ -187,7 +187,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./build/reports/kover-merged-report.xml
           env_vars: OS,JAVA_VERSION
-          flags: 'unit-tests,${{ matrix.os }}'
+          flags: '${{ matrix.os }}'
           name: 'codecov-${{ matrix.os }}'
           fail_ci_if_error: false
           #verbose: true

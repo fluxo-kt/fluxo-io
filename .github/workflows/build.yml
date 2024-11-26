@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ '22', '11' ]
+        java: [ '23', '11' ]
         os: [ 'macos', 'windows', 'ubuntu' ]
         # CodeQL supports ['c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift']
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support.
@@ -86,7 +86,7 @@ jobs:
       - name: 'Set up JDK ${{ matrix.java }}'
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: graalvm
           java-version: '${{ matrix.java }}'
 
       - name: 'Cached KMP things (Konan, Node, Yarn, Binaryen)'
@@ -98,7 +98,7 @@ jobs:
             ~/.gradle/yarn
             ~/.gradle/nodejs
             ~/.gradle/binaryen
-          key: "${{ runner.os }}-kmp-2.0.0"
+          key: "${{ runner.os }}-kmp-2.1.0"
           restore-keys: |
             ${{ runner.os }}-kmp-
 

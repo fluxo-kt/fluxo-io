@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.atomicfu)
+    alias(libs.plugins.vanniktech.mvn.publish)
 }
 
 fkcSetupMultiplatform(
@@ -14,7 +15,7 @@ fkcSetupMultiplatform(
         setupCoroutines = true
         setupDependencies = true
         addStdlibDependency = true
-        enablePublication = false
+        enablePublication = true
         apiValidation {
             ignoredPackages.add("fluxo.io.internal")
             @Suppress("UnstableApiUsage")

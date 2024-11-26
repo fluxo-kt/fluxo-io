@@ -1,3 +1,10 @@
+buildscript {
+    // Starting from Kotlin 2.1.0, KGP doesn't depend on the `kotlin-compiler-embeddable`.
+    // Other plugins can bring incompatible versions of the compiler.
+    // https://kotlinlang.slack.com/archives/C0KLZSCHF/p1729256644747559?thread_ts=1729151089.194689&cid=C0KLZSCHF
+    dependencies.classpath(libs.kotlin.compiler.embeddable)
+}
+
 plugins {
     alias(libs.plugins.android.lib) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -6,6 +13,7 @@ plugins {
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.fluxo.bcv.js) apply false
     alias(libs.plugins.gradle.doctor) apply false
+    alias(libs.plugins.vanniktech.mvn.publish) apply false
     alias(libs.plugins.fluxo.kmp.conf)
 }
 
@@ -32,7 +40,6 @@ fkcSetupRaw {
         developerEmail = "artyom.shendrik@gmail.com"
     }
 
-    enableSpotless = false
     apiValidation {
         tsApiChecks = false
     }

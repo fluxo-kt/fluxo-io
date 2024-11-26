@@ -16,12 +16,13 @@ androidCompileSdk = "35"
 androidBuildTools = "35.0.0"
 
 javaLangTarget = "1.8"
-kotlinLangVersion = "2.1"
+kotlinLangVersion = "2.0"
+kotlinCoreLibraries = "2.0.21"
 
 # https://github.com/JetBrains/kotlin/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin
 # WARN: Don't forget to update kotlin version badge in ../README.md
-kotlin = "2.1.0-Beta2"
+kotlin = "2.1.0-RC2"
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
@@ -40,7 +41,7 @@ kotlinx-io = "0.5.4"
 # https://maven.google.com/web/index.html#com.android.tools.build:gradle
 # https://mvnrepository.com/artifact/com.android.tools.build/gradle?repo=google
 # https://developer.android.com/build/releases/gradle-plugin#updating-plugin
-android-gradle-plugin = "8.7.1"
+android-gradle-plugin = "8.7.2"
 
 # Kotlin code coverage plugin
 # https://github.com/Kotlin/kotlinx-kover/releases
@@ -72,7 +73,7 @@ stately-concurrent-collections = { module = "co.touchlab:stately-concurrent-coll
 
 # https://developer.android.com/jetpack/androidx/releases/annotation
 # https://mvnrepository.com/artifact/androidx.annotation/annotation
-androidx-annotation = { module = "androidx.annotation:annotation", version = "1.9.0" }
+androidx-annotation = { module = "androidx.annotation:annotation", version = "1.9.1" }
 
 # https://mvnrepository.com/artifact/org.jetbrains/annotations
 jetbrains-annotation = { module = "org.jetbrains:annotations", version = "26.0.1" }
@@ -87,6 +88,11 @@ jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref="atomicfu" }
+
+# Starting from Kotlin 2.1.0, KGP doesn't depend on the `kotlin-compiler-embeddable` dependency.
+# Other plugins can bring incompatible versions of the compiler.
+# https://kotlinlang.slack.com/archives/C0KLZSCHF/p1729256644747559?thread_ts=1729151089.194689&cid=C0KLZSCHF
+kotlin-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 
 
 [plugins]
@@ -104,7 +110,13 @@ fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", ve
 kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.16.3" }
 
 # https://github.com/fluxo-kt/fluxo-kmp-conf/releases
-fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.12.1" }
+fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.13.1" }
+
+# Universal Gradle plugin for artifact publication to any Maven instance.
+# https://github.com/vanniktech/gradle-maven-publish-plugin/blob/main/docs/what.md
+# https://github.com/vanniktech/gradle-maven-publish-plugin/releases
+# https://mvnrepository.com/artifact/com.vanniktech.maven.publish.base/com.vanniktech.maven.publish.base.gradle.plugin
+vanniktech-mvn-publish = { id = "com.vanniktech.maven.publish", version = "0.30.0" }
 
 # Gradle Doctor: helps diagnose and fix common build problems.
 # https://runningcode.github.io/gradle-doctor/

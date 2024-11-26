@@ -49,13 +49,23 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
         private val api: RandomAccessFile,
     ) : SharedDataAccessor(resources = arrayOf(api)) {
 
+        private companion object {
+            private const val MAX_TRIES = 10
+            private const val DEBUG = false
+        }
+
+
         private val monitor = Any()
 
         override val size: Long get() = api.length()
 
         private fun seek(api: RandomAccessFile, position: Long) {
             // Retry until the seek is successful
+            var tries = 0
             do {
+                if (tries++ >= MAX_TRIES) {
+                    throw IOException("Failed to seek to position $position after $MAX_TRIES tries")
+                }
                 api.seek(position)
             } while (api.filePointer != position)
         }
@@ -65,11 +75,24 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
             // RandomAccessFile isn't reliably under a concurrent load!
             synchronized(monitor) {
                 // Retry until the read is successful
+                var tries = 0
                 while (true) {
                     seek(api, position)
                     val read = api.read(bytes, offset, length)
-                    if (read > 0 && api.filePointer == position + read) {
+                    if (read > 0) {
+                        if (DEBUG && api.filePointer != position + read) {
+                            throw AssertionError(
+                                "Read $read bytes at position $position," +
+                                    " but the pointer is at ${api.filePointer}",
+                            )
+                        }
                         return read
+                    }
+                    if (tries++ >= MAX_TRIES) {
+                        throw IOException(
+                            "Failed to read $length bytes at position $position" +
+                                " after $MAX_TRIES tries",
+                        )
                     }
                 }
             }
@@ -81,11 +104,25 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
             // RandomAccessFile isn't reliably under a concurrent load!
             synchronized(monitor) {
                 // Retry until the read is successful
+                var tries = 0
                 while (true) {
                     seek(api, position)
-                    val read = api.read()
-                    if (read == 1 && api.filePointer == position + 1L) {
-                        return read
+                    val byteUint = api.read()
+                    if (byteUint >= 0) {
+                        // Sometimes `read` returns a byte,
+                        // but the pointer is still at the same position.
+                        if (DEBUG && api.filePointer != position + 1L) {
+                            throw AssertionError(
+                                "Read a byte at position $position," +
+                                    " but the pointer is at ${api.filePointer}",
+                            )
+                        }
+                        return byteUint
+                    }
+                    if (tries++ >= MAX_TRIES) {
+                        throw IOException(
+                            "Failed to read a byte at position $position after $MAX_TRIES tries",
+                        )
                     }
                 }
             }

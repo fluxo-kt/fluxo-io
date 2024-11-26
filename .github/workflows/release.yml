@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  # allows the action to create a release
+  contents: write
+
+env:
+  CI: true
+  RELEASE: true
+  DISABLE_TESTS: true
+  IS_DEFAULT_REPO: ${{ github.repository == 'fluxo-kt/fluxo-io' }}
+  BUILD_NUMBER: ${{ github.run_number }}
+  SCM_TAG: ${{ github.sha }}
+  GRADLE_OPTS: |
+    -Dorg.gradle.daemon=false
+    -Dorg.gradle.unsafe.watch-fs=false
+    -Dorg.gradle.vfs.watch=false
+
+jobs:
+  gh_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          disable-sudo: true
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare release settings
+        run: |
+          echo "GITHUB_REF_NAME: $GITHUB_REF_NAME"
+          RELEASE_PRE=false
+          RELEASE_SUFFIX=""
+          # Check release type
+          if [[ "$GITHUB_REF_NAME" =~ 'alpha' || "$GITHUB_REF_NAME" =~ 'beta' || "$GITHUB_REF_NAME" =~ 'rc' ]]; then
+            echo "This is a pre-release!"
+            RELEASE_PRE=true
+            RELEASE_SUFFIX=" (pre release)"
+          fi
+          # shellcheck disable=SC2086
+          echo "RELEASE_PRE=$RELEASE_PRE" >> $GITHUB_ENV
+          # shellcheck disable=SC2086
+          echo "RELEASE_SUFFIX=$RELEASE_SUFFIX" >> $GITHUB_ENV
+
+      - name: GitHub Release
+        # https://github.com/anton-yurchenko/git-release#readme
+        uses: docker://antonyurchenko/git-release:latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRAFT_RELEASE: "true"
+          PRE_RELEASE: "${{ env.RELEASE_PRE }}"
+          RELEASE_NAME_SUFFIX: "${{ env.RELEASE_SUFFIX }}"
+          CHANGELOG_FILE: "CHANGELOG.md"
+          ALLOW_EMPTY_CHANGELOG: "false"
+
+  publish_release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          disable-sudo: true
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: graalvm
+          java-version: 23
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+          cache-read-only: true
+
+      - name: Publish
+        id: snapshot
+        if: env.IS_DEFAULT_REPO
+        env:
+          OSSRH_USER: ${{ secrets.OSSRH_USER }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: >
+          ./gradlew publish -DDISABLE_TESTS
+          --rerun-tasks --no-build-cache --no-configuration-cache --stacktrace --scan
+
+
+# References
+# https://github.com/studiometa/vue-mapbox-gl/blob/8c3ca5a/.github/workflows/release.yml#L26

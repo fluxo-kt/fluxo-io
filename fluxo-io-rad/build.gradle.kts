@@ -14,8 +14,10 @@ fkcSetupMultiplatform(
         "kotlin.ExperimentalSubclassOptIn",
     ),
     config = {
-        projectName = "fluxo-io-rad"
-        description = "I/O functionality for Kotlin Multiplatform from Fluxo"
+        projectName = "fluxo-io"
+        description = "I/O functionality for Kotlin Multiplatform from Fluxo" +
+            ", including read-only random data access interface with multiple implementations" +
+            ", and more."
 
         // useDokka = true
         setupCoroutines = false

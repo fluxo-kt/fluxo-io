@@ -1,6 +1,8 @@
 # Fluxo IO
 
 ![Stability: Alpha](https://kotl.in/badges/alpha.svg)
+[![Version][badge-mvn]][mvn]
+[![Snapshot Version][badge-snapshot]][snapshot]
 [![Kotlin Version][badge-kotlin]][badge-kotlin-link]
 [![Build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
@@ -9,13 +11,13 @@
 ![JVM][badge-jvm] ![badge][badge-android] ![badge][badge-android-native]
 ![badge][badge-ios] ![badge][badge-watchos] ![badge][badge-tvos] ![badge][badge-mac]
 ![badge][badge-win] ![badge][badge-linux]
-![badge][badge-js] ![badge][badge-wasm]
+![badge][badge-js] ![badge][badge-wasm] ![badge][badge-wasi]
 
 ---
 
 > [!CAUTION]
 > **⚠ Work-In-Progress**.
-> **API isn’t completely stable yet!**<br>
+> **API may be not completely stable yet!**<br>
 > **Benchmarks and complete test coverage are coming.**
 
 
@@ -93,7 +95,7 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [license](LICENSE) file for details.
 
 
-[badge-kotlin]: http://img.shields.io/badge/Kotlin-2.0.0-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
+[badge-kotlin]: http://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
 [badge-kotlin-link]: https://github.com/JetBrains/kotlin/releases
 
 [badge-kmp]: http://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=7F52FF&labelColor=2B2B2B
@@ -110,6 +112,13 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [badge-linux]: http://img.shields.io/badge/-Linux-6E1F7C?logo=linux&logoColor=FFF6DB
 [badge-js]: http://img.shields.io/badge/-JavaScript-F8DB5D?logo=javascript&logoColor=312C02
 [badge-wasm]: http://img.shields.io/badge/-WASM.JS-654FF0?logo=webassembly&logoColor=FCFDFD
+[badge-wasi]: http://img.shields.io/badge/-WASM.WASI-F72585?logo=webassembly&logoColor=FCFDFD
+
+[mvn]: https://mvnrepository.com/artifact/io.github.fluxo-kt/fluxo-io
+[badge-mvn]: https://img.shields.io/maven-central/v/io.github.fluxo-kt/fluxo-io?logo=apachemaven
+
+[snapshot]: https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/fluxo-kt/fluxo-io
+[badge-snapshot]: https://img.shields.io/badge/dynamic/xml?color=666&logo=apachemaven&labelColor=c71a36&label=&query=%2F%2Fversion%5Blast%28%29%5D&url=https%3A%2F%2Fs01.oss.sonatype.org%2Fcontent%2Frepositories%2Fsnapshots%2Fio%2Fgithub%2Ffluxo-kt%2Ffluxo-io%2Fmaven-metadata.xml
 
 [jitpack]: https://www.jitpack.io/#fluxo-kt/fluxo-io
 [badge-jitpack]: https://www.jitpack.io/v/fluxo-kt/fluxo-io.svg

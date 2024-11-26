@@ -74,21 +74,21 @@ kover.reports {
         rule {
             disabled = false
             groupBy = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
-            minBound(50)
+            minBound(55)
             bound {
-                minValue = 72
+                minValue = 80
                 coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.LINE
                 aggregationForGroup =
                     kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
             }
             bound {
-                minValue = 65
+                minValue = 80
                 coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.INSTRUCTION
                 aggregationForGroup =
                     kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
             }
             bound {
-                minValue = 50
+                minValue = 55
                 coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH
                 aggregationForGroup =
                     kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE

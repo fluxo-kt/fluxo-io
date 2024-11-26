@@ -5,9 +5,6 @@
 
 [//]: # (Removed, Added, Changed, Fixed, Updated)
 
-### Fixed
-- Exclude Kotlin JS DOM API dependency (redundant).
-
 
 ## [0.1.0] - 2024-11-26
 

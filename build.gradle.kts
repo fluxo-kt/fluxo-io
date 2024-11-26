@@ -109,15 +109,6 @@ kover.reports {
 }
 
 allprojects {
-    // Exclude unused DOM API.
-    configurations.all {
-        resolutionStrategy.eachDependency {
-            if (requested.module.name == "kotlin-dom-api-compat") {
-                useTarget(libs.kotlin.stdlib.js)
-            }
-        }
-    }
-
     // FIXME: Setup automatically.
     plugins.withType<org.jetbrains.dokka.gradle.DokkaPlugin> {
         tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {

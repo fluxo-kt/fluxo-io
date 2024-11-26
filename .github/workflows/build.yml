@@ -172,7 +172,7 @@ jobs:
           files: '**/build/test-results/*/TEST-*.xml'
           env_vars: OS,JAVA_VERSION
           flags: '${{ matrix.os }}'
-          name: 'codecov-${{ matrix.os }}'
+          name: 'codecov-${{ matrix.os }}-${{ matrix.java }}'
           fail_ci_if_error: false
           verbose: true
 
@@ -188,9 +188,9 @@ jobs:
           files: ./build/reports/kover-merged-report.xml
           env_vars: OS,JAVA_VERSION
           flags: '${{ matrix.os }}'
-          name: 'codecov-${{ matrix.os }}'
+          name: 'codecov-${{ matrix.os }}-${{ matrix.java }}'
           fail_ci_if_error: false
-          #verbose: true
+          verbose: true
 
       - name: Publish SNAPSHOT
         id: snapshot

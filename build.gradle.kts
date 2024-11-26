@@ -30,6 +30,7 @@ fkcSetupRaw {
         developerId = "amal"
         developerName = "Art Shendrik"
         developerEmail = "artyom.shendrik@gmail.com"
+        sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
     }
 
     enableApiValidation = true

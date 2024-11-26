@@ -45,6 +45,8 @@ permissions:
   # issues to post a comment to a pull request.
   pull-requests: write
   issues: write
+  # for the `mikepenz/action-junit-report` action
+  checks: write
 
 env:
   CI: true
@@ -156,6 +158,7 @@ jobs:
         if: (success() || failure()) && matrix.os == 'macos' && env.IS_DEFAULT_REPO && env.IS_DEFAULT_BRANCH
         uses: mikepenz/action-junit-report@v5
         with:
+          comment: true
           report_paths: '**/build/test-results/*/TEST-*.xml'
 
       - name: Publish SNAPSHOT

@@ -176,6 +176,7 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
           RELEASE: true
         run: ./gradlew publish -DDISABLE_TESTS --no-configuration-cache --stacktrace --scan
 
@@ -195,6 +196,8 @@ jobs:
         if: matrix.os == 'ubuntu' && matrix.java == '17'
         timeout-minutes: 6
         uses: github/codeql-action/analyze@v3
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
         with:
           category: "/language:${{matrix.language}}"
 

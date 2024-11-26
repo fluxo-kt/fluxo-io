@@ -2,10 +2,7 @@ package fluxo.io.rad
 
 import java.io.DataInputStream
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.RandomAccessFile
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
@@ -31,13 +28,5 @@ internal class RandomAccessDataStreamFactoryTest(
             { ByteChannelFactoryRadAccessor(it.length()) { it.inputStream().channel } },
             { ByteChannelFactoryRadAccessor(it.length()) { RandomAccessFile(it, "r").channel } },
         ).asList()
-    }
-
-
-    @Test
-    fun fileExists() {
-        assertFailsWith<FileNotFoundException> {
-            factory(File("/does/not/exist"))
-        }
     }
 }

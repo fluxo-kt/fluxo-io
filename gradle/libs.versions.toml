@@ -8,7 +8,7 @@
 [versions]
 
 # WARNING: Remember to update the version in `README.md` examples!
-version = "0.1.0"
+version = "0.1.1-SNAPSHOT"
 
 # AutoCloseable requires API level 19 (Android 4.4)
 androidMinSdk = "19"

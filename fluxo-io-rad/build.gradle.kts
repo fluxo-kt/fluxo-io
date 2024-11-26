@@ -1,4 +1,6 @@
 plugins {
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.lib)
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.atomicfu)
     alias(libs.plugins.vanniktech.mvn.publish)
@@ -12,6 +14,7 @@ fkcSetupMultiplatform(
         "kotlin.ExperimentalSubclassOptIn",
     ),
     config = {
+        useDokka = true
         setupCoroutines = true
         setupDependencies = true
         addStdlibDependency = true
@@ -22,6 +25,10 @@ fkcSetupMultiplatform(
             klibValidationEnabled = true
             tsApiChecks = false
         }
+    },
+    kmp = {
+        allDefaultTargets(wasmWasi = true)
+        androidNative()
     },
 ) {
     common.main.dependencies {
@@ -41,9 +48,9 @@ fkcSetupMultiplatform(
         implementation(libs.assertj)
     }
 
-    sourceSets.jvmTest.configure {
-        dependsOn(commonJvm.main)
-    }
+//    sourceSets.jvmTest.configure {
+//        dependsOn(commonJvm.main)
+//    }
 
     val commonJs = commonJs
     commonJs.main.dependencies {

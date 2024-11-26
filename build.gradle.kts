@@ -21,30 +21,24 @@ plugins {
 fkcSetupRaw {
     explicitApi()
 
-    // Default KMP setup.
-    defaults {
-        allDefaultTargets(
-            // wasmWasi = true // TODO
-        )
-        androidNative()
-    }
-
     projectName = "Fluxo IO"
-    description = "Fluxo IO library for Kotlin Multiplatform"
+    description = "I/O functionality for Kotlin Multiplatform from Fluxo"
     githubProject = "fluxo-kt/fluxo-io"
     group = "io.github.fluxo-kt"
 
     publicationConfig {
         developerId = "amal"
-        developerName = "Artyom Shendrik"
+        developerName = "Art Shendrik"
         developerEmail = "artyom.shendrik@gmail.com"
     }
 
-    apiValidation {
-        tsApiChecks = false
-    }
+    enableApiValidation = true
 
+    setupVerification = true
+    enableGenericAndroidLint = true
+    enableGradleDoctor = true
     experimentalLatestCompilation = true
+    latestSettingsForTests = true
     allWarningsAsErrors = true
     optInInternal = true
     optIns = listOf(
@@ -54,7 +48,7 @@ fkcSetupRaw {
 
 
 /**
- * Find Android SDK JAR for usage as dependency in non-android modules or source sets.
+ * Find Android SDK JAR for usage as a dependency in non-android modules or source sets.
  */
 fun findAndroidJar(project: Project, compileSdkVersion: Int): FileCollection {
     fun getSdkDirFromLocalProperties(): String? {

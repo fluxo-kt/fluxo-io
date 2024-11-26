@@ -1,6 +1,6 @@
-<?xml version="1.0" ?>
+<?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
-  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ForbiddenComment:AsyncFileChannelRad.kt$// TODO: Avoid runBlocking usage, block without coroutine suspension (use Semaphore?)</ID>
     <ID>ForbiddenComment:RandomAccessDataInputStream.kt$RandomAccessDataInputStream$// TODO: Can it cause Int overflow?</ID>

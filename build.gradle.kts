@@ -1,3 +1,5 @@
+import java.net.URL
+
 buildscript {
     // Starting from Kotlin 2.1.0, KGP doesn't depend on the `kotlin-compiler-embeddable`.
     // Other plugins can bring incompatible versions of the compiler.
@@ -11,6 +13,7 @@ plugins {
     alias(libs.plugins.atomicfu) apply false
     alias(libs.plugins.kotlinx.bcv) apply false
     alias(libs.plugins.kotlinx.kover)
+    alias(libs.plugins.dokka) apply false
     alias(libs.plugins.fluxo.bcv.js) apply false
     alias(libs.plugins.gradle.doctor) apply false
     alias(libs.plugins.vanniktech.mvn.publish) apply false
@@ -46,6 +49,94 @@ fkcSetupRaw {
         "kotlin.ExperimentalStdlibApi",
         "kotlin.js.ExperimentalJsExport",
     )
+}
+
+
+kover.reports {
+    dependencies {
+        kover(projects.fluxoIoRad)
+    }
+
+    // TODO: Disable Kover by default to reduce performance penalty.
+    //  https://github.com/Kotlin/kotlinx-kover/issues/531#issuecomment-1929483468
+    val isCI by isCI()
+    val isRelease by isRelease()
+
+    filters {
+        // Test classes
+        excludes.classes("*Test")
+
+        includes.classes("kotlinx.kover.examples.merged.*")
+    }
+
+    verify {
+        @Suppress("MagicNumber")
+        rule {
+            disabled = false
+            groupBy = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
+            minBound(50)
+            bound {
+                minValue = 72
+                coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.LINE
+                aggregationForGroup =
+                    kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+            }
+            bound {
+                minValue = 65
+                coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.INSTRUCTION
+                aggregationForGroup =
+                    kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+            }
+            bound {
+                minValue = 50
+                coverageUnits = kotlinx.kover.gradle.plugin.dsl.CoverageUnit.BRANCH
+                aggregationForGroup =
+                    kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+            }
+        }
+    }
+
+    total {
+        xml {
+            onCheck = true
+            xmlFile = layout.buildDirectory.file("reports/kover-merged-report.xml")
+        }
+        html {
+            onCheck = !isCI && isRelease
+            htmlDir = layout.buildDirectory.dir("reports/kover-merged-report-html")
+        }
+    }
+}
+
+allprojects {
+    // Exclude unused DOM API.
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.module.name == "kotlin-dom-api-compat") {
+                useTarget(libs.kotlin.stdlib.js)
+            }
+        }
+    }
+
+    // FIXME: Setup automatically.
+    plugins.withType<org.jetbrains.dokka.gradle.DokkaPlugin> {
+        tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+            dokkaSourceSets {
+                configureEach {
+                    if (name.startsWith("ios")) {
+                        displayName.set("ios")
+                    }
+
+                    sourceLink {
+                        localDirectory.set(rootDir)
+                        @Suppress("DEPRECATION")
+                        remoteUrl.set(URL("https://github.com/fluxo-kt/fluxo-io/blob/main"))
+                        remoteLineSuffix.set("#L")
+                    }
+                }
+            }
+        }
+    }
 }
 
 

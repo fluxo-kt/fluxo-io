@@ -19,11 +19,15 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 // FIXME: Test behaviour for the underlying file change
@@ -40,6 +44,8 @@ internal abstract class AbstractRandomAccessDataTest(
 ) {
 
     companion object {
+        private val DEFAULT_TIMEOUT = 9.seconds
+
         val BYTES = ByteArray(256)
 
         init {
@@ -87,13 +93,13 @@ internal abstract class AbstractRandomAccessDataTest(
 
 
     @Test
-    fun readWithOffsetAndLengthShouldRead() {
+    fun readWithOffsetAndLengthShouldRead() = runTest(timeout = DEFAULT_TIMEOUT) {
         val read = rad.readFrom(2, 3)
         assertEquals(byteArrayOf(2, 3, 4), read)
     }
 
     @Test
-    fun readWhenOffsetIsBeyondEOFShouldThrowException() {
+    fun readWhenOffsetIsBeyondEOFShouldThrowException() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertIOB { rad.readFrom(257, 0) }
     }
 
@@ -118,7 +124,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamRead() {
+    fun inputStreamRead() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(BYTES.size, inputStream.available())
         for (i in BYTES.indices) {
             assertEquals(i, inputStream.read())
@@ -127,19 +133,19 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadNullBytes() {
+    fun inputStreamReadNullBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
         @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
         assertFailsWith<NullPointerException> { inputStream.read(null) }
     }
 
     @Test
-    fun inputStreamReadNullBytesWithOffset() {
+    fun inputStreamReadNullBytesWithOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
         @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
         assertFailsWith<NullPointerException> { inputStream.read(null, 0, 1) }
     }
 
     @Test
-    fun inputStreamReadBytes() {
+    fun inputStreamReadBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
         val b = ByteArray(256)
         val amountRead = inputStream.read(b)
         assertEquals(BYTES, b)
@@ -147,7 +153,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadOffsetBytes() {
+    fun inputStreamReadOffsetBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
         val b = ByteArray(7)
         inputStream.skip(1)
         val amountRead = inputStream.read(b, 2, 3)
@@ -156,7 +162,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadMoreBytesThanAvailable() {
+    fun inputStreamReadMoreBytesThanAvailable() = runTest(timeout = DEFAULT_TIMEOUT) {
         val b = ByteArray(257)
         val amountRead = inputStream.read(b)
         assertEquals(BYTES, b.copyOf(BYTES.size))
@@ -164,7 +170,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadPastEnd() {
+    fun inputStreamReadPastEnd() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(255L, inputStream.skip(255))
         assertEquals(0xFF, inputStream.read())
         assertEquals(-1, inputStream.read())
@@ -172,7 +178,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadZeroLength() {
+    fun inputStreamReadZeroLength() = runTest(timeout = DEFAULT_TIMEOUT) {
         val b = byteArrayOf(0x0F)
         val amountRead = inputStream.read(b, 0, 0)
         assertEquals(byteArrayOf(0x0F), b)
@@ -181,61 +187,61 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamSkip() {
+    fun inputStreamSkip() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(4L, inputStream.skip(4))
         assertEquals(4, inputStream.read())
     }
 
     @Test
-    fun inputStreamSkipMoreThanAvailable() {
+    fun inputStreamSkipMoreThanAvailable() = runTest(timeout = DEFAULT_TIMEOUT) {
         val amountSkipped = inputStream.skip(257)
         assertEquals(-1, inputStream.read())
         assertEquals(256L, amountSkipped)
     }
 
     @Test
-    fun inputStreamSkipPastEnd() {
+    fun inputStreamSkipPastEnd() = runTest(timeout = DEFAULT_TIMEOUT) {
         inputStream.skip(256)
         val amountSkipped = inputStream.skip(1)
         assertEquals(0L, amountSkipped)
     }
 
     @Test
-    fun subsectionNegativeOffset() {
+    fun subsectionNegativeOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertIOB { rad.subsection(-1, 1) }
     }
 
     @Test
-    fun subsectionNegativeLength() {
+    fun subsectionNegativeLength() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertIOB { rad.subsection(0, -1) }
     }
 
     @Test
-    fun subsectionZeroLength() {
+    fun subsectionZeroLength() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(0, 0)
         assertEquals(-1, subsection.asInputStream().read())
     }
 
     @Test
-    fun subsectionTooBig() {
+    fun subsectionTooBig() = runTest(timeout = DEFAULT_TIMEOUT) {
         rad.subsection(0, 256)
         assertIOB { rad.subsection(0, 257) }
     }
 
     @Test
-    fun subsectionTooBigWithOffset() {
+    fun subsectionTooBigWithOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
         rad.subsection(1, 255)
         assertIOB { rad.subsection(1, 256) }
     }
 
     @Test
-    fun subsection() {
+    fun subsection() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(1, 1)
         assertEquals(1, subsection.asInputStream().read())
     }
 
     @Test
-    fun inputStreamReadPastSubsection() {
+    fun inputStreamReadPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(1, 2)
         val inputStream = subsection.asInputStream()
         assertEquals(2, inputStream.available())
@@ -245,7 +251,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadBytesPastSubsection() {
+    fun inputStreamReadBytesPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(1, 2)
         val inputStream = subsection.asInputStream()
         assertEquals(2, inputStream.available())
@@ -255,7 +261,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamSkipPastSubsection() {
+    fun inputStreamSkipPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(1, 2)
         val inputStream = subsection.asInputStream()
         assertEquals(2, inputStream.available())
@@ -270,7 +276,7 @@ internal abstract class AbstractRandomAccessDataTest(
 
 
     @Test
-    fun testConcurrency() {
+    fun testConcurrency() = runTest(timeout = DEFAULT_TIMEOUT) {
         val threadPool = Executors.newFixedThreadPool(30)
         (0 until 180).map { taskIndex ->
             threadPool.submit<Unit> {
@@ -310,7 +316,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testSize() {
+    fun testSize() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(BYTES.size.toLong(), rad.size)
         assertEquals(rad.size, rad.subsection(0, rad.size).size)
         assertEquals(8, rad.subsection(10, 8).size)
@@ -318,7 +324,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testInputStream() {
+    fun testInputStream() = runTest(timeout = DEFAULT_TIMEOUT) {
         val streams = arrayOf(
             inputStream,
             rad.asInputStream(),
@@ -357,52 +363,71 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testSubsection() {
-        val copy = rad.subsection(0, rad.size)
-        assertEquals(BYTES.size.toLong(), copy.size)
-        assertEquals(BYTES, copy.readAllBytes())
+    fun testSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val finished = AtomicBoolean(false)
+        val thread = Thread.currentThread()
+        val timeoutThread = Thread {
+            try {
+                Thread.sleep(DEFAULT_TIMEOUT.inWholeMilliseconds)
+                if (!finished.get()) {
+                    thread.interrupt()
+                    this@runTest.cancel()
+                }
+            } catch (_: InterruptedException) {
+            }
+        }
+        try {
+            timeoutThread.start()
 
-        assertEquals(copy.readByteAt(3), rad.readByteAt(3))
-        assertEquals(copy.readByteAt(156), rad.readByteAt(156))
-        assertEquals(copy.readByteAt(BYTES.size + 12L), rad.readByteAt(BYTES.size + 12L))
+            val copy = rad.subsection(0, rad.size)
+            assertEquals(BYTES.size.toLong(), copy.size)
+            assertEquals(BYTES, copy.readAllBytes())
 
-        assertIOB { rad.subsection(0, BYTES.size + 1L) }
-        assertIOB { rad.subsection(1, BYTES.size.toLong()) }
-        assertIOB { rad.subsection(-1, 5) }
-        assertIOB { rad.subsection(0, -1) }
-        assertIOB { rad.subsection(rad.size + 1, 0) }
-        assertIOB { rad.subsection(rad.size, 1) }
+            assertEquals(copy.readByteAt(3), rad.readByteAt(3))
+            assertEquals(copy.readByteAt(156), rad.readByteAt(156))
+            assertEquals(copy.readByteAt(BYTES.size + 12L), rad.readByteAt(BYTES.size + 12L))
+
+            assertIOB { rad.subsection(0, BYTES.size + 1L) }
+            assertIOB { rad.subsection(1, BYTES.size.toLong()) }
+            assertIOB { rad.subsection(-1, 5) }
+            assertIOB { rad.subsection(0, -1) }
+            assertIOB { rad.subsection(rad.size + 1, 0) }
+            assertIOB { rad.subsection(rad.size, 1) }
 
 
-        val part = rad.subsection(5, 8)
-        assertIOB { part.subsection(0, 9) }
-        assertIOB { part.subsection(1, 8) }
-        assertIOB { part.subsection(-1, 5) }
+            val part = rad.subsection(5, 8)
+            assertIOB { part.subsection(0, 9) }
+            assertIOB { part.subsection(1, 8) }
+            assertIOB { part.subsection(-1, 5) }
 
-        assertEquals(BYTES.copyOfRange(5, 13), part.readAllBytes())
-        assertEquals(BYTES.copyOfRange(5, 13), part.readFrom(0L, Int.MAX_VALUE))
-        assertEquals(BYTES.copyOfRange(6, 13), part.readFrom(1L, Int.MAX_VALUE))
-        assertIOB { part.readFrom(-1L, 1) }
+            assertEquals(BYTES.copyOfRange(5, 13), part.readAllBytes())
+            assertEquals(BYTES.copyOfRange(5, 13), part.readFrom(0L, Int.MAX_VALUE))
+            assertEquals(BYTES.copyOfRange(6, 13), part.readFrom(1L, Int.MAX_VALUE))
+            assertIOB { part.readFrom(-1L, 1) }
 
-        assertEmptyRad(rad.subsection(0, 0))
-        assertEmptyRad(rad.subsection(0, 0).subsection(0, 0))
-        assertEmptyRad(rad.subsection(9, 0))
-        assertEmptyRad(rad.subsection(rad.size, 0))
+            assertEmptyRad(rad.subsection(0, 0))
+            assertEmptyRad(rad.subsection(0, 0).subsection(0, 0))
+            assertEmptyRad(rad.subsection(9, 0))
+            assertEmptyRad(rad.subsection(rad.size, 0))
 
-        assertIOB { rad.subsection(0, LONG_GIVES_INT_MINUS_2) }
-        assertIOB { rad.subsection(0, LONG_GIVES_INT_0) }
-        assertIOB { rad.subsection(0, LONG_GIVES_INT_2) }
-        assertIOB { rad.subsection(0, LONG_NEG_GIVES_INT_2) }
-        assertIOB { rad.subsection(0, Int.MAX_VALUE.toLong()) }
-        assertIOB { rad.subsection(LONG_GIVES_INT_MINUS_2, 1) }
-        assertIOB { rad.subsection(LONG_GIVES_INT_0, 1) }
-        assertIOB { rad.subsection(LONG_GIVES_INT_2, 1) }
-        assertIOB { rad.subsection(LONG_NEG_GIVES_INT_2, 1) }
-        assertIOB { rad.subsection(Int.MAX_VALUE.toLong(), 1) }
+            assertIOB { rad.subsection(0, LONG_GIVES_INT_MINUS_2) }
+            assertIOB { rad.subsection(0, LONG_GIVES_INT_0) }
+            assertIOB { rad.subsection(0, LONG_GIVES_INT_2) }
+            assertIOB { rad.subsection(0, LONG_NEG_GIVES_INT_2) }
+            assertIOB { rad.subsection(0, Int.MAX_VALUE.toLong()) }
+            assertIOB { rad.subsection(LONG_GIVES_INT_MINUS_2, 1) }
+            assertIOB { rad.subsection(LONG_GIVES_INT_0, 1) }
+            assertIOB { rad.subsection(LONG_GIVES_INT_2, 1) }
+            assertIOB { rad.subsection(LONG_NEG_GIVES_INT_2, 1) }
+            assertIOB { rad.subsection(Int.MAX_VALUE.toLong(), 1) }
+        } finally {
+            finished.set(true)
+            timeoutThread.interrupt()
+        }
     }
 
     @Test
-    fun testAllBytes() {
+    fun testAllBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(BYTES, inputStream.readBytes())
 
         for (rad in arrayOf(rad, rad.subsection(0, rad.size))) {
@@ -460,7 +485,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testReadToNewArray() {
+    fun testReadToNewArray() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(rad, rad.subsection(0, rad.size)).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
             val size = rad.size
@@ -534,7 +559,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testReadArray() {
+    fun testReadArray() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
             rad.subsection(0, rad.size),
@@ -670,7 +695,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testAsyncReadArray() {
+    fun testAsyncReadArray() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
             rad.subsection(0, rad.size),
@@ -690,7 +715,7 @@ internal abstract class AbstractRandomAccessDataTest(
 
 
     @Test
-    fun testReadByte() {
+    fun testReadByte() = runTest(timeout = DEFAULT_TIMEOUT) {
         val copy = rad.subsection(0, rad.size)
         arrayOf(rad, copy, rad.subsection(0, 8)).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
@@ -716,7 +741,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testReadBuffer() {
+    fun testReadBuffer() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
             rad.subsection(0, rad.size),
@@ -747,7 +772,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testReadBufferAsync() {
+    fun testReadBufferAsync() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
             rad.subsection(0, rad.size),
@@ -762,7 +787,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testTransferTo() {
+    fun testTransferTo() = runTest(timeout = DEFAULT_TIMEOUT) {
         val bufferSizes = intArrayOf(
             1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144,
         )
@@ -866,31 +891,29 @@ internal abstract class AbstractRandomAccessDataTest(
 
 
     @Test
-    fun suspendReads() {
-        runBlocking {
-            val array = ByteArray(3)
-            val heapBuff = ByteBuffer.wrap(array)
-            try {
-                val read = rad.readAsync(heapBuff, 2)
-                assertEquals(3, read)
-                assertEquals(byteArrayOf(2, 3, 4), array)
-            } finally {
-                heapBuff.releaseCompat()
-            }
+    fun suspendReads() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val array = ByteArray(3)
+        val heapBuff = ByteBuffer.wrap(array)
+        try {
+            val read = rad.readAsync(heapBuff, 2)
+            assertEquals(3, read)
+            assertEquals(byteArrayOf(2, 3, 4), array)
+        } finally {
+            heapBuff.releaseCompat()
+        }
 
-            val directBuff = ByteBuffer.allocateDirect(3)
-            try {
-                val read = rad.readAsync(directBuff, 2)
-                assertEquals(3, read)
-                assertEquals(3, directBuff.capacity())
-                assertEquals(3, directBuff.position())
-                assertEquals(3, directBuff.limit())
-                directBuff.flipCompat()
-                val bufArray = directBuff.toArray()
-                assertEquals(byteArrayOf(2, 3, 4), bufArray)
-            } finally {
-                directBuff.releaseCompat()
-            }
+        val directBuff = ByteBuffer.allocateDirect(3)
+        try {
+            val read = rad.readAsync(directBuff, 2)
+            assertEquals(3, read)
+            assertEquals(3, directBuff.capacity())
+            assertEquals(3, directBuff.position())
+            assertEquals(3, directBuff.limit())
+            directBuff.flipCompat()
+            val bufArray = directBuff.toArray()
+            assertEquals(byteArrayOf(2, 3, 4), bufArray)
+        } finally {
+            directBuff.releaseCompat()
         }
     }
 

@@ -21,7 +21,7 @@ plugins {
 fkcSetupRaw {
     explicitApi()
 
-    projectName = "Fluxo IO"
+    projectName = "fluxo-io"
     description = "I/O functionality for Kotlin Multiplatform from Fluxo"
     githubProject = "fluxo-kt/fluxo-io"
     group = "io.github.fluxo-kt"
@@ -39,9 +39,10 @@ fkcSetupRaw {
     enableGradleDoctor = true
     experimentalLatestCompilation = true
     latestSettingsForTests = true
-    allWarningsAsErrors = true
+    allWarningsAsErrors = false
     optInInternal = true
     optIns = listOf(
+        "kotlin.ExperimentalStdlibApi",
         "kotlin.js.ExperimentalJsExport",
     )
 }

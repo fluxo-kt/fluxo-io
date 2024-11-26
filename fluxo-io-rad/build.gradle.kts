@@ -14,8 +14,11 @@ fkcSetupMultiplatform(
         "kotlin.ExperimentalSubclassOptIn",
     ),
     config = {
-        useDokka = true
-        setupCoroutines = true
+        projectName = "fluxo-io-rad"
+        description = "I/O functionality for Kotlin Multiplatform from Fluxo"
+
+        // useDokka = true
+        setupCoroutines = false
         setupDependencies = true
         addStdlibDependency = true
         enablePublication = true
@@ -23,7 +26,7 @@ fkcSetupMultiplatform(
             ignoredPackages.add("fluxo.io.internal")
             @Suppress("UnstableApiUsage")
             klibValidationEnabled = true
-            tsApiChecks = false
+            tsApiChecks = true
         }
     },
     kmp = {
@@ -43,6 +46,7 @@ fkcSetupMultiplatform(
         compileOnly(libs.coroutines)
     }
     commonJvm.test.dependencies {
+        implementation(libs.coroutines)
         implementation(libs.kotlin.test.junit)
         implementation(libs.coroutines.test)
         implementation(libs.assertj)
@@ -56,6 +60,8 @@ fkcSetupMultiplatform(
     commonJs.main.dependencies {
         // Fix JS build KLIB issue
         implementation(libs.kotlinx.atomicfu)
+        // Kotlin/JS doesn't support an older standard library than the compiler.
+        implementation(libs.kotlin.stdlib)
     }
 
     commonNative.main.dependencies {

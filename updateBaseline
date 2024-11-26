@@ -22,7 +22,7 @@ echo "===================================="
 # -U: Refresh dependencies
 #COMMON_TASKS="${COMMON_TASKS} --rerun-tasks -U"
 
-./gradlew ${COMMON_TASKS} kotlinUpgradeYarnLock || EXIT_CODE=101
+./gradlew kotlinUpgradeYarnLock ${COMMON_TASKS} || EXIT_CODE=101
 
 
 if [ ${EXIT_CODE} -ne 0 ]; then

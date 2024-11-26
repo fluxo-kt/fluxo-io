@@ -16,13 +16,13 @@ androidCompileSdk = "35"
 androidBuildTools = "35.0.0"
 
 javaLangTarget = "1.8"
-kotlinLangVersion = "2.0"
+kotlinLangVersion = "1.9"
 kotlinCoreLibraries = "2.0.21"
 
 # https://github.com/JetBrains/kotlin/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin
 # WARN: Don't forget to update kotlin version badge in ../README.md
-kotlin = "2.1.0-RC2"
+kotlin = "2.0.21"
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
@@ -59,6 +59,7 @@ jmh = "1.37"
 
 [libraries]
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }
 
 coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -69,6 +70,7 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlinx-io-bytestring = { module = "org.jetbrains.kotlinx:kotlinx-io-bytestring", version.ref = "kotlinx-io" }
 
+# https://github.com/touchlab/Stately/releases
 stately-concurrent-collections = { module = "co.touchlab:stately-concurrent-collections", version = "2.1.0" }
 
 # https://developer.android.com/jetpack/androidx/releases/annotation
@@ -110,7 +112,7 @@ fluxo-bcv-js = { id = "io.github.fluxo-kt.binary-compatibility-validator-js", ve
 kotlinx-bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.16.3" }
 
 # https://github.com/fluxo-kt/fluxo-kmp-conf/releases
-fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.13.1" }
+fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.13.2" }
 
 # Universal Gradle plugin for artifact publication to any Maven instance.
 # https://github.com/vanniktech/gradle-maven-publish-plugin/blob/main/docs/what.md

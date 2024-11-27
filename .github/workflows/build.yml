@@ -134,7 +134,7 @@ jobs:
       - name: 'Build and check'
         id: check
         timeout-minutes: 18
-        run: ./gradlew build assemble check --continue --stacktrace --scan
+        run: ./gradlew build assemble check koverLog --continue --stacktrace --scan
 
       - name: Upload sarif report (Detekt)
         if: always() && matrix.os == 'macos' && matrix.java == '23'

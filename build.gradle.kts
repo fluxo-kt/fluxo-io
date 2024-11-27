@@ -101,6 +101,9 @@ kover.reports {
             onCheck = true
             xmlFile = layout.buildDirectory.file("reports/kover-merged-report.xml")
         }
+        log {
+            onCheck = true
+        }
         html {
             onCheck = !isCI && isRelease
             htmlDir = layout.buildDirectory.dir("reports/kover-merged-report-html")

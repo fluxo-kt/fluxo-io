@@ -4,7 +4,6 @@
 [![Version][badge-mvn]][mvn]
 [![Kotlin Version][badge-kotlin]][badge-kotlin-link]
 [![Build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
-[![codecov](https://codecov.io/github/fluxo-kt/fluxo-io/graph/badge.svg?token=NZYDm4lHPp)](https://codecov.io/github/fluxo-kt/fluxo-io)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 ![Kotlin Multiplatform][badge-kmp]

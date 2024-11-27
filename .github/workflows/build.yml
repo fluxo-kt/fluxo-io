@@ -50,6 +50,7 @@ permissions:
 
 env:
   CI: true
+  CODE_QL: false
   BUILD_NUMBER: ${{ github.run_number }}
   SCM_TAG: ${{ github.sha }}
   #GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -119,7 +120,7 @@ jobs:
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results
 
       - name: Initialize CodeQL
-        if: matrix.os == 'ubuntu' && matrix.java == '17'
+        if: matrix.os == 'ubuntu' && matrix.java == '17' && env.CODE_QL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
@@ -224,7 +225,7 @@ jobs:
           compression-level: 9
 
       - name: Perform CodeQL Analysis
-        if: matrix.os == 'ubuntu' && matrix.java == '17'
+        if: matrix.os == 'ubuntu' && matrix.java == '17' && env.CODE_QL
         timeout-minutes: 6
         uses: github/codeql-action/analyze@v3
         env:

@@ -65,8 +65,6 @@ kover.reports {
     filters {
         // Test classes
         excludes.classes("*Test")
-
-        includes.classes("kotlinx.kover.examples.merged.*")
     }
 
     verify {

@@ -93,6 +93,7 @@ _Open-source since 2024-06-16._
 * [Kotlinx IO](https://github.com/Kotlin/kotlinx-io)
 * [Ktor IO](https://github.com/ktorio/ktor/tree/main/ktor-io)
 * [DitchOoM Buffer](https://github.com/DitchOoM/buffer)
+* [Karma Krafts kMMIO](https://git.karmakrafts.dev/kk/kmmio) (Lightweight KMP MMIO)
 
 
 ### Versioning

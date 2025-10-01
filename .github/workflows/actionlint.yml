@@ -31,6 +31,6 @@ jobs:
             raw.githubusercontent.com:443
             registry.npmjs.org:443
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/actionlint

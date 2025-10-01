@@ -49,7 +49,7 @@ jobs:
               body: `🔄 Baseline update [started](${RUN_URL})...`
             })
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Needed for correct git commit --amend.
           fetch-depth: 3

@@ -56,7 +56,7 @@ dokka = "2.0.0-Beta"
 
 # AtomicFU: The idiomatic way to use atomic operations in Kotlin
 # https://github.com/Kotlin/kotlinx-atomicfu/releases.
-atomicfu = "0.26.0"
+atomicfu = "0.31.0"
 
 # Java Microbenchmark Harness (JMH)
 # https://github.com/openjdk/jmh/tags

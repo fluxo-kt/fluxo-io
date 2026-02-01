@@ -52,7 +52,7 @@ kover = "0.9.0-RC"
 # Dokka is a documentation engine for Kotlin/Java
 # https://github.com/Kotlin/dokka/releases
 # https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin?repo=space-kotlin-dokka-dev
-dokka = "2.0.0-Beta"
+dokka = "2.2.0-Beta"
 
 # AtomicFU: The idiomatic way to use atomic operations in Kotlin
 # https://github.com/Kotlin/kotlinx-atomicfu/releases.

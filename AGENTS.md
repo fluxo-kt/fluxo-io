@@ -76,7 +76,7 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
 
 ## Build, test, regen baselines
 ```
-./gradlew check                    # full verify (BCV apiCheck, kover, detekt, lint, depGuard, tests)
+./gradlew check                    # full verify (BCV apiCheck, kover, detekt, AGP lint wiring, depGuard, tests)
 ./gradlew :fluxo-io-rad:jvmTest    # JVM unit tests
 ./gradlew :fluxo-io-rad:apiDump    # refresh BCV after intentional API change
 ./updateBaseline                   # CANONICAL regen: verification metadata+yarnLock+apiDump+depGuardBaseline+detektBaselineMerge (CI=true RELEASE=true, no build/config cache, isolated .gradle/update-baseline home unless GRADLE_USER_HOME is set)

@@ -1,7 +1,7 @@
 # Release Instructions
 
-Publishing uses Vanniktech's Maven Central Portal support. Do not use OSSRH,
-S01 URLs, or the generic `publish` task for Central releases.
+Publishing uses Vanniktech's Maven Central Portal support. Do not use retired
+Sonatype snapshot URLs or the generic `publish` task for Central releases.
 
 ## Prerequisites
 

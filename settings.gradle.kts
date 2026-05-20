@@ -44,11 +44,6 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
-        maven(url = "https://www.jitpack.io") {
-            content {
-                includeGroupByRegex("com\\.github\\..*")
-            }
-        }
     }
 }
 

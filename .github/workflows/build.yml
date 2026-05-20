@@ -16,6 +16,7 @@ on:
     # so we don't need to run on the merge commit.
     branches-ignore:
       # Dependabot creates both branch and PR. Avoid running twice.
+      - 'codex/**'
       - 'dependabot/**'
       - 'dev'
       - 'feat*/**'

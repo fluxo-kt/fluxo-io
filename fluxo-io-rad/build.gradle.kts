@@ -4,9 +4,11 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.lib)
     alias(libs.plugins.kotlinx.kover)
+    alias(libs.plugins.kotlinx.bcv)
     alias(libs.plugins.atomicfu)
     alias(libs.plugins.vanniktech.mvn.publish)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.fluxo.bcv.js)
 }
 
 fkcSetupMultiplatform(
@@ -29,11 +31,39 @@ fkcSetupMultiplatform(
             ignoredPackages.add("fluxo.io.internal")
             @Suppress("UnstableApiUsage")
             klibValidationEnabled = true
-            tsApiChecks = false
+            tsApiChecks = true
         }
     },
     kmp = {
-        allDefaultTargets(wasmWasi = false)
+        js {
+            target {
+                nodejs()
+                binaries.executable()
+                useEsModules()
+                compilerOptions {
+                    moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_ES)
+                    sourceMap.set(true)
+                    useEsClasses.set(true)
+                }
+                compilations.configureEach {
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_ES)
+                            sourceMap.set(true)
+                            useEsClasses.set(true)
+                        }
+                    }
+                }
+            }
+        }
+        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+        wasmJs {
+            target {
+                nodejs()
+                binaries.executable()
+            }
+        }
+        allDefaultTargets(js = false, wasm = false, wasmWasi = false)
         androidNative()
     },
 ) {

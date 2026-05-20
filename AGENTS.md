@@ -156,6 +156,13 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   or plugin updates must refresh it with the dependency change.
 - `verifyBuildPolicy` enforces non-negotiable build/security invariants,
   including pinned actions/runners, Central Portal, TS API checks, and Dokka.
+- AGP 9 Android-KMP has no `:fluxo-io-rad:lint` task here; use the discovered
+  lint packaging tasks (`compileLint`, `androidCompileLintChecks`,
+  `bundleAndroidMainLocalLintAar`) plus `check`.
+- Current warning debt is upstream/plugin-shaped: Detekt calls deprecated
+  Gradle `ReportingExtension.file`, Kotlin/JS resolves `*NpmAggregated` during
+  configuration, and `Java8BufferCompat` keeps Kotlin internal `InlineOnly` for
+  source-compatible Java 8 buffer wrappers.
 - Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`,
   `.kotlin-js-store/`) — never edit; never commit. JS yarn lockfile
   regenerated via `./gradlew kotlinUpgradeYarnLock` (run by

@@ -1,4 +1,6 @@
 import buildlogic.VerifyBuildPolicyTask
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     alias(libs.plugins.android.lib) apply false
@@ -103,6 +105,20 @@ kover.reports {
 }
 
 allprojects {
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
+
+    tasks.withType<Jar>().configureEach {
+        manifest.attributes.remove("Build-Jdk")
+        manifest.attributes.remove("Build-Jdk-Spec")
+        manifest.attributes.remove("Built-By")
+        manifest.attributes.remove("Build-Date")
+        manifest.attributes.remove("Build-Timestamp")
+        manifest.attributes.remove("Created-By")
+    }
+
     plugins.withId("org.jetbrains.dokka") {
         extensions.configure<org.jetbrains.dokka.gradle.DokkaExtension>("dokka") {
             dokkaSourceSets.configureEach {

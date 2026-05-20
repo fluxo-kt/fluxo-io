@@ -3,15 +3,43 @@
 # SC2086: Double quote to prevent globbing and word splitting.
 # shellcheck disable=SC2086
 
-./gradlew --stop --info
+if [ -z "${GRADLE_USER_HOME}" ]; then
+  export GRADLE_USER_HOME="${PWD}/.gradle/update-baseline"
+fi
 
-COMMON_TASKS="apiDump dependencyGuardBaseline detektBaselineMerge updateLintBaseline"
-COMMON_TASKS="${COMMON_TASKS} --continue -Dlint.baselines.continue=true"
+BASELINE_TASKS="apiDump dependencyGuardBaseline detektBaselineMerge"
+VERIFICATION_BASELINE_TASKS="dependencyGuardBaseline detektBaselineMerge"
+COMMON_TASKS="${BASELINE_TASKS} --continue -Dlint.baselines.continue=true"
+GRADLE_BASE_ARGS="--no-daemon --no-configuration-cache"
+VERIFY_TASKS="help kotlinUpgradeYarnLock"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinJvm"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileAndroidMain"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinJs"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinWasmJs"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:transformCommonMainDependenciesMetadata"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:transformNativeMainCInteropDependenciesMetadata"
+VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:jvmTest :fluxo-io-rad:apiCheck"
+VERIFY_TASKS="${VERIFY_TASKS} ${VERIFICATION_BASELINE_TASKS} koverLog publishToMavenLocal"
 export GRADLE_OPTS="${GRADLE_OPTS} -Dorg.gradle.logging.stacktrace=all"
 export GRADLE_OPTS="${GRADLE_OPTS} -Dorg.gradle.caching=false -Dkotlin.incremental=false"
 export CI=true
 export RELEASE=true
 EXIT_CODE=0
+
+echo ""
+echo "========================================"
+echo "== RUN DEPENDENCY VERIFICATION GRAPH =="
+echo "========================================"
+
+./gradlew ${GRADLE_BASE_ARGS} --write-verification-metadata sha256,pgp --refresh-keys ${VERIFY_TASKS} || EXIT_CODE=100
+
+if [ ${EXIT_CODE} -ne 0 ]; then
+  echo ""
+  echo "==========================================="
+  echo "== DEPENDENCY VERIFICATION FAILED: ${EXIT_CODE} =="
+  echo "==========================================="
+  exit ${EXIT_CODE}
+fi
 
 echo ""
 echo "===================================="
@@ -22,7 +50,11 @@ echo "===================================="
 # -U: Refresh dependencies
 #COMMON_TASKS="${COMMON_TASKS} --rerun-tasks -U"
 
-./gradlew kotlinUpgradeYarnLock ${COMMON_TASKS} || EXIT_CODE=101
+./gradlew ${GRADLE_BASE_ARGS} --write-verification-metadata sha256,pgp --refresh-keys kotlinUpgradeYarnLock ${BASELINE_TASKS} || EXIT_CODE=101
+
+if [ ${EXIT_CODE} -eq 0 ]; then
+  ./gradlew ${GRADLE_BASE_ARGS} kotlinUpgradeYarnLock ${COMMON_TASKS} || EXIT_CODE=102
+fi
 
 
 if [ ${EXIT_CODE} -ne 0 ]; then

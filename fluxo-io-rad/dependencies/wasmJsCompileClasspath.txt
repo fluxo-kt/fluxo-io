@@ -1,4 +1,4 @@
-org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.0.21
-org.jetbrains.kotlin:kotlin-stdlib:2.0.21
-org.jetbrains.kotlinx:atomicfu-wasm-js:0.26.0
-org.jetbrains.kotlinx:atomicfu:0.26.0
+org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.21
+org.jetbrains.kotlin:kotlin-stdlib:2.2.21
+org.jetbrains.kotlinx:atomicfu-wasm-js:0.32.1
+org.jetbrains.kotlinx:atomicfu:0.32.1

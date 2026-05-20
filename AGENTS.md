@@ -79,7 +79,7 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
 ./gradlew check                    # full verify (BCV apiCheck, kover, detekt, lint, depGuard, tests)
 ./gradlew :fluxo-io-rad:jvmTest    # JVM unit tests
 ./gradlew :fluxo-io-rad:apiDump    # refresh BCV after intentional API change
-./updateBaseline                   # CANONICAL regen: yarnLock+apiDump+depGuardBaseline+detektBaselineMerge+updateLintBaseline (CI=true RELEASE=true, no cache)
+./updateBaseline                   # CANONICAL regen: verification metadata+yarnLock+apiDump+depGuardBaseline+detektBaselineMerge (CI=true RELEASE=true, no build/config cache, isolated .gradle/update-baseline home unless GRADLE_USER_HOME is set)
 ```
 - Configuration cache is on with `problems=warn`. CC-unsafe build script
   edits silently warn, not fail. Don't capture `Project` at execution
@@ -129,6 +129,12 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   actuals. Consumer keep rules are not published by default; use
   `android.optimization.consumerKeepRules { publish = true; file(...) }`
   and verify `bundleAndroidMainAar` contains `proguard.txt`.
+- **No `updateLintBaseline` task under AGP 9 Android-KMP** here. Keep
+  `updateBaseline` to executable tasks only; verify available lint tasks with
+  `./gradlew tasks --all --quiet | rg -i 'lint|baseline'` before adding one.
+- `updateBaseline` uses an isolated `.gradle/update-baseline` Gradle user home
+  when `GRADLE_USER_HOME` is unset. The shared global daemon registry can receive
+  stop signals from other worktrees and kill long baseline runs.
 - **`SECURITY.md` and `RELEASING.md` are stubs** ("_To be written_").
   Don't trust them.
 - Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`,

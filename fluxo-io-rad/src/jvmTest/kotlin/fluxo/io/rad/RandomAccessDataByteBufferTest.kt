@@ -5,9 +5,11 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -64,5 +66,27 @@ internal class RadByteBufferAccessorTest(
         assertIOB { RadByteBufferAccessor(tempFile, BYTES.size.toLong(), 1) }
         assertIOB { RadByteBufferAccessor(tempFile, BYTES.size + 1L, 1) }
         assertIOB { RadByteBufferAccessor(tempFile, 0L, BYTES.size + 1) }
+    }
+}
+
+internal class RadByteBufferAccessorResourceTest {
+
+    @Test
+    fun subsectionRetainsSharedResourcesUntilItCloses() {
+        val closeCount = AtomicInteger()
+        val bytes = byteArrayOf(1, 2, 3)
+        val resource = AutoCloseable { closeCount.incrementAndGet() }
+        val rad = RadByteBufferAccessor(ByteBuffer.wrap(bytes), 0, bytes.size, resource)
+        val subsection = rad.subsection(1, 1)
+
+        rad.close()
+        assertEquals(0, closeCount.get())
+        assertEquals(2, subsection.readByteAt(0))
+
+        subsection.close()
+        subsection.close()
+        rad.close()
+
+        assertEquals(1, closeCount.get())
     }
 }

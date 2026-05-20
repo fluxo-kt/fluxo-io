@@ -6,6 +6,7 @@ import org.jetbrains.lincheck.datastructures.Operation
 
 internal class SharedCloseableLincheckTest {
     private val closeable = LincheckCloseable()
+    private val listener: (Throwable?) -> Unit = { }
 
     @Operation
     fun retain(): Boolean =
@@ -24,7 +25,13 @@ internal class SharedCloseableLincheckTest {
 
     @Operation
     fun addOnSharedCloseListener(): Boolean {
-        closeable.addOnSharedCloseListener { }
+        closeable.addOnSharedCloseListener(listener)
+        return true
+    }
+
+    @Operation
+    fun removeOnSharedCloseListener(): Boolean {
+        closeable.removeOnSharedCloseListener(listener)
         return true
     }
 

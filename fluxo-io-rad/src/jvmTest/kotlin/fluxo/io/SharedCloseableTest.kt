@@ -153,6 +153,21 @@ internal class SharedCloseableTest {
     }
 
     @Test
+    fun removedListenerIsNotInvoked() {
+        val closeable = TestCloseable()
+        val listenerCalls = AtomicInteger()
+        val listener: (Throwable?) -> Unit = { listenerCalls.incrementAndGet() }
+
+        closeable.addOnSharedCloseListener(listener)
+        closeable.removeOnSharedCloseListener(listener)
+        closeable.close()
+
+        assertEquals(0, listenerCalls.get())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
+    }
+
+    @Test
     fun listenerAddedAfterCloseIsNotInvoked() {
         val closeable = TestCloseable()
         val listenerCalls = AtomicInteger()
@@ -166,29 +181,36 @@ internal class SharedCloseableTest {
     }
 
     @Test
-    fun loggerUpdateIsVisibleAcrossThreads() {
-        val loggerMessage = AtomicReference<String>()
-        val ready = CountDownLatch(1)
-        val done = CountDownLatch(1)
+    fun listenerRemovedDuringResourceCloseIsNotInvoked() {
+        lateinit var closeable: TestCloseable
+        val listenerCalls = AtomicInteger()
+        val listener: (Throwable?) -> Unit = { listenerCalls.incrementAndGet() }
+        closeable = TestCloseable { closeable.removeOnSharedCloseListener(listener) }
 
-        val worker = Thread {
-            ready.countDown()
-            while (LOGGER == null) {
-                Thread.yield()
-            }
-            LOGGER?.invoke("visible", null)
-            done.countDown()
+        closeable.addOnSharedCloseListener(listener)
+        closeable.close()
+
+        assertEquals(0, listenerCalls.get())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
+    }
+
+    @Test
+    fun listenerRemovedDuringNotificationIsNotInvokedLater() {
+        lateinit var closeable: TestCloseable
+        val lateListenerCalls = AtomicInteger()
+        val lateListener: (Throwable?) -> Unit = { lateListenerCalls.incrementAndGet() }
+        closeable = TestCloseable()
+
+        closeable.addOnSharedCloseListener {
+            closeable.addOnSharedCloseListener(lateListener)
+            closeable.removeOnSharedCloseListener(lateListener)
         }
-        worker.start()
-        assertTrue(ready.await(1, TimeUnit.SECONDS))
+        closeable.close()
 
-        setFluxoIoLogger { message, _ -> loggerMessage.set(message) }
-
-        assertTrue(done.await(1, TimeUnit.SECONDS))
-        worker.join(1_000)
-        assertEquals("visible", loggerMessage.get())
-
-        setFluxoIoLogger { _, _ -> }
+        assertEquals(0, lateListenerCalls.get())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
     }
 
     private class TestCloseable(

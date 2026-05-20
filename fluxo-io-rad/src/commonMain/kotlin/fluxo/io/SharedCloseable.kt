@@ -116,7 +116,7 @@ public abstract class SharedCloseable : Closeable {
                         failure = notifyListenersOnce(current.listeners, closeCause, failure)
                     } else if (state.compareAndSet(
                             expect = current,
-                            update = CloseState.Closed(cause = closeCause),
+                            update = CloseState.Closed,
                         )
                     ) {
                         return failure
@@ -227,6 +227,6 @@ public abstract class SharedCloseable : Closeable {
                 copy(listeners = emptyArray())
         }
 
-        data class Closed(val cause: Throwable?) : CloseState
+        data object Closed : CloseState
     }
 }

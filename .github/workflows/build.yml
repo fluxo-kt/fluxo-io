@@ -2,9 +2,6 @@ name: Build
 
 on:
   pull_request:
-    paths-ignore:
-      - '**-validation.yml'
-      - '**.*ignore'
     # Avoid useless and/or duplicate runs.
     # Also, we merge with --ff-only,
     # so we don't need to run on the merge commit.
@@ -20,9 +17,6 @@ on:
       - 'pull/**'
       - 'wip/**'
   push:
-    paths-ignore:
-      - '**-validation.yml'
-      - '**.*ignore'
 
 permissions:
   contents: read

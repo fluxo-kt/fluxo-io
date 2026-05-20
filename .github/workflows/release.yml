@@ -20,8 +20,96 @@ env:
     -Dorg.gradle.vfs.watch=false
 
 jobs:
+  publish_release:
+    runs-on: macos-15
+    outputs:
+      version: ${{ steps.release_version.outputs.version }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          disable-sudo: true
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up JDK
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+        with:
+          cache-disabled: true
+          cache-read-only: true
+          validate-wrappers: true
+
+      - name: Verify release version
+        id: release_version
+        run: |
+          version="$(awk -F ' *= *' '$1 == "version" { gsub(/"/, "", $2); print $2; exit }' gradle/libs.versions.toml)"
+          test -n "$version"
+          if [[ "$GITHUB_REF_NAME" != "v$version" ]]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match catalog version $version."
+            exit 1
+          fi
+          case "$version" in
+            *-SNAPSHOT)
+              echo "::error::Release tags must not point at SNAPSHOT versions."
+              exit 1
+              ;;
+          esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release build
+        run: ./gradlew check apiCheck --no-configuration-cache --stacktrace --scan
+
+      - name: Prepare Central publication artifacts
+        if: env.IS_DEFAULT_REPO == 'true'
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: ./gradlew publishToMavenLocal --no-configuration-cache --stacktrace --scan
+
+      - name: Collect Central attestation subjects
+        id: central_attestation_subjects
+        if: env.IS_DEFAULT_REPO == 'true'
+        uses: ./.github/actions/central-attestation-subjects
+        with:
+          project-version: ${{ steps.release_version.outputs.version }}
+          require-signatures: true
+
+      - name: Attest Central artifacts
+        if: env.IS_DEFAULT_REPO == 'true'
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-checksums: ${{ steps.central_attestation_subjects.outputs.checksums }}
+
+      - name: Publish
+        id: central_portal
+        if: env.IS_DEFAULT_REPO == 'true'
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+        run: >
+          ./gradlew publishToMavenCentral
+          --no-configuration-cache --stacktrace --scan
+
   gh_release:
     runs-on: ubuntu-24.04
+    needs: publish_release
     permissions:
       contents: write
 
@@ -51,80 +139,26 @@ jobs:
           # shellcheck disable=SC2086
           echo "RELEASE_SUFFIX=$RELEASE_SUFFIX" >> $GITHUB_ENV
 
+      - name: Extract release notes
+        run: |
+          version="${{ needs.publish_release.outputs.version }}"
+          notes="$RUNNER_TEMP/release-notes.md"
+          awk -v version="$version" '
+            $0 ~ "^## \\[" version "\\]" { found = 1; print; next }
+            found && $0 ~ "^## " { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' CHANGELOG.md > "$notes"
+          test -s "$notes"
+          echo "RELEASE_NOTES=$notes" >> "$GITHUB_ENV"
+
       - name: GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
-          body_path: CHANGELOG.md
+          body_path: ${{ env.RELEASE_NOTES }}
           draft: true
           name: ${{ github.ref_name }}${{ env.RELEASE_SUFFIX }}
           prerelease: ${{ env.RELEASE_PRE }}
-
-  publish_release:
-    runs-on: macos-15
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
-        with:
-          disable-sudo: true
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-
-      - name: Set up JDK
-        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
-        with:
-          cache-disabled: true
-          cache-read-only: true
-          validate-wrappers: true
-
-      - name: Verify release build
-        run: ./gradlew check apiCheck --no-configuration-cache --stacktrace --scan
-
-      - name: Prepare Central publication artifacts
-        if: env.IS_DEFAULT_REPO == 'true'
-        env:
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
-        run: ./gradlew publishToMavenLocal --no-configuration-cache --stacktrace --scan
-
-      - name: Collect Central attestation subjects
-        id: central_attestation_subjects
-        if: env.IS_DEFAULT_REPO == 'true'
-        uses: ./.github/actions/central-attestation-subjects
-        with:
-          require-signatures: true
-
-      - name: Attest Central artifacts
-        if: env.IS_DEFAULT_REPO == 'true'
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-checksums: ${{ steps.central_attestation_subjects.outputs.checksums }}
-
-      - name: Publish
-        id: central_portal
-        if: env.IS_DEFAULT_REPO == 'true'
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
-        run: >
-          ./gradlew publishToMavenCentral
-          --no-configuration-cache --stacktrace --scan
 
 
 # References

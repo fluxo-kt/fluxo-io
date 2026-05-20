@@ -112,6 +112,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
 
         StringBuilder workflowText = new StringBuilder();
         for (File file : workflowFiles) {
+            String path = toPolicyPath(file, rootDir);
             List<String> lines = Files.readAllLines(file.toPath());
             for (int i = 0; i < lines.size(); i++) {
                 String rawLine = lines.get(i);
@@ -130,6 +131,15 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                             rootDir,
                             i + 1,
                             "Runner images must be pinned, not '*-latest'."
+                    );
+                }
+                if (path.equals(".github/workflows/build.yml") && line.startsWith("paths-ignore:")) {
+                    addPolicyFailure(
+                            failures,
+                            file,
+                            rootDir,
+                            i + 1,
+                            "Build runs verifyBuildPolicy and must not ignore policy-scanned paths."
                     );
                 }
             }

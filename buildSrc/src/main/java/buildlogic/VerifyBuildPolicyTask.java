@@ -122,6 +122,10 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                     if (isSetupGradleRef(extractUsesRef(line))) {
                         checkSetupGradleWrapperValidation(file, rootDir, i, lines, failures);
                     }
+                    if (path.equals(".github/workflows/build.yml")
+                            && isCheckoutRef(extractUsesRef(line))) {
+                        checkCheckoutCredentialsNotPersisted(file, rootDir, i, lines, failures);
+                    }
                 }
                 if (line.startsWith("runs-on:")
                         && line.substring(line.indexOf("runs-on:") + "runs-on:".length()).contains("-latest")) {
@@ -195,6 +199,15 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         if (usesRef.startsWith("./")) {
             return;
         }
+        if (isSetupGradleRef(usesRef) && !rawLine.contains(SETUP_GRADLE_PINNED_REF)) {
+            addPolicyFailure(
+                    failures,
+                    file,
+                    rootDir,
+                    lineNumber,
+                    "setup-gradle must use the pinned v6.1.0 commit SHA."
+            );
+        }
         if (usesRef.startsWith("docker://")) {
             if (!usesRef.contains("@sha256:")) {
                 addPolicyFailure(
@@ -232,6 +245,10 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
 
     private static boolean isSetupGradleRef(String usesRef) {
         return usesRef.startsWith("gradle/actions/setup-gradle@");
+    }
+
+    private static boolean isCheckoutRef(String usesRef) {
+        return usesRef.startsWith("actions/checkout@");
     }
 
     private static void checkSetupGradleWrapperValidation(
@@ -273,6 +290,59 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                 usesLineIndex + 1,
                 "Each setup-gradle step must enable validate-wrappers: true."
         );
+    }
+
+    private static void checkCheckoutCredentialsNotPersisted(
+            File file,
+            File rootDir,
+            int usesLineIndex,
+            List<String> lines,
+            List<String> failures
+    ) {
+        if (hasActionInput(usesLineIndex, lines, "persist-credentials:", "false")) {
+            return;
+        }
+        addPolicyFailure(
+                failures,
+                file,
+                rootDir,
+                usesLineIndex + 1,
+                "Build checkout must not persist the workflow token before running project code."
+        );
+    }
+
+    private static boolean hasActionInput(
+            int usesLineIndex,
+            List<String> lines,
+            String key,
+            String expectedValue
+    ) {
+        int usesIndent = leadingSpaces(lines.get(usesLineIndex));
+        boolean inWith = false;
+        int withIndent = -1;
+        for (int i = usesLineIndex + 1; i < lines.size(); i++) {
+            String rawLine = lines.get(i);
+            String trimmed = rawLine.trim();
+            if (trimmed.isEmpty() || isCommentLine(trimmed)) {
+                continue;
+            }
+            int indent = leadingSpaces(rawLine);
+            if (indent < usesIndent && trimmed.startsWith("- ")) {
+                break;
+            }
+            if (!inWith && indent == usesIndent && trimmed.equals("with:")) {
+                inWith = true;
+                withIndent = indent;
+                continue;
+            }
+            if (inWith && indent <= withIndent) {
+                inWith = false;
+            }
+            if (inWith && trimmed.equals(key + " " + expectedValue)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isPolicySha(String value) {

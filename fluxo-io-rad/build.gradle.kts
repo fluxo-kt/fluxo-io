@@ -19,7 +19,7 @@ fkcSetupMultiplatform(
             ", including read-only random data access interface with multiple implementations" +
             ", and more."
 
-        // useDokka = true
+        useDokka = true
         setupCoroutines = false
         setupDependencies = false
         enablePublication = true

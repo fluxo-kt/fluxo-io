@@ -139,6 +139,9 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
 - `updateBaseline` uses an isolated `.gradle/update-baseline` Gradle user home
   when `GRADLE_USER_HOME` is unset. The shared global daemon registry can receive
   stop signals from other worktrees and kill long baseline runs.
+- `useDokka = true` only applies Dokka for non-SNAPSHOT publications in
+  fluxo-kmp-conf. Verify release docs with a temporary non-SNAPSHOT version or
+  release config; keep `dokka-base`/`templating-plugin` in verification metadata.
 - **`SECURITY.md` and `RELEASING.md` are stubs** ("_To be written_").
   Don't trust them.
 - Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`,

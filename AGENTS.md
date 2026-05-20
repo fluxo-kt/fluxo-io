@@ -124,6 +124,11 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   the JDK 9 covariant-override `NoSuchMethodError`.
 - **Coroutines is `compileOnly`** in lib code. Consumers using suspend
   APIs must depend on `kotlinx-coroutines-core`.
+- **AGP 9 Android-KMP trap:** `androidMain` must explicitly depend on
+  `commonJvmMain` here, otherwise Android compilation cannot see JVM
+  actuals. Consumer keep rules are not published by default; use
+  `android.optimization.consumerKeepRules { publish = true; file(...) }`
+  and verify `bundleAndroidMainAar` contains `proguard.txt`.
 - **`SECURITY.md` and `RELEASING.md` are stubs** ("_To be written_").
   Don't trust them.
 - Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`,

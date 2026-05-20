@@ -1,12 +1,3 @@
-import java.net.URL
-
-buildscript {
-    // Starting from Kotlin 2.1.0, KGP doesn't depend on the `kotlin-compiler-embeddable`.
-    // Other plugins can bring incompatible versions of the compiler.
-    // https://kotlinlang.slack.com/archives/C0KLZSCHF/p1729256644747559?thread_ts=1729151089.194689&cid=C0KLZSCHF
-    dependencies.classpath(libs.kotlin.compiler.embeddable)
-}
-
 plugins {
     alias(libs.plugins.android.lib) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -33,7 +24,6 @@ fkcSetupRaw {
         developerId = "amal"
         developerName = "Art Shendrik"
         developerEmail = "artyom.shendrik@gmail.com"
-        sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
     }
 
     enableApiValidation = true
@@ -110,21 +100,17 @@ kover.reports {
 }
 
 allprojects {
-    // FIXME: Setup automatically.
-    plugins.withType<org.jetbrains.dokka.gradle.DokkaPlugin> {
-        tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-            dokkaSourceSets {
-                configureEach {
-                    if (name.startsWith("ios")) {
-                        displayName.set("ios")
-                    }
+    plugins.withId("org.jetbrains.dokka") {
+        extensions.configure<org.jetbrains.dokka.gradle.DokkaExtension>("dokka") {
+            dokkaSourceSets.configureEach {
+                if (name.startsWith("ios")) {
+                    displayName.set("ios")
+                }
 
-                    sourceLink {
-                        localDirectory.set(rootDir)
-                        @Suppress("DEPRECATION")
-                        remoteUrl.set(URL("https://github.com/fluxo-kt/fluxo-io/blob/main"))
-                        remoteLineSuffix.set("#L")
-                    }
+                sourceLink {
+                    localDirectory.set(rootDir)
+                    remoteUrl("https://github.com/fluxo-kt/fluxo-io/blob/main")
+                    remoteLineSuffix.set("#L")
                 }
             }
         }

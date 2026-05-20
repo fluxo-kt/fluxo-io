@@ -21,8 +21,7 @@ fkcSetupMultiplatform(
 
         // useDokka = true
         setupCoroutines = false
-        setupDependencies = true
-        addStdlibDependency = true
+        setupDependencies = false
         enablePublication = true
         apiValidation {
             ignoredPackages.add("fluxo.io.internal")
@@ -45,6 +44,7 @@ fkcSetupMultiplatform(
         compileOnly(rootProject.extra["androidJar"]!!)
         compileOnly(libs.androidx.annotation)
         compileOnly(libs.jetbrains.annotation)
+        compileOnly(libs.jsr305)
         compileOnly(libs.coroutines)
     }
     commonJvm.test.dependencies {
@@ -68,5 +68,20 @@ fkcSetupMultiplatform(
 
     commonNative.main.dependencies {
         implementation(libs.stately.concurrent.collections)
+    }
+}
+
+kotlin {
+    android {
+        optimization {
+            consumerKeepRules.apply {
+                publish = true
+                file("src/commonJvmMain/resources/META-INF/proguard/fluxo-io-rad.pro")
+            }
+        }
+    }
+
+    sourceSets.named("androidMain") {
+        dependsOn(sourceSets.named("commonJvmMain").get())
     }
 }

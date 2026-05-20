@@ -62,8 +62,16 @@ jobs:
             echo "Baseline auto-amend only supports same-repository PR branches."
             exit 1
           fi
+          head_ref="$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)"
+          case "$head_ref" in
+            dependabot/*) ;;
+            *)
+              echo "Baseline auto-amend only supports Dependabot PR branches."
+              exit 1
+              ;;
+          esac
           gh pr checkout "$PR_NUMBER"
-          echo "GITHUB_HEAD_REF=$(gh pr view "$PR_NUMBER" --json headRefName -q .headRefName)" >> "$GITHUB_ENV"
+          echo "GITHUB_HEAD_REF=$head_ref" >> "$GITHUB_ENV"
           echo "GITHUB_HEAD_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid)" >> "$GITHUB_ENV"
 
       - name: Set up JDK

@@ -142,8 +142,19 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                             "Build runs verifyBuildPolicy and must not ignore policy-scanned paths."
                     );
                 }
+                if (path.equals(".github/workflows/build.yml") && line.startsWith("branches-ignore:")) {
+                    addPolicyFailure(
+                            failures,
+                            file,
+                            rootDir,
+                            i + 1,
+                            "Build runs default-branch PR verification and must not ignore PR base branches."
+                    );
+                }
             }
-            workflowText.append(Files.readString(file.toPath())).append('\n');
+            String fileText = Files.readString(file.toPath());
+            checkCentralPortalWorkflow(path, fileText, failures);
+            workflowText.append(fileText).append('\n');
         }
 
         String text = workflowText.toString();
@@ -152,6 +163,17 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         }
         if (!containsLiveLiteral(text, "publishToMavenCentral")) {
             failures.add(".github/workflows:1: Central Portal publish workflows must call publishToMavenCentral.");
+        }
+    }
+
+    private static void checkCentralPortalWorkflow(
+            String path,
+            String text,
+            List<String> failures
+    ) {
+        if ((path.equals(".github/workflows/build.yml") || path.equals(".github/workflows/release.yml"))
+                && !containsLiveLiteral(text, "publishToMavenCentral")) {
+            failures.add(path + ":1: Central Portal publish workflow must call publishToMavenCentral.");
         }
     }
 

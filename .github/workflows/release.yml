@@ -38,6 +38,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
@@ -55,6 +57,16 @@ jobs:
       - name: Verify release version
         id: release_version
         run: |
+          if [[ "${{ github.ref_protected }}" != "true" ]]; then
+            echo "::error::Release tags must be protected before Central publication."
+            exit 1
+          fi
+          default_branch="${{ github.event.repository.default_branch }}"
+          git fetch --no-tags origin "$default_branch"
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" "origin/$default_branch"; then
+            echo "::error::Release tag commit must be reachable from origin/$default_branch."
+            exit 1
+          fi
           version="$(awk -F ' *= *' '$1 == "version" { gsub(/"/, "", $2); print $2; exit }' gradle/libs.versions.toml)"
           test -n "$version"
           if [[ "$GITHUB_REF_NAME" != "v$version" ]]; then

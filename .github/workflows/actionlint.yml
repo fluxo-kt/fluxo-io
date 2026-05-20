@@ -33,4 +33,15 @@ jobs:
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Validate local action metadata
+        run: |
+          ruby -e '
+            require "yaml"
+            Dir[".github/actions/*/action.yml"].sort.each do |path|
+              action = YAML.load_file(path)
+              abort("#{path}: missing name") unless action["name"].is_a?(String)
+              abort("#{path}: missing runs") unless action["runs"].is_a?(Hash)
+            end
+          '
+
       - uses: ./.github/actions/actionlint

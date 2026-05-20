@@ -44,7 +44,7 @@ runs:
           case "$file" in
             "$maven_dir"/fluxo-io-rad*/"$project_version"/*)
               case "$file" in
-                *.jar|*.klib|*.aar|*.pom|*.module|*.asc|*.sha256|*.sha512)
+                *.jar|*.klib|*.aar|*.pom|*.module|*.asc|*.sha256|*.sha512|maven-metadata.xml*)
                   printf '%s\0' "$file"
                   ;;
               esac
@@ -84,6 +84,12 @@ runs:
           echo "::error::Central attestation subjects must include Gradle module metadata."
           exit 1
         }
+        if [[ "$project_version" == *-SNAPSHOT ]]; then
+          grep -q 'maven-metadata\.xml' "$checksums" || {
+            echo "::error::SNAPSHOT attestation subjects must include Maven metadata."
+            exit 1
+          }
+        fi
         if [[ "${{ inputs.require-signatures }}" == "true" ]]; then
           grep -q '\.asc' "$checksums" || {
             echo "::error::Release attestation subjects must include signatures."

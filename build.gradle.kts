@@ -104,6 +104,8 @@ kover.reports {
     }
 }
 
+val dokkaSourceLinkRef = providers.environmentVariable("SCM_TAG").orElse("dev")
+
 allprojects {
     tasks.withType<AbstractArchiveTask>().configureEach {
         isPreserveFileTimestamps = false
@@ -128,7 +130,7 @@ allprojects {
 
                 sourceLink {
                     localDirectory.set(rootDir)
-                    remoteUrl("https://github.com/fluxo-kt/fluxo-io/blob/main")
+                    remoteUrl("https://github.com/fluxo-kt/fluxo-io/blob/${dokkaSourceLinkRef.get()}")
                     remoteLineSuffix.set("#L")
                 }
             }

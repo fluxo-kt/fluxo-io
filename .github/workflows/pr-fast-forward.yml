@@ -13,12 +13,10 @@ permissions:
 
 jobs:
   pr-fast-forward:
-    # Only run if the PR comment contains the '/fast-forward' command or equals a '/ff' command.
-    # Only run if a user with write permissions made the comment.
+    # Only run if the PR comment is an exact fast-forward command.
     if: |
       github.event.issue.pull_request &&
-      (github.event.comment.body == '/ff' || contains(github.event.comment.body, '/fast-forward')) &&
-      (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
+      (github.event.comment.body == '/ff' || github.event.comment.body == '/fast-forward')
     runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,6 +31,20 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+
+      - name: Authorize command
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+        run: |
+          permission="$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$COMMENT_AUTHOR/permission" --jq .permission)"
+          case "$permission" in
+            admin|maintain|write) ;;
+            *)
+              echo "::error::$COMMENT_AUTHOR has '$permission' permission, not write/maintain/admin."
+              exit 1
+              ;;
+          esac
 
       - name: React to the comment right away
         uses: dkershner6/reaction-action@97ede302a1b145b3739dec3ca84a489a34ef48b5 # v2

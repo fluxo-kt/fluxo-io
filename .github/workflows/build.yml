@@ -2,20 +2,6 @@ name: Build
 
 on:
   pull_request:
-    # Avoid useless and/or duplicate runs.
-    # Also, we merge with --ff-only,
-    # so we don't need to run on the merge commit.
-    branches-ignore:
-      # This filters PR target branches, not source branches.
-      - 'codex/**'
-      - 'dependabot/**'
-      - 'dev'
-      - 'feat*/**'
-      - 'fix/**'
-      - 'mr/**'
-      - 'pr/**'
-      - 'pull/**'
-      - 'wip/**'
   push:
 
 permissions:
@@ -24,12 +10,6 @@ permissions:
   security-events: write
   # required for workflows in private repositories (CodeQL)
   actions: read
-  # We appear to need write permission for both pull-requests and
-  # issues to post a comment to a pull request.
-  pull-requests: write
-  issues: write
-  # for the `mikepenz/action-junit-report` action
-  checks: write
 
 env:
   CI: true
@@ -84,7 +64,7 @@ jobs:
           cache-disabled: ${{ matrix.os == 'windows-2025' }} # super slow on Windows.
           cache-encryption-key: ${{ env.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
-          add-job-summary-as-pr-comment: on-failure
+          add-job-summary-as-pr-comment: never
           artifact-retention-days: 1
           validate-wrappers: true
 
@@ -94,7 +74,7 @@ jobs:
         with:
           cache-disabled: ${{ matrix.os == 'windows-2025' }} # super slow on Windows.
           cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
-          add-job-summary-as-pr-comment: on-failure
+          add-job-summary-as-pr-comment: never
           artifact-retention-days: 1
           validate-wrappers: true
 
@@ -135,13 +115,6 @@ jobs:
         with:
           sarif_file: build/lint-merged.sarif
           category: lint
-
-      - name: Publish JUnit test results as a pull request check
-        if: (success() || failure()) && matrix.os == 'macos-15' && env.IS_DEFAULT_REPO == 'true' && env.IS_DEFAULT_BRANCH == 'true'
-        uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3 # v5.6.2
-        with:
-          comment: true
-          report_paths: '**/build/test-results/*/TEST-*.xml'
 
       - name: Upload test results to Codecov
         continue-on-error: true
@@ -195,22 +168,6 @@ jobs:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
         with:
           category: "/language:${{matrix.language}}"
-
-      - name: "Post result in PR comment"
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
-        if: github.event_name == 'pull_request' && failure()
-        env:
-          OS: ${{ matrix.os }}
-          GH_WORKFLOW: ${{ github.workflow }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { OS, GH_WORKFLOW, RUN_URL } = process.env
-            github.rest.issues.createComment({
-              issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo,
-              body: `❌ ${GH_WORKFLOW} [failed](${RUN_URL}) on ${OS}.`,
-            })
 
   publishSnapshot:
     needs: buildAndCheck

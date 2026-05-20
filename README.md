@@ -1,7 +1,6 @@
 # Fluxo IO
 
 ![Stability: Alpha](https://kotl.in/badges/alpha.svg)
-[![Version][badge-mvn]][mvn]
 [![Kotlin Version][badge-kotlin]][badge-kotlin-link]
 [![Build](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
@@ -22,20 +21,19 @@
 
 ### How to use
 
-[![Version][badge-mvn]][mvn]
-
 ```kotlin
 // in the `build.gradle.kts` of the target module.
 plugins {
   kotlin("multiplatform") version "2.2.21"
 }
 dependencies {
-  implementation("io.github.fluxo-kt:fluxo-io-rad:0.1.0") // <-- add here
+  implementation("io.github.fluxo-kt:fluxo-io-rad:<published-version>") // <-- add here
 }
 ```
 
-You can also use snapshots from the Central Portal snapshot repository:<br>
-[![Snapshot Version][badge-snapshot]][snapshot]
+Use only versions that exist in Maven Central or the Central Portal snapshot
+repository. This module is alpha; do not assume unpublished coordinates are
+available.
 
 
 Library provides cross-platform [`RandomAccessData`][RandomAccessData]
@@ -127,9 +125,3 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [badge-js]: http://img.shields.io/badge/-JavaScript-F8DB5D?logo=javascript&logoColor=312C02
 [badge-wasm]: http://img.shields.io/badge/-WASM.JS-654FF0?logo=webassembly&logoColor=FCFDFD
 [badge-wasi]: http://img.shields.io/badge/-WASM.WASI-F72585?logo=webassembly&logoColor=FCFDFD
-
-[mvn]: https://mvnrepository.com/artifact/io.github.fluxo-kt/fluxo-io-rad
-[badge-mvn]: https://img.shields.io/maven-central/v/io.github.fluxo-kt/fluxo-io-rad?logo=apachemaven&labelColor=c71a36&color=666
-
-[snapshot]: https://central.sonatype.com/repository/maven-snapshots/io/github/fluxo-kt/fluxo-io-rad
-[badge-snapshot]: https://img.shields.io/badge/dynamic/xml?color=666&logo=apachemaven&labelColor=c71a36&label=&query=%2F%2Fversion%5Blast%28%29%5D&url=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fio%2Fgithub%2Ffluxo-kt%2Ffluxo-io-rad%2Fmaven-metadata.xml

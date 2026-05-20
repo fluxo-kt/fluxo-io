@@ -114,8 +114,8 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
 ## Conventions and traps
 - **Conventional commits required**, strict type set listed in
   CONTRIBUTING.md. Keep history flat (`--ff-only`); fast-forward merges
-  are triggered by an OWNER/MEMBER posting `/ff` or `/fast-forward` in a
-  PR comment.
+  are triggered by an exact `/ff` or `/fast-forward` PR comment after the
+  workflow verifies the commenter has write, maintain, or admin permission.
 - **Adding a new submodule** → also update `.github/workflows/build.yml`
   (called out in `settings.gradle.kts`).
 - **Mmap limit**: only files < 2 GiB (`Int.MAX_VALUE`) work with
@@ -167,10 +167,10 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   Gradle `ReportingExtension.file`, Kotlin/JS resolves `*NpmAggregated` during
   configuration, and `Java8BufferCompat` keeps Kotlin internal `InlineOnly` for
   source-compatible Java 8 buffer wrappers.
-- Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`,
-  `.kotlin-js-store/`) — never edit; never commit. JS yarn lockfile
-  regenerated via `./gradlew kotlinUpgradeYarnLock` (run by
-  `updateBaseline`).
+- Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`) — never edit;
+  never commit. `.kotlin-js-store/yarn.lock` is tracked baseline output and is
+  regenerated via `./gradlew kotlinUpgradeYarnLock` (run by `updateBaseline`);
+  do not edit other `.kotlin-js-store/` files.
 - Project flags in `gradle.properties` (`MAX_DEBUG`, `COMPOSE_METRICS`,
   `USE_KOTLIN_DEBUG`, `LOAD_KMM_CODE_COMPLETION`) are read by
   `fluxo-kmp-conf`; semantics live in that plugin.

@@ -71,6 +71,101 @@ internal class SharedCloseableTest {
     }
 
     @Test
+    fun listenerAddedDuringFinalCloseIsNotDropped() {
+        val enteredClose = CountDownLatch(1)
+        val finishClose = CountDownLatch(1)
+        val listenerCalls = AtomicInteger()
+        val closeFailure = AtomicReference<Throwable>()
+        val closeable = TestCloseable {
+            enteredClose.countDown()
+            assertTrue(finishClose.await(1, TimeUnit.SECONDS))
+        }
+
+        val closer = Thread {
+            try {
+                closeable.close()
+            } catch (e: Throwable) {
+                closeFailure.set(e)
+            }
+        }
+        closer.start()
+
+        assertTrue(enteredClose.await(1, TimeUnit.SECONDS))
+        closeable.addOnSharedCloseListener { listenerCalls.incrementAndGet() }
+        assertEquals(0, listenerCalls.get())
+
+        finishClose.countDown()
+        closer.join(1_000)
+
+        assertFalse(closer.isAlive)
+        assertEquals(null, closeFailure.get())
+        assertEquals(1, listenerCalls.get())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
+    }
+
+    @Test
+    fun listenerAddedDuringCloseNotificationIsNotDropped() {
+        val enteredListener = CountDownLatch(1)
+        val finishListener = CountDownLatch(1)
+        val lateListenerCalls = AtomicInteger()
+        val closeFailure = AtomicReference<Throwable>()
+        val closeable = TestCloseable()
+        closeable.addOnSharedCloseListener {
+            enteredListener.countDown()
+            assertTrue(finishListener.await(1, TimeUnit.SECONDS))
+        }
+
+        val closer = Thread {
+            try {
+                closeable.close()
+            } catch (e: Throwable) {
+                closeFailure.set(e)
+            }
+        }
+        closer.start()
+
+        assertTrue(enteredListener.await(1, TimeUnit.SECONDS))
+        closeable.addOnSharedCloseListener { lateListenerCalls.incrementAndGet() }
+        assertEquals(0, lateListenerCalls.get())
+
+        finishListener.countDown()
+        closer.join(1_000)
+
+        assertFalse(closer.isAlive)
+        assertEquals(null, closeFailure.get())
+        assertEquals(1, lateListenerCalls.get())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
+    }
+
+    @Test
+    fun duplicateListenerRegistrationIsDeduplicated() {
+        val closeable = TestCloseable()
+        val listenerCalls = AtomicInteger()
+        val listener: (Throwable?) -> Unit = { listenerCalls.incrementAndGet() }
+
+        closeable.addOnSharedCloseListener(listener)
+        closeable.addOnSharedCloseListener(listener)
+        closeable.close()
+
+        assertEquals(1, listenerCalls.get())
+    }
+
+    @Test
+    fun listenerAddedAfterCloseIsNotInvoked() {
+        val closeable = TestCloseable()
+        val listenerCalls = AtomicInteger()
+
+        closeable.close()
+        closeable.addOnSharedCloseListener { listenerCalls.incrementAndGet() }
+
+        assertEquals(0, listenerCalls.get())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
+    }
+
+    @Test
     fun loggerUpdateIsVisibleAcrossThreads() {
         val loggerMessage = AtomicReference<String>()
         val ready = CountDownLatch(1)
@@ -96,13 +191,16 @@ internal class SharedCloseableTest {
         setFluxoIoLogger { _, _ -> }
     }
 
-    private class TestCloseable : SharedCloseable() {
+    private class TestCloseable(
+        private val onClose: () -> Unit = {},
+    ) : SharedCloseable() {
         private val closes = AtomicInteger()
 
         val closeCount: Int get() = closes.get()
 
         override fun onSharedClose() {
             closes.incrementAndGet()
+            onClose()
         }
     }
 }

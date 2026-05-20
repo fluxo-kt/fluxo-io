@@ -63,6 +63,9 @@ atomicfu = "0.32.1"
 # https://github.com/openjdk/jmh/tags
 jmh = "1.37"
 
+# Lincheck: concurrency model checking for JVM tests.
+lincheck = "3.5"
+
 
 [libraries]
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -95,6 +98,7 @@ assertj = { module = "org.assertj:assertj-core", version = "3.27.7" }
 
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
+lincheck = { module = "org.jetbrains.lincheck:lincheck", version.ref = "lincheck" }
 
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref="atomicfu" }
 

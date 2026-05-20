@@ -86,6 +86,10 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   time.
 - Tests use `runTest(timeout = 9.seconds)`. Concurrency is exercised by
   `AbstractRandomAccessDataTest.testConcurrency` against a real temp file.
+- Lincheck models must keep each `@Operation` to one API action. Do not
+  combine mutation plus later observation (for example `close(); isOpen`) in
+  one operation; expose the observation as a separate operation or deterministic
+  regression test.
 - CI runs across macOS/Windows/Ubuntu and multiple JDKs; SNAPSHOT
   publishes only on macOS push to default branch (see
   `.github/workflows/build.yml`). CodeQL is gated by the `CODE_QL` env

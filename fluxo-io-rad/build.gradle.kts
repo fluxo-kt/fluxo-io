@@ -52,6 +52,7 @@ fkcSetupMultiplatform(
         implementation(libs.kotlin.test.junit)
         implementation(libs.coroutines.test)
         implementation(libs.assertj)
+        implementation(libs.lincheck)
     }
 
 //    sourceSets.jvmTest.configure {

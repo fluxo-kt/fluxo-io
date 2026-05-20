@@ -1,3 +1,5 @@
+import buildlogic.VerifyBuildPolicyTask
+
 plugins {
     alias(libs.plugins.android.lib) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -27,6 +29,7 @@ fkcSetupRaw {
     }
 
     enableApiValidation = true
+    useDokka = true
 
     setupVerification = true
     enableGenericAndroidLint = true
@@ -115,6 +118,49 @@ allprojects {
             }
         }
     }
+}
+
+val buildPolicyRootDir: java.io.File = layout.projectDirectory.asFile
+val buildPolicyExcludedDirs = setOf(
+    ".git",
+    ".gradle",
+    ".idea",
+    ".kotlin",
+    ".kotlin-js-store",
+    "build",
+    "buildSrc/build",
+    "dependencies",
+    "node_modules",
+)
+val buildPolicyTextExtensions = setOf(
+    "gradle",
+    "kts",
+    "kt",
+    "java",
+    "properties",
+    "toml",
+    "md",
+    "txt",
+    "xml",
+    "yml",
+    "yaml",
+)
+val buildPolicyFiles = fileTree(buildPolicyRootDir) {
+    buildPolicyExcludedDirs.forEach { dir ->
+        exclude("$dir/**", "**/$dir/**")
+    }
+    include(buildPolicyTextExtensions.map { "**/*.$it" })
+}
+
+tasks.register<VerifyBuildPolicyTask>("verifyBuildPolicy") {
+    group = "verification"
+    description = "Verifies non-negotiable build, publication, and workflow policy invariants."
+    rootDirectory.set(buildPolicyRootDir.absolutePath)
+    policyFiles.from(buildPolicyFiles)
+}
+
+tasks.named("check") {
+    dependsOn("verifyBuildPolicy")
 }
 
 

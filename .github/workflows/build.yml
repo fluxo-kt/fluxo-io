@@ -5,8 +5,6 @@ on:
     paths-ignore:
       - '**-validation.yml'
       - '**.*ignore'
-      - '**.md'
-      - '**.txt'
     # Avoid useless and/or duplicate runs.
     # Also, we merge with --ff-only,
     # so we don't need to run on the merge commit.
@@ -25,8 +23,6 @@ on:
     paths-ignore:
       - '**-validation.yml'
       - '**.*ignore'
-      - '**.md'
-      - '**.txt'
 
 permissions:
   contents: read
@@ -264,16 +260,24 @@ jobs:
         run: |
           version="$(awk -F ' *= *' '$1 == "version" { gsub(/"/, "", $2); print $2; exit }' gradle/libs.versions.toml)"
           test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "is_snapshot=$([[ "$version" == *-SNAPSHOT ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Prepare SNAPSHOT publication artifacts
         if: steps.project_version.outputs.is_snapshot == 'true'
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: ./gradlew publishToMavenLocal --no-configuration-cache --stacktrace --scan
 
       - name: Collect SNAPSHOT attestation subjects
         id: snapshot_attestation_subjects
         if: steps.project_version.outputs.is_snapshot == 'true'
         uses: ./.github/actions/central-attestation-subjects
+        with:
+          project-version: ${{ steps.project_version.outputs.version }}
+          require-signatures: true
 
       - name: Attest SNAPSHOT artifacts
         if: steps.project_version.outputs.is_snapshot == 'true'
@@ -286,4 +290,7 @@ jobs:
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace --scan

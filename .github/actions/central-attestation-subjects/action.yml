@@ -60,7 +60,8 @@ runs:
         : > "$checksums"
         while IFS= read -r -d '' file; do
           digest="$(shasum -a 256 "$file" | awk '{ print $1 }')"
-          printf '%s  %s\n' "$digest" "$(basename "$file")" >> "$checksums"
+          subject="${file#"$maven_dir"/}"
+          printf '%s  %s\n' "$digest" "$subject" >> "$checksums"
         done < "$files"
 
         grep -q '\.jar' "$checksums" || {

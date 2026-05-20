@@ -118,6 +118,9 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                 String line = rawLine.trim();
                 if (line.startsWith("uses:") || line.startsWith("- uses:")) {
                     checkActionRef(file, rootDir, i + 1, rawLine, line, failures);
+                    if (isSetupGradleRef(extractUsesRef(line))) {
+                        checkSetupGradleWrapperValidation(file, rootDir, i, lines, failures);
+                    }
                 }
                 if (line.startsWith("runs-on:")
                         && line.substring(line.indexOf("runs-on:") + "runs-on:".length()).contains("-latest")) {
@@ -137,9 +140,6 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         if (!containsLiveLiteral(text, SETUP_GRADLE_PINNED_REF)) {
             failures.add(".github/workflows:1: setup-gradle must use the pinned v6.1.0 commit SHA.");
         }
-        if (!containsLiveLiteral(text, "validate-wrappers: true")) {
-            failures.add(".github/workflows:1: setup-gradle wrapper validation must be enabled.");
-        }
         if (!containsLiveLiteral(text, "publishToMavenCentral")) {
             failures.add(".github/workflows:1: Central Portal publish workflows must call publishToMavenCentral.");
         }
@@ -153,7 +153,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
             String line,
             List<String> failures
     ) {
-        String usesRef = line.substring(line.indexOf("uses:") + "uses:".length()).trim().split(" ")[0];
+        String usesRef = extractUsesRef(line);
         String actionRef = "";
         int atIndex = usesRef.lastIndexOf('@');
         if (atIndex >= 0) {
@@ -194,6 +194,44 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         }
     }
 
+    private static String extractUsesRef(String line) {
+        return line.substring(line.indexOf("uses:") + "uses:".length()).trim().split(" ")[0];
+    }
+
+    private static boolean isSetupGradleRef(String usesRef) {
+        return usesRef.startsWith("gradle/actions/setup-gradle@");
+    }
+
+    private static void checkSetupGradleWrapperValidation(
+            File file,
+            File rootDir,
+            int usesLineIndex,
+            List<String> lines,
+            List<String> failures
+    ) {
+        int usesIndent = leadingSpaces(lines.get(usesLineIndex));
+        for (int i = usesLineIndex + 1; i < lines.size(); i++) {
+            String rawLine = lines.get(i);
+            String trimmed = rawLine.trim();
+            if (trimmed.isEmpty() || isCommentLine(trimmed)) {
+                continue;
+            }
+            if (leadingSpaces(rawLine) <= usesIndent && trimmed.startsWith("- ")) {
+                break;
+            }
+            if (trimmed.equals("validate-wrappers: true")) {
+                return;
+            }
+        }
+        addPolicyFailure(
+                failures,
+                file,
+                rootDir,
+                usesLineIndex + 1,
+                "Each setup-gradle step must enable validate-wrappers: true."
+        );
+    }
+
     private static boolean isPolicySha(String value) {
         if (value.length() != 40) {
             return false;
@@ -225,6 +263,14 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                 || trimmedLine.startsWith("//")
                 || trimmedLine.startsWith("*")
                 || trimmedLine.startsWith("<!--");
+    }
+
+    private static int leadingSpaces(String line) {
+        int count = 0;
+        while (count < line.length() && line.charAt(count) == ' ') {
+            count++;
+        }
+        return count;
     }
 
     private static void addPolicyFailure(

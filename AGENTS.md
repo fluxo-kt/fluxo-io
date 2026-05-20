@@ -10,8 +10,8 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
 - **Tests use real temp files, not mocks.** Every JVM impl is exercised
   through `AbstractRandomAccessDataTest` with concurrency + randomized
   reads. Tests live ONLY in `jvmTest`.
-- **Public API is BCV-locked** (Binary Compatibility Validator; JVM + KLIB
-  enforced, TS dumps exist but unchecked). Dumps under
+- **Public API is locked** by JVM/KLIB Binary Compatibility Validator and TS
+  API dumps. Dumps under
   `fluxo-io-rad/api/`. Any intended ABI change must be reflected via
   `apiDump`. CI fails on drift.
 - **Java surface is shaped by file-level

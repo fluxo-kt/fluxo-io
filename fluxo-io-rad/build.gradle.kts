@@ -1,9 +1,12 @@
+import com.vanniktech.maven.publish.DeploymentValidation
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.lib)
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.atomicfu)
     alias(libs.plugins.vanniktech.mvn.publish)
+    alias(libs.plugins.dokka)
 }
 
 fkcSetupMultiplatform(
@@ -19,10 +22,9 @@ fkcSetupMultiplatform(
             ", including read-only random data access interface with multiple implementations" +
             ", and more."
 
-        useDokka = true
         setupCoroutines = false
         setupDependencies = false
-        enablePublication = true
+        enablePublication = false
         apiValidation {
             ignoredPackages.add("fluxo.io.internal")
             @Suppress("UnstableApiUsage")
@@ -69,6 +71,42 @@ fkcSetupMultiplatform(
 
     commonNative.main.dependencies {
         implementation(libs.stately.concurrent.collections)
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(
+        automaticRelease = false,
+        validateDeployment = DeploymentValidation.VALIDATED,
+    )
+    signAllPublications()
+    coordinates("io.github.fluxo-kt", "fluxo-io-rad", libs.versions.version.get())
+    pom {
+        name.set("fluxo-io-rad")
+        description.set(
+            "Read-only random-access I/O for Kotlin Multiplatform.",
+        )
+        inceptionYear.set("2024")
+        url.set("https://github.com/fluxo-kt/fluxo-io")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("repo")
+            }
+        }
+        developers {
+            developer {
+                id.set("amal")
+                name.set("Art Shendrik")
+                email.set("artyom.shendrik@gmail.com")
+            }
+        }
+        scm {
+            url.set("https://github.com/fluxo-kt/fluxo-io")
+            connection.set("scm:git:git://github.com/fluxo-kt/fluxo-io.git")
+            developerConnection.set("scm:git:ssh://git@github.com/fluxo-kt/fluxo-io.git")
+        }
     }
 }
 

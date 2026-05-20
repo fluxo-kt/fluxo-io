@@ -94,19 +94,6 @@ jobs:
           distribution: ${{ matrix.java == '17' && 'temurin' || 'graalvm' }}
           java-version: '${{ matrix.java }}'
 
-      - name: 'Cached KMP things (Konan, Node, Yarn, Binaryen)'
-        if: false # Seems slower than without it.
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.konan
-            ~/.gradle/yarn
-            ~/.gradle/nodejs
-            ~/.gradle/binaryen
-          key: "${{ runner.os }}-kmp-2.1.0"
-          restore-keys: |
-            ${{ runner.os }}-kmp-
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -201,17 +188,11 @@ jobs:
           && steps.check.outcome == 'success'&& github.event_name == 'push'
           && env.IS_DEFAULT_REPO && env.IS_DEFAULT_BRANCH
         env:
-          OSSRH_USER: ${{ secrets.OSSRH_USER }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USER }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
           RELEASE: true
-        run: ./gradlew publish -DDISABLE_TESTS --no-configuration-cache --stacktrace --scan
+        run: ./gradlew publishToMavenCentral -DDISABLE_TESTS --no-configuration-cache --stacktrace --scan
 
       - name: Upload the build report
         if: always()

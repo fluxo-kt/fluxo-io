@@ -6,13 +6,11 @@ on:
       - "v*"
 
 permissions:
-  # allows the action to create a release
-  contents: write
+  contents: read
 
 env:
   CI: true
   RELEASE: true
-  DISABLE_TESTS: true
   IS_DEFAULT_REPO: ${{ github.repository == 'fluxo-kt/fluxo-io' }}
   BUILD_NUMBER: ${{ github.run_number }}
   SCM_TAG: ${{ github.sha }}
@@ -23,7 +21,9 @@ env:
 
 jobs:
   gh_release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
 
     steps:
       - name: Harden Runner
@@ -33,7 +33,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Prepare release settings
         run: |
@@ -52,18 +52,15 @@ jobs:
           echo "RELEASE_SUFFIX=$RELEASE_SUFFIX" >> $GITHUB_ENV
 
       - name: GitHub Release
-        # https://github.com/anton-yurchenko/git-release#readme
-        uses: docker://antonyurchenko/git-release:latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DRAFT_RELEASE: "true"
-          PRE_RELEASE: "${{ env.RELEASE_PRE }}"
-          RELEASE_NAME_SUFFIX: "${{ env.RELEASE_SUFFIX }}"
-          CHANGELOG_FILE: "CHANGELOG.md"
-          ALLOW_EMPTY_CHANGELOG: "false"
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          body_path: CHANGELOG.md
+          draft: true
+          name: ${{ github.ref_name }}${{ env.RELEASE_SUFFIX }}
+          prerelease: ${{ env.RELEASE_PRE }}
 
   publish_release:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Harden Runner
@@ -73,23 +70,27 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
-          distribution: graalvm
-          java-version: 23
+          distribution: temurin
+          java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
         with:
           cache-disabled: true
           cache-read-only: true
+          validate-wrappers: true
+
+      - name: Verify release build
+        run: ./gradlew check apiCheck --no-configuration-cache --stacktrace --scan
 
       - name: Publish
         id: central_portal
-        if: env.IS_DEFAULT_REPO
+        if: env.IS_DEFAULT_REPO == 'true'
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -97,7 +98,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_IN_MEMORY_KEY_ID }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
         run: >
-          ./gradlew publishToMavenCentral -DDISABLE_TESTS
+          ./gradlew publishToMavenCentral
           --rerun-tasks --no-build-cache --no-configuration-cache --stacktrace --scan
 
 

@@ -19,7 +19,7 @@ jobs:
       github.event.issue.pull_request &&
       (github.event.comment.body == '/ff' || contains(github.event.comment.body, '/fast-forward')) &&
       (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
@@ -35,14 +35,14 @@ jobs:
             github.com:443
 
       - name: React to the comment right away
-        uses: dkershner6/reaction-action@v2
+        uses: dkershner6/reaction-action@97ede302a1b145b3739dec3ca84a489a34ef48b5 # v2
         continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           reaction: "rocket"
 
       - name: Fast-forward and push
-        uses: sequoia-pgp/fast-forward@v1
+        uses: sequoia-pgp/fast-forward@ea7628bedcb0b0b96e94383ada458d812fca4979 # v1.0.0
         with:
           merge: true
           # To reduce the workflow's verbosity, use 'on-error'

@@ -10,7 +10,7 @@ inputs:
   files:
     description: Comma-separated glob pattern list of files to check
     required: false
-    default: '.github/workflows/*.yml, .github/actions/**.yaml'
+    default: '.github/workflows/*.yml, .github/actions/**.yml, .github/actions/**.yaml'
   flags:
     description: Extra flags for the actionlint
     required: false
@@ -27,7 +27,7 @@ runs:
     # https://github.com/rhysd/actionlint/releases
     # https://github.com/gmazzo/gradle-codeowners-plugin/pull/66/files
     - name: actionlint
-      uses: raven-actions/actionlint@v1
+      uses: raven-actions/actionlint@789059c543ab20522fb3e7240794e13b0f69ad67 # v1.0.3
       id: al
       with:
         fail-on-error: ${{ inputs.fail-on-error }}

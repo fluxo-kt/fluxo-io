@@ -41,6 +41,29 @@ internal class SharedCloseableTest {
     }
 
     @Test
+    fun onSharedCloseFailureAfterRetainIsReportedToListenersAndRethrown() {
+        val closeFailure = IOException("close")
+        val listenerFailure = IllegalStateException("listener")
+        val listenerCause = AtomicReference<Throwable?>()
+        val closeable = TestCloseable { throw closeFailure }
+
+        closeable.retain()
+        closeable.addOnSharedCloseListener { cause ->
+            listenerCause.set(cause)
+            throw listenerFailure
+        }
+
+        closeable.close()
+        val thrown = assertFailsWith<IOException> { closeable.close() }
+
+        assertEquals(closeFailure, thrown)
+        assertEquals(closeFailure, listenerCause.get())
+        assertEquals(listOf(listenerFailure), thrown.suppressed.toList())
+        assertFalse(closeable.isOpen)
+        assertEquals(1, closeable.closeCount)
+    }
+
+    @Test
     fun throwingListenersDoNotPreventLaterListenersAndPreserveSuppressedFailures() {
         val closeable = TestCloseable()
         val first = IllegalStateException("first")

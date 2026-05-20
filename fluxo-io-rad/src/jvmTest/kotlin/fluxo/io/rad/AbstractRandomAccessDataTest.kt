@@ -241,6 +241,17 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
+    fun subsectionOutlivesParentClose() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val subsection = rad.subsection(1, 1)
+        inputStream.close()
+
+        rad.close()
+
+        assertEquals(1, subsection.readByteAt(0))
+        subsection.close()
+    }
+
+    @Test
     fun inputStreamReadPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(1, 2)
         val inputStream = subsection.asInputStream()

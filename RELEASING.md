@@ -53,6 +53,9 @@ Before publishing a release deployment, verify:
   license, developer, and SCM fields.
 - `compileOnly` dependencies do not become runtime dependencies.
 - Non-SNAPSHOT artifacts are signed.
+- Published artifacts have GitHub provenance attestations. Verify a downloaded
+  artifact with:
+  `gh attestation verify <artifact> --repo fluxo-kt/fluxo-io`.
 
 ## Rollback
 

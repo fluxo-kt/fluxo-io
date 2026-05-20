@@ -1,0 +1,94 @@
+name: Prepare Central attestation subjects
+description: Collect Maven Central publication artifacts into a SHA-256 subject file.
+
+inputs:
+  maven-local-group-dir:
+    description: Maven local group directory that contains the publication outputs.
+    default: ''
+    required: false
+  project-version:
+    description: Project version to collect from Maven local.
+    default: ''
+    required: false
+  require-signatures:
+    description: Require ASCII-armored signatures in the subject set.
+    default: 'false'
+    required: false
+
+outputs:
+  checksums:
+    description: Path to the generated SHA-256 subject checksum file.
+    value: ${{ steps.collect.outputs.checksums }}
+
+runs:
+  using: composite
+  steps:
+    - id: collect
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        maven_dir="${{ inputs.maven-local-group-dir }}"
+        if [[ -z "$maven_dir" ]]; then
+          maven_dir="$HOME/.m2/repository/io/github/fluxo-kt"
+        fi
+        project_version="${{ inputs.project-version }}"
+        if [[ -z "$project_version" ]]; then
+          project_version="$(sed -n 's/^version = "\(.*\)"/\1/p' gradle/libs.versions.toml)"
+        fi
+        files="${RUNNER_TEMP}/central-attestation-subjects.files"
+        checksums="${RUNNER_TEMP}/central-attestation-subjects.sha256"
+
+        : > "$files"
+        find "$maven_dir" -type f -print0 | sort -z | while IFS= read -r -d '' file; do
+          case "$file" in
+            "$maven_dir"/fluxo-io-rad*/"$project_version"/*)
+              case "$file" in
+                *.jar|*.klib|*.aar|*.pom|*.module|*.asc|*.sha256|*.sha512)
+                  printf '%s\0' "$file"
+                  ;;
+              esac
+              ;;
+          esac
+        done > "$files"
+
+        if [[ ! -s "$files" ]]; then
+          echo "::error::No Central publication subjects were found for $project_version under $maven_dir."
+          exit 1
+        fi
+
+        : > "$checksums"
+        while IFS= read -r -d '' file; do
+          digest="$(shasum -a 256 "$file" | awk '{ print $1 }')"
+          printf '%s  %s\n' "$digest" "$(basename "$file")" >> "$checksums"
+        done < "$files"
+
+        grep -q '\.jar' "$checksums" || {
+          echo "::error::Central attestation subjects must include published jars."
+          exit 1
+        }
+        grep -q '\.klib' "$checksums" || {
+          echo "::error::Central attestation subjects must include published KLIBs."
+          exit 1
+        }
+        grep -q '\.aar' "$checksums" || {
+          echo "::error::Central attestation subjects must include the Android AAR."
+          exit 1
+        }
+        grep -q '\.pom' "$checksums" || {
+          echo "::error::Central attestation subjects must include generated POMs."
+          exit 1
+        }
+        grep -q '\.module' "$checksums" || {
+          echo "::error::Central attestation subjects must include Gradle module metadata."
+          exit 1
+        }
+        if [[ "${{ inputs.require-signatures }}" == "true" ]]; then
+          grep -q '\.asc' "$checksums" || {
+            echo "::error::Release attestation subjects must include signatures."
+            exit 1
+          }
+        fi
+
+        cat "$checksums"
+        echo "checksums=$checksums" >> "$GITHUB_OUTPUT"

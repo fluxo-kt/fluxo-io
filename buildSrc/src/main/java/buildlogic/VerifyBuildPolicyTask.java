@@ -161,7 +161,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         if (!containsLiveLiteral(text, SETUP_GRADLE_PINNED_REF)) {
             failures.add(".github/workflows:1: setup-gradle must use the pinned v6.1.0 commit SHA.");
         }
-        if (!containsLiveLiteral(text, "publishToMavenCentral")) {
+        if (!containsLiveGradleCommand(text, "publishToMavenCentral")) {
             failures.add(".github/workflows:1: Central Portal publish workflows must call publishToMavenCentral.");
         }
     }
@@ -172,7 +172,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
             List<String> failures
     ) {
         if ((path.equals(".github/workflows/build.yml") || path.equals(".github/workflows/release.yml"))
-                && !containsLiveLiteral(text, "publishToMavenCentral")) {
+                && !containsLiveGradleCommand(text, "publishToMavenCentral")) {
             failures.add(path + ":1: Central Portal publish workflow must call publishToMavenCentral.");
         }
     }
@@ -242,16 +242,27 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
             List<String> failures
     ) {
         int usesIndent = leadingSpaces(lines.get(usesLineIndex));
+        boolean inWith = false;
+        int withIndent = -1;
         for (int i = usesLineIndex + 1; i < lines.size(); i++) {
             String rawLine = lines.get(i);
             String trimmed = rawLine.trim();
             if (trimmed.isEmpty() || isCommentLine(trimmed)) {
                 continue;
             }
-            if (leadingSpaces(rawLine) <= usesIndent && trimmed.startsWith("- ")) {
+            int indent = leadingSpaces(rawLine);
+            if (indent < usesIndent && trimmed.startsWith("- ")) {
                 break;
             }
-            if (trimmed.equals("validate-wrappers: true")) {
+            if (!inWith && indent == usesIndent && trimmed.equals("with:")) {
+                inWith = true;
+                withIndent = indent;
+                continue;
+            }
+            if (inWith && indent <= withIndent) {
+                inWith = false;
+            }
+            if (inWith && trimmed.equals("validate-wrappers: true")) {
                 return;
             }
         }
@@ -284,6 +295,20 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                 continue;
             }
             if (line.contains(literal)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsLiveGradleCommand(String text, String taskName) {
+        String command = "./gradlew " + taskName;
+        for (String line : text.split("\\R")) {
+            String trimmed = line.trim();
+            if (isCommentLine(trimmed)) {
+                continue;
+            }
+            if (line.contains(command)) {
                 return true;
             }
         }

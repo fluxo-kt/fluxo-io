@@ -87,7 +87,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         for (RequiredLiteral required : REQUIRED_LITERALS) {
             File file = new File(rootDir, required.relativePath());
             String text = Files.readString(file.toPath());
-            if (!text.contains(required.value())) {
+            if (!containsLiveLiteral(text, required.value())) {
                 failures.add(required.relativePath()
                         + ":1: "
                         + required.rationale()
@@ -134,13 +134,13 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
         }
 
         String text = workflowText.toString();
-        if (!text.contains(SETUP_GRADLE_PINNED_REF)) {
+        if (!containsLiveLiteral(text, SETUP_GRADLE_PINNED_REF)) {
             failures.add(".github/workflows:1: setup-gradle must use the pinned v6.1.0 commit SHA.");
         }
-        if (!text.contains("validate-wrappers: true")) {
+        if (!containsLiveLiteral(text, "validate-wrappers: true")) {
             failures.add(".github/workflows:1: setup-gradle wrapper validation must be enabled.");
         }
-        if (!text.contains("publishToMavenCentral")) {
+        if (!containsLiveLiteral(text, "publishToMavenCentral")) {
             failures.add(".github/workflows:1: Central Portal publish workflows must call publishToMavenCentral.");
         }
     }
@@ -205,6 +205,26 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
             }
         }
         return true;
+    }
+
+    private static boolean containsLiveLiteral(String text, String literal) {
+        for (String line : text.split("\\R")) {
+            String trimmed = line.trim();
+            if (isCommentLine(trimmed)) {
+                continue;
+            }
+            if (line.contains(literal)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isCommentLine(String trimmedLine) {
+        return trimmedLine.startsWith("#")
+                || trimmedLine.startsWith("//")
+                || trimmedLine.startsWith("*")
+                || trimmedLine.startsWith("<!--");
     }
 
     private static void addPolicyFailure(

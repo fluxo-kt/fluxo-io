@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+
 import com.vanniktech.maven.publish.DeploymentValidation
 
 plugins {
@@ -101,6 +103,12 @@ fkcSetupMultiplatform(
 
     commonNative.main.dependencies {
         implementation(libs.stately.concurrent.collections)
+    }
+}
+
+apiValidation {
+    klib {
+        enabled = true
     }
 }
 

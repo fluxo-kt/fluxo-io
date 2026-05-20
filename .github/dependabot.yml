@@ -11,6 +11,27 @@ updates:
       prefix: "build(deps)"
     schedule:
       interval: "monthly"
+    groups:
+      kotlin-kotlinx:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.kotlinx*"
+      android-androidx:
+        patterns:
+          - "com.android.*"
+          - "androidx.*"
+      gradle-plugins:
+        patterns:
+          - "gradle"
+          - "com.gradle*"
+          - "com.vanniktech*"
+          - "org.jetbrains.dokka*"
+          - "org.jetbrains.kotlinx.binary-compatibility-validator*"
+          - "org.jetbrains.kotlinx.kover*"
+          - "com.osacky.doctor*"
+      fluxo-plugins:
+        patterns:
+          - "io.github.fluxo-kt*"
     reviewers:
       - "amal"
     labels:
@@ -23,6 +44,10 @@ updates:
       prefix: "ci(GitHub)"
     schedule:
       interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     reviewers:
       - "amal"
     labels:

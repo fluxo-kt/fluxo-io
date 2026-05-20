@@ -109,7 +109,7 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [license](LICENSE) file for details.
 
 
-[badge-kotlin]: http://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
+[badge-kotlin]: http://img.shields.io/badge/Kotlin-2.2.21-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
 [badge-kotlin-link]: https://github.com/JetBrains/kotlin/releases
 
 [badge-kmp]: http://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=7F52FF&labelColor=2B2B2B

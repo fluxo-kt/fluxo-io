@@ -37,9 +37,11 @@ repositories {
 3. Run `./gradlew publishToMavenLocal`.
 4. Inspect generated POMs and artifacts under
    `~/.m2/repository/io/github/fluxo-kt/fluxo-io-rad*`.
-5. Push a signed release tag `v<version>`.
-6. Let `.github/workflows/release.yml` run `publishToMavenCentral`.
-7. Review the deployment in Central Portal, then publish it manually.
+5. Finalize `CHANGELOG.md` for `v<version>`; the GitHub release draft uses it
+   as the release body.
+6. Push a signed release tag `v<version>`.
+7. Let `.github/workflows/release.yml` run `publishToMavenCentral`.
+8. Review the deployment in Central Portal, then publish it manually.
 
 ## Verification
 

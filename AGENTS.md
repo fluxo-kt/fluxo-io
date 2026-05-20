@@ -89,10 +89,11 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   combine mutation plus later observation (for example `close(); isOpen`) in
   one operation; expose the observation as a separate operation or deterministic
   regression test.
-- CI runs across macOS/Windows/Ubuntu and multiple JDKs; SNAPSHOT
-  publishes only on macOS push to default branch (see
-  `.github/workflows/build.yml`). CodeQL is gated by the `CODE_QL` env
-  var. Dependabot PRs are auto-amended by `pr-baseline.yml`.
+- CI runs across macOS/Windows/Ubuntu on JDK 21. SNAPSHOT publishing is a
+  separate macOS job after the matrix succeeds, only on default-branch pushes
+  when the catalog version ends with `-SNAPSHOT`. `pr-baseline.yml` is a
+  manual same-repository baseline-refresh workflow, not automatic Dependabot
+  handling.
 
 ## Adding a new RAD impl (canonical recipe)
 1. JVM: `internal class FooRad(access, offset, size) :

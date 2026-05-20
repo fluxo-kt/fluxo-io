@@ -37,7 +37,6 @@ jobs:
     name: 'Check ${{ matrix.os }}, JDK 21'
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
-    if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     env:
       GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: false
 
@@ -134,7 +133,7 @@ jobs:
 
       - name: Upload code coverage to Codecov
         continue-on-error: true
-        if: (success() || failure()) && !contains(github.event.head_commit.message, 'coverage skip')
+        if: success() || failure()
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         env:
           OS: ${{ matrix.os }}

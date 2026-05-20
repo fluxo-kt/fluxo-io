@@ -366,6 +366,8 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
             new ForbiddenLiteral("kotlin.mpp.import.enableKgp" + "DependencyResolution=true", "Do not restore obsolete KGP dependency resolution flags."),
             new ForbiddenLiteral("kotlin.mpp.androidSourceSet" + "LayoutVersion=2", "Do not restore the old Android source-set layout flag."),
             new ForbiddenLiteral("org.gradle.configure" + "ondemand=true", "Configuration-on-demand is not compatible with this build policy."),
+            new ForbiddenLiteral("ci " + "skip", "Build verification must not be suppressible by commit-message tokens."),
+            new ForbiddenLiteral("coverage " + "skip", "CI reporting must not be suppressible by commit-message tokens."),
             new ForbiddenLiteral("tsApiChecks = " + "false", "TypeScript API checks are required."),
             new ForbiddenLiteral("ubuntu" + "-latest", "Runner images must be pinned to explicit OS versions."),
             new ForbiddenLiteral("macos" + "-latest", "Runner images must be pinned to explicit OS versions."),

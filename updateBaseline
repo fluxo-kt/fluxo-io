@@ -31,7 +31,7 @@ echo "========================================"
 echo "== RUN DEPENDENCY VERIFICATION GRAPH =="
 echo "========================================"
 
-./gradlew ${GRADLE_BASE_ARGS} --write-verification-metadata sha256,pgp --refresh-keys ${VERIFY_TASKS} || EXIT_CODE=100
+./gradlew ${GRADLE_BASE_ARGS} --write-verification-metadata sha256,pgp --refresh-keys --export-keys ${VERIFY_TASKS} || EXIT_CODE=100
 
 if [ ${EXIT_CODE} -ne 0 ]; then
   echo ""
@@ -50,7 +50,7 @@ echo "===================================="
 # -U: Refresh dependencies
 #COMMON_TASKS="${COMMON_TASKS} --rerun-tasks -U"
 
-./gradlew ${GRADLE_BASE_ARGS} --write-verification-metadata sha256,pgp --refresh-keys kotlinUpgradeYarnLock ${BASELINE_TASKS} || EXIT_CODE=101
+./gradlew ${GRADLE_BASE_ARGS} --write-verification-metadata sha256,pgp --refresh-keys --export-keys kotlinUpgradeYarnLock ${BASELINE_TASKS} || EXIT_CODE=101
 
 if [ ${EXIT_CODE} -eq 0 ]; then
   ./gradlew ${GRADLE_BASE_ARGS} kotlinUpgradeYarnLock ${COMMON_TASKS} || EXIT_CODE=102

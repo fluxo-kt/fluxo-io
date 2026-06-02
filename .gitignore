@@ -15,6 +15,12 @@ build/
 local.properties
 projectFilesBackup*/
 
+### Gradle dependency verification ###
+# Binary keyring is a regenerable cache (./updateBaseline re-exports it).
+# The reviewable ASCII gradle/verification-keyring.keys is committed instead so
+# CI verifies signatures against local key material, not flaky public keyservers.
+gradle/verification-keyring.gpg
+
 ### OS ###
 .DS_Store
 Thumbs.db

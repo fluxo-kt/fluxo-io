@@ -150,9 +150,13 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   correct — keep both.
 - **`publishSnapshot` (build.yml) auto-fires on a `dev` push** when the catalogue
   version ends `-SNAPSHOT` (gated `event==push && repo==fluxo-kt/fluxo-io &&
-  ref==default_branch`). Merging to `dev` *is* a publish attempt; it reds (in
-  isolation, matrix stays green) until the five publish secrets exist. Pushing a
-  feature branch does not publish.
+  ref==default_branch`) — it reds in isolation (matrix stays green) until the five
+  publish secrets exist. Pushing a feature branch does not publish. **Trap: a `/ff`
+  land does NOT trigger it.** The fast-forward push is authored by `GITHUB_TOKEN`,
+  and GitHub suppresses workflow triggers for `GITHUB_TOKEN` pushes (recursion
+  guard) — so build.yml/publishSnapshot do not run on a `/ff` merge. Verified: dev
+  FF to a new tip produced zero build.yml runs. To actually publish a snapshot, push
+  to `dev` with a real user/PAT (or dispatch the publish manually) — not via `/ff`.
 - **dep-submission graph is an allowlist, not a denylist.**
   `DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS=".*(Compile|Runtime)Classpath"` (full-
   string `String.matches`) ships only consumer-facing resolved classpaths. The

@@ -22,3 +22,12 @@ jobs:
 
       - name: Dependency Review
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # jsdiff DoS (CVE-2026-24001, LOW) in diff@7.0.0 — a Kotlin/JS *build-toolchain*
+          # transitive (mocha/kotlin-web-helpers) in .kotlin-js-store/yarn.lock, never shipped in
+          # the published artifact. GitHub mis-scopes every yarn.lock dep as `runtime` (so
+          # fail-on-scopes can't help), and diff is semver-major-pinned (^7.0.0) below the 8.0.3
+          # fix, so it can't be bumped out. Pre-existing on dev (diff@5.2.0 carries the same GHSA);
+          # this branch shuffles one vulnerable version to another, adding no consumer-facing risk.
+          # Strictness is preserved for shipped (JVM/actions) ecosystems — only this GHSA is waived.
+          allow-ghsas: GHSA-73rr-hh4g-fpgx

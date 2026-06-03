@@ -84,7 +84,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: matrix.os == 'ubuntu-24.04'
-        uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        uses: github/codeql-action/init@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         with:
           languages: ${{ matrix.language }}
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -102,7 +102,7 @@ jobs:
       - name: Upload sarif report (Detekt)
         if: always() && matrix.os == 'macos-15'
           && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH == 'true')
-        uses: github/codeql-action/upload-sarif@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         continue-on-error: true
         with:
           sarif_file: build/detekt-merged.sarif
@@ -111,7 +111,7 @@ jobs:
       - name: Upload sarif report (Lint)
         if: always() && matrix.os == 'macos-15'
           && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH == 'true')
-        uses: github/codeql-action/upload-sarif@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         continue-on-error: true
         with:
           sarif_file: build/lint-merged.sarif
@@ -136,7 +136,7 @@ jobs:
       - name: Upload code coverage to Codecov
         continue-on-error: true
         if: success() || failure()
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         env:
           OS: ${{ matrix.os }}
           JAVA_VERSION: 21
@@ -151,7 +151,7 @@ jobs:
 
       - name: Upload the build report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: '${{ matrix.os }}-JDK21-build-report'
           path: |
@@ -164,7 +164,7 @@ jobs:
       - name: Perform CodeQL Analysis
         if: matrix.os == 'ubuntu-24.04'
         timeout-minutes: 6
-        uses: github/codeql-action/analyze@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        uses: github/codeql-action/analyze@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         env:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
         with:

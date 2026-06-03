@@ -17,6 +17,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicBoolean
@@ -270,6 +271,32 @@ internal abstract class AbstractRandomAccessDataTest(
         // The parent shares the same accessor and was never closed: it must stay usable.
         assertEquals(1, rad.readByteAt(1))
         assertEquals(BYTES, rad.readAllBytes())
+    }
+
+    /**
+     * Reading a resource-backed holder after it has been closed must fail cleanly with
+     * [IOException], never return stale bytes and never touch a freed resource. For a
+     * memory-mapped/direct `ByteBuffer` the freed region is unmapped, so an unguarded read is a
+     * native use-after-free that crashes the JVM; a stream pool would leak a re-created stream.
+     *
+     * Exercises every resource-touching entry point, because each may have a per-impl perf
+     * override that bypasses the shared `read(bytes)` primitive: `readByteAt`/`readFrom` plus
+     * `read(ByteBuffer)` and `transferTo`. Dropping the guard from any one override must turn
+     * this red — otherwise the gate covers only some paths and a UAF leaks through the rest.
+     *
+     * [RandomAccessDataArrayTest] overrides this: a `ByteArray` holds no releasable resource, so
+     * its `close()` is a no-op and reads stay valid — there is nothing to make unsafe.
+     */
+    @Test
+    open fun readingClosedHolderThrowsNotCrashes() = runTest(timeout = DEFAULT_TIMEOUT) {
+        inputStream.close()
+        rad.close() // root was the only holder, so the shared resource is now freed
+
+        val sink = Channels.newChannel(ByteArrayOutputStream())
+        assertFailsWith<IOException> { rad.readByteAt(0) }
+        assertFailsWith<IOException> { rad.readFrom(0, 1) }
+        assertFailsWith<IOException> { rad.read(ByteBuffer.allocate(1), 0) }
+        assertFailsWith<IOException> { rad.transferTo(sink) }
     }
 
     @Test

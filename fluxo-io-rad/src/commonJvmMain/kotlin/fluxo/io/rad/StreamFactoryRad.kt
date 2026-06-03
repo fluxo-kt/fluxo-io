@@ -5,6 +5,7 @@ import fluxo.io.EOFException
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
+import fluxo.io.internal.checkOpen
 import fluxo.io.rad.StreamFactoryRad.StreamFactory
 import fluxo.io.rad.StreamFactoryRad.StreamFactoryAccess
 import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
@@ -62,6 +63,7 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
         override val size: Long get() = factory.size
 
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
+            checkOpen()
             // Try to find a suitable stream in the pool or open new.
             // Use TreeMap thread safely.
             val pool = pool
@@ -90,6 +92,11 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                     val newPosition = position + read
                     if (newPosition < srcLen) {
                         synchronized(pool) {
+                            // Recheck under the pool lock: if closed concurrently, onSharedClose
+                            // already drained the pool, so a put here would leak this stream
+                            // (never drained again). `isOpen` flips false before onSharedClose
+                            // runs, and the drain also holds this lock, so the check is exact.
+                            if (!isOpen) return@synchronized
                             val prev = pool.put(newPosition, stream)
                             closeStream = false
 

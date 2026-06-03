@@ -3,6 +3,7 @@ package fluxo.io.rad
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
+import fluxo.io.internal.checkOpen
 import fluxo.io.nio.limitCompat
 import fluxo.io.nio.positionCompat
 import fluxo.io.nio.releaseCompat
@@ -49,7 +50,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
 
 
     override fun readByteAt0(position: Long): Int =
-        access.api.get(toAccessPos(position)).toInt() and MAX_BYTE
+        access.readByteAt(toAccessPos(position))
 
     @Throws(IOException::class)
     override fun read(buffer: ByteBuffer, position: Long): Int {
@@ -90,10 +91,16 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
 
         override val size: Long get() = api.capacity().toLong()
 
+        fun readByteAt(position: Int): Int = synchronized(api) {
+            checkOpen()
+            api.get(position).toInt() and MAX_BYTE
+        }
+
         @Throws(IndexOutOfBoundsException::class)
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
             val buf = api
             synchronized(buf) {
+                checkOpen()
                 buf.limitCompat(buf.capacity())
                 buf.positionCompat(position.toInt())
                 val len = min(buf.remaining(), length)
@@ -107,6 +114,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
             val pos = position.toInt()
             val buf = api
             synchronized(buf) {
+                checkOpen()
                 val capacity = buf.capacity()
                 var len = capacity - pos
                 buf.limitCompat(pos + len)
@@ -129,6 +137,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
                 return 0
             }
             synchronized(buf) {
+                checkOpen()
                 buf.limitCompat(position + len)
                 buf.positionCompat(position)
                 var written = 0
@@ -140,7 +149,9 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
         }
 
         override fun onSharedClose() {
-            api.releaseCompat()
+            // Serialise the unmap with reads on the same monitor so an in-flight read can never
+            // observe a half-freed buffer; see [checkOpen]. [isOpen] is already false here.
+            synchronized(api) { api.releaseCompat() }
             super.onSharedClose()
         }
     }

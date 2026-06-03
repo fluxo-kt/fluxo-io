@@ -169,6 +169,16 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   under github-script@v7). `setup-gradle` is special — its allowed SHA is the
   hardcoded `SETUP_GRADLE_PINNED_REF` constant in `VerifyBuildPolicyTask.java`;
   bumping the workflow pin requires editing that constant in the same change.
+- **harden-runner `egress-policy: block` allowlists rot too.** Any host an action
+  *transitively* reaches must be listed, and GitHub migrates those hosts. The
+  actionlint job downloads its binary via `@actions/tool-cache` from a release
+  asset `browser_download_url`, which 302-redirects off `github.com` to
+  **`release-assets.githubusercontent.com`** (the current asset host, replacing the
+  legacy `objects.githubusercontent.com` — keep both listed). Cache-hit runs (push)
+  hide the gap; cache-miss (PR) reds with `ECONNREFUSED`. To re-derive the real host
+  for any release download: `curl -sIL <browser_download_url> | grep -i ^location`.
+  Don't reverse-DNS the blocked IP — harden-runner reports the destination IP, not
+  the hostname. Never "fix" this by downgrading `block`→`audit` (disables blocking).
 - **Don't strand local-only branches.** Push WIP to `origin` (bus-factor; a
   single local copy is what stranded the toolchain modernization). Divergence
   happens — expect to rebase onto `origin/dev` before an `--ff-only` land.
@@ -228,6 +238,13 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   flagged npm transitives are Kotlin/JS *dev-toolchain* deps, never shipped —
   benign. If the jobs get noisy, the only lever is an `npm` ecosystem block in
   `dependabot.yml` scoped to `/.kotlin-js-store` with a catch-all `ignore`.
+  The PR-time `dependency-review` gate sees the same lockfile and fails only on
+  **added** vulnerable deps. GitHub scopes every yarn.lock entry as `runtime`
+  (mocha, typescript included), so `fail-on-scopes` can't filter them; waive a
+  proven dev-toolchain advisory per-GHSA via `allow-ghsas` (keeps low+ strictness
+  for shipped JVM/actions deps) rather than blanket-raising `fail-on-severity`.
+  Verify scope/manifest with the dependency-graph compare API
+  (`gh api repos/<o>/<r>/dependency-graph/compare/<base>...<head>`).
 - Project flags in `gradle.properties` (`MAX_DEBUG`, `COMPOSE_METRICS`,
   `USE_KOTLIN_DEBUG`, `LOAD_KMM_CODE_COMPLETION`) are read by
   `fluxo-kmp-conf`; semantics live in that plugin.

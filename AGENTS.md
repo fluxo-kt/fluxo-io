@@ -52,7 +52,15 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   `subsection()` calls `retain()` on the underlying
   `SharedDataAccessor`; closing decrements; resource frees on the last
   close. **Each subsection MUST be closed independently** — otherwise the
-  underlying handle leaks.
+  underlying handle leaks. Conversely, **`close()` is idempotent per holder**
+  (`AccessorAwareRad` has a private atomicfu `closed` guard, `final` override):
+  a holder owns exactly one retain, so it must release at most once. Without the
+  guard a `Closeable`-legal double-close (`use{}` + manual, defensive close)
+  would decrement the *shared* refcount twice and prematurely free the resource
+  still used by the parent/siblings — `IOException` for file impls, a **JVM
+  `SIGABRT` use-after-free** for direct/mmap `ByteBuffer`. Regression:
+  `AbstractRandomAccessDataTest.doubleClosingSubsectionKeepsSharedResourceForParent`
+  runs across every impl, so a new RAD that drops the guard can't pass CI.
 - `SharedDataAccessor` owns the JVM resource and the only
   `read(bytes, position, offset, length)` primitive.
   `AccessorAwareRad<A>` wraps it with offset/size + bounds checks

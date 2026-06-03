@@ -150,20 +150,14 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   correct — keep both.
 - **`publishSnapshot` (build.yml) auto-fires on a `dev` push** when the catalogue
   version ends `-SNAPSHOT` (gated `event==push && repo==fluxo-kt/fluxo-io &&
-  ref==default_branch`) — it reds in isolation (matrix stays green) until the five
-  publish secrets exist. Pushing a feature branch does not publish. **Trap: a `/ff`
-  land does NOT trigger it.** The fast-forward push is authored by `GITHUB_TOKEN`,
-  and GitHub suppresses workflow triggers for `GITHUB_TOKEN` pushes (recursion
-  guard) — so build.yml/publishSnapshot do not run on a `/ff` merge. Verified: dev
-  FF to a new tip produced zero build.yml runs. To actually publish a snapshot, push
-  to `dev` with a real user/PAT (or dispatch the publish manually) — not via `/ff`.
-  When it *does* fire without secrets, the steps reading `secrets.MAVEN_CENTRAL_*`/
-  `SIGNING_*` hard-fail → the job reds meaning "secrets absent", not "publish broken"
-  (a false-red class). Proper fix *if that red becomes noise*: a preflight job emitting
-  a `has_secrets` boolean output and gating `publishSnapshot` on it (secrets are
-  unreadable in a job-level `if:`). NOT `continue-on-error` — that would mask real
-  publish failures too. Deferred deliberately: it doesn't fire on `/ff` lands, and its
-  only firing window (a real push/dispatch) coincides with secret provisioning.
+  ref==default_branch`); a feature-branch push does not publish. **Trap: a `/ff` land
+  does NOT trigger it** — the FF push is authored by `GITHUB_TOKEN`, and GitHub
+  suppresses workflow triggers for `GITHUB_TOKEN` pushes (recursion guard). To publish
+  a snapshot, push `dev` with a real user/PAT or dispatch manually — not via `/ff`.
+  Without the five publish secrets the publish steps hard-fail → a false-red (secrets
+  absent, not publish broken); if it turns noisy, gate via a preflight `has_secrets`
+  job (secrets are unreadable in a job-level `if:`), NOT `continue-on-error` (masks
+  real publish failures).
 - **dep-submission graph is an allowlist, not a denylist.**
   `DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS=".*(Compile|Runtime)Classpath"` (full-
   string `String.matches`) ships only consumer-facing resolved classpaths. The
@@ -172,52 +166,29 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   build tooling into the submitted graph → phantom
   `security_update_dependency_not_found` Dependabot jobs. Excluding build tooling
   from the *consumer* graph is accurate (consumers never see it), not vuln-hiding.
-  **Effectiveness gotcha (same GITHUB_TOKEN root as publishSnapshot):** the submitted
-  graph only refreshes when `dependency-submission.yml` actually runs (`push` to `dev` /
-  `workflow_dispatch` / Mon cron). A `/ff` land is GITHUB_TOKEN-authored → no `push`
-  trigger → the graph stays **stale**, so old Security-tab alerts linger even after the
-  in-tree fix (observed post-#29: build-tooling alerts + an assertj-core HIGH flagging
-  `<=3.27.6` though the catalogue was already on the patched `3.27.7`). After any `/ff`
-  that should refresh deps, run `gh workflow run dependency-submission.yml --ref dev` to
-  re-submit; the 4 `.kotlin-js-store/yarn.lock` npm alerts persist regardless (GitHub
-  auto-detects that lockfile; no per-path graph exclusion — inherent, benign).
-  **Stale-manifest zombie alerts (root-caused, NOT lag, NOT a broken fix):** the manual
-  re-submit produces a *clean* 42-pkg snapshot (verified: download the run's
-  `dependency_submission-dependency-submission.json` artifact — only consumer deps
-  androidx-annotation/kotlin-stdlib/jsr305/coroutines, zero bouncycastle/protobuf/commons-*/
-  httpclient), yet ~15 maven alerts persist. Reason: they sit on a *different* manifest
-  literally named **`settings.gradle.kts`** (`created_at == updated_at`, never refreshed)
-  submitted by the **old** `setup-gradle` auto-graph that the pre-modernization build.yml ran
-  on `dev` (`dependency-graph: …'generate-and-submit'…`, no allowlist → buildscript classpath
-  incl. tooling). #29 disabled that (`GITHUB_DEPENDENCY_GRAPH_ENABLED: false`) but the new
-  submitter uses a **different correlator** (`dependency_submission-dependency-submission`), so
-  it cannot overwrite the orphan. GitHub keeps the last snapshot per correlator
-  **indefinitely** and never auto-evicts when its producer stops — so the orphaned manifest's
-  alerts are zombies. **Root-cause eviction is NOT reliably possible — RESOLVED by `not_used`
-  dismissal (2026-06-03).** The empty-snapshot overwrite (POST `/repos/<o>/<r>/dependency-graph/
-  snapshots` under the orphan's correlator → its deps read as removed → auto-dismiss) was tried
-  under the derived correlator `build-buildAndCheck` (id 69645949, SUCCESS) and did NOT clear the
-  alerts in ~37 min. Why it can't be made reliable: **GitHub exposes no API to read an existing
-  submitted snapshot's correlator** (no GET/list; `/dependency-graph/sbom` aggregates without
-  correlator labels; legacy GraphQL `dependencyGraphManifests` is blind to submitted snapshots —
-  returns `dependenciesCount:0`), and setup-gradle's auto-submit correlator need not match the
-  standalone action's `<wf-name>-<job>` rule — so the orphan's true correlator is unrecoverable
-  and the overwrite can't target it. So the 15 were dismissed `not_used` (honest: build tooling,
-  never shipped, absent from the live allowlisted consumer graph). The orphan manifest persists →
-  a future CVE on those frozen tooling versions can raise a NEW alert; dismiss likewise. NEW
-  orphans are structurally prevented (auto-graph disabled + single stable-correlator submitter).
-  Diagnose via the submitted run artifact (ground truth — NOT the cached SBOM nor legacy GraphQL,
-  both blind to submitted-snapshot removals) + `gh api …/dependabot/alerts --jq '…manifest_path…'`.
-- **Dependabot proposes untagged re-publishes; adopt only endorsed versions.** It
-  reads a registry's `<versions>` *list*, not `<latest>`/upstream tags, so it can
-  suggest an artifact the maintainer never blessed. Cautionary case: `com.osacky.doctor
-  0.12.1` (PR #25) — no `v0.12.1` git tag (tags jump `v0.11.0→v0.12.0`), latest GitHub
-  release is `0.12.0`, POM byte-identical to 0.12.0, published 2.5 min after it, and the
-  Plugin Portal `<latest>`/`<release>` stay at `0.12.0`: a publish-mechanics re-cut, not
-  an upgrade. Rule: before folding a dep/plugin bump, confirm a matching upstream
-  tag/release AND registry `<latest>` — else keep the endorsed version and close the PR.
-  Dep-verification checksums the bytes you declare; it does NOT catch "non-endorsed", so
-  this review is the only gate.
+  **Stale graph after `/ff` (same GITHUB_TOKEN root as publishSnapshot):** the graph
+  refreshes only when `dependency-submission.yml` runs (`push` to `dev` / dispatch /
+  Mon cron); a `/ff` land is GITHUB_TOKEN-authored → no run → stale graph + lingering
+  Security-tab alerts. After a `/ff` that should refresh deps, run
+  `gh workflow run dependency-submission.yml --ref dev`. The 4 `.kotlin-js-store/yarn.lock`
+  npm alerts persist regardless (GitHub auto-detects that lockfile; no per-path
+  exclusion — inherent, benign). **Zombie maven alerts:** the pre-#29 `setup-gradle`
+  auto-graph submitted a `settings.gradle.kts` manifest (buildscript classpath incl.
+  tooling) under a *different correlator* than the live submitter; GitHub keeps the last
+  snapshot per correlator indefinitely, never auto-evicts a stopped producer, and exposes
+  **no API to read a submitted snapshot's correlator** (SBOM + legacy GraphQL are blind to
+  submitted snapshots) → a targeted empty-snapshot eviction can't reach the orphan, so
+  **dismiss `not_used`** (build tooling, never shipped). New orphans are structurally
+  prevented (auto-graph off via `GITHUB_DEPENDENCY_GRAPH_ENABLED: false` + single
+  stable-correlator submitter). Diagnose via the submitted-run artifact (ground truth,
+  not the cached SBOM) + `gh api …/dependabot/alerts --jq '…manifest_path…'`.
+- **Dependabot proposes untagged re-publishes; adopt only endorsed versions.** It reads
+  a registry's `<versions>` *list*, not `<latest>`/upstream tags, so it can suggest an
+  artifact the maintainer never blessed. Rule: before folding a dep/plugin bump, confirm
+  a matching upstream tag/release AND registry `<latest>`; else keep the endorsed version
+  and close the PR. Dep-verification checksums the bytes you declare, NOT "endorsed" — so
+  this review is the only gate. (Case: `com.osacky.doctor 0.12.1` — no `v0.12.1` tag,
+  Portal `<latest>` still 0.12.0, POM identical → a re-cut, not an upgrade.)
 - **Action pins rot.** Every remote action needs a 40-char SHA + `# vX.Y.Z`
   comment (policy-enforced); when bumping a major, verify Node-runtime compat
   (e.g. github-script v7/Node20 → v9/Node24). Pinned-action rot is real: a pinned

@@ -24,7 +24,7 @@ kotlinCoreLibraries = "2.2.21"
 # https://github.com/JetBrains/kotlin/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin
 # WARN: Don't forget to update kotlin version badge in ../README.md
-kotlin = "2.2.21"
+kotlin = "2.3.21"
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
@@ -57,7 +57,7 @@ dokka = "2.2.0"
 
 # AtomicFU: The idiomatic way to use atomic operations in Kotlin
 # https://github.com/Kotlin/kotlinx-atomicfu/releases.
-atomicfu = "0.32.1"
+atomicfu = "0.33.0"
 
 # Java Microbenchmark Harness (JMH)
 # https://github.com/openjdk/jmh/tags

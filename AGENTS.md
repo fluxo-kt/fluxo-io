@@ -146,7 +146,7 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   workflows must use `publishToMavenCentral`, with manual Portal release.
 - **Never re-add JitPack.** It is Linux-only and does not support KMP
   (jitpack#3853); this lib has Apple/Native targets, so a JitPack build emits a
-  broken metadata-incomplete artifact. Removal + the `jitpack.io` policy ban are
+  broken metadata-incomplete artifact. Removal + the JitPack repository ban are
   correct — keep both.
 - **`publishSnapshot` (build.yml) auto-fires on a `dev` push** when the catalogue
   version ends `-SNAPSHOT` (gated `event==push && repo==fluxo-kt/fluxo-io &&
@@ -227,14 +227,24 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   Symptom is `checksum is missing from verification metadata` for a `.pom` on the
   Plugin Portal. The fragile fix is per-version `<component>` entries — coroutines-bom
   had 1.7.3/1.9.0/1.11.0 yet CI pulled 1.8.0 → red. Trust the coordinate instead;
-  code JARs stay checksum-verified.
+  code JARs stay checksum-verified. The same single-OS limitation hits **toolchain
+  binaries** (`org.nodejs:node`, `com.github.webassembly:binaryen`): platform-
+  multiplied + version-churned, so `updateBaseline` captures only the runner's own
+  variant (was darwin-arm64-only → linux/windows CI red). Trust these by coordinate
+  too — non-shipped build infra from official immutable sources; shipped artifacts
+  stay checksummed. General rule: **verify shipped/library artifacts by checksum;
+  trust non-shipped build infrastructure (BOM/parent POMs + toolchain binaries) by
+  coordinate.**
 - `verifyBuildPolicy` enforces non-negotiable build/security invariants,
   including pinned actions/runners, Central Portal, TS API checks, and Dokka.
   **Threat model is accidental-regression, not anti-malicious:** it scans text
   for required/forbidden literals, so it is bypassable by string concat
   (`"jit"+"pack.io"`) and asserts literal *presence*, not effective value (both
   `useDokka = true` and a later `= false` present would pass). Don't mistake it
-  for tamper-proof; don't gold-plate it either.
+  for tamper-proof; don't gold-plate it either. It scans tracked **docs** too
+  (incl. AGENTS.md/CLAUDE.md), so never write a forbidden literal verbatim in
+  Markdown — name it descriptively (e.g. "the JitPack repository"); a bare
+  occurrence reds the gate (it bit the JitPack-ban note once).
 - AGP 9 Android-KMP has no `:fluxo-io-rad:lint` task here; use the discovered
   lint packaging tasks (`compileLint`, `androidCompileLintChecks`,
   `bundleAndroidMainLocalLintAar`) plus `check`.

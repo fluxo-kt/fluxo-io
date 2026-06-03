@@ -200,10 +200,15 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   passes `--export-keys`, writing `gradle/verification-keyring.keys` (ASCII,
   tracked, reviewable; the binary `.gpg` is gitignored). CI verifies signatures
   against this local keyring — never public keyservers. **Dirty-home trap:** a
-  green local `./gradlew check` does NOT prove CI will pass, because your
-  `~/.gradle` caches downloaded keys while CI starts clean; without the committed
-  keyring CI must fetch every `<trusted-key>` from flaky keyservers and reds on
-  ~126 buildscript-classpath artifacts. Keep keyservers *enabled* (no
+  green local `./gradlew check` does NOT prove CI will pass. Verification fires
+  only when an artifact *enters* a `GRADLE_USER_HOME` (download time), so a
+  populated home silently passes artifacts CI would reject; a warm daemon and a
+  stored config-cache entry further skip re-resolution. Three masking layers →
+  the ONLY faithful local repro is a **fresh empty `GRADLE_USER_HOME`** (copy in
+  `wrapper/` to skip the distro download, leave `modules-2` empty) run with
+  `--no-daemon` and cleared `.gradle/configuration-cache`. The same trap hides
+  missing keys: without the committed keyring CI must fetch every `<trusted-key>`
+  from flaky keyservers and reds on ~126 buildscript-classpath artifacts. Keep keyservers *enabled* (no
   `<key-servers enabled="false"/>`): the keyring satisfies verify-time, and the
   fallback is what lets `--refresh-keys` fetch material for newly-added deps —
   disabling it would break the regen writer path. After a dep change, re-run
@@ -216,6 +221,13 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   cannot reach, so `updateBaseline` *cannot* auto-generate their sha256. Trust
   the BOM by coordinate (metadata-only, no code, version-proof). Do NOT add
   per-version sha256 — it recreates the catch-22 on the next junit bump.
+  **Same class, same fix for `kotlinx-coroutines-bom` and `jackson-base`**
+  (Jackson parent POM): BOM/parent metadata POMs the CC path drags onto the
+  buildscript classpath at versions `updateBaseline` (`--no-CC`) never resolves.
+  Symptom is `checksum is missing from verification metadata` for a `.pom` on the
+  Plugin Portal. The fragile fix is per-version `<component>` entries — coroutines-bom
+  had 1.7.3/1.9.0/1.11.0 yet CI pulled 1.8.0 → red. Trust the coordinate instead;
+  code JARs stay checksum-verified.
 - `verifyBuildPolicy` enforces non-negotiable build/security invariants,
   including pinned actions/runners, Central Portal, TS API checks, and Dokka.
   **Threat model is accidental-regression, not anti-malicious:** it scans text

@@ -8,6 +8,7 @@ import fluxo.io.util.calcLength
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPositionAndMaxLength
 import kotlin.math.min
+import kotlinx.atomicfu.atomic
 
 @ThreadSafe
 internal abstract class AccessorAwareRad<A : SharedDataAccessor>
@@ -76,7 +77,22 @@ internal constructor(
     }
 
 
-    override fun close() {
-        access.close()
+    /**
+     * Guards [close] for one-shot release. Each holder — the root or any [subsection] —
+     * owns exactly one retain on the shared [access], so it must release at most once.
+     */
+    private val closed = atomic(false)
+
+    /**
+     * Idempotent, per the [java.io.Closeable] contract ("if already closed, invoking this
+     * method has no effect"). A repeated close must NOT decrement the shared refcount again:
+     * doing so would prematurely free the resource still in use by the parent or sibling
+     * subsections — for a memory-mapped buffer that is a use-after-free that crashes the JVM,
+     * not merely an [IOException]. Final so no subclass can reintroduce the unguarded path.
+     */
+    final override fun close() {
+        if (closed.compareAndSet(expect = false, update = true)) {
+            access.close()
+        }
     }
 }

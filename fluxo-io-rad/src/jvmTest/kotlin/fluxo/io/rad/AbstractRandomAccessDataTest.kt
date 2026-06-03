@@ -251,6 +251,27 @@ internal abstract class AbstractRandomAccessDataTest(
         subsection.close()
     }
 
+    /**
+     * Closing one holder more than once must be a no-op, per the [java.io.Closeable]
+     * contract ("if the stream is already closed then invoking this method has no
+     * effect"). A second close must NOT decrement the shared refcount again, else it
+     * prematurely frees the underlying resource still in use by the parent (and any
+     * sibling subsections), corrupting their reads.
+     */
+    @Test
+    fun doubleClosingSubsectionKeepsSharedResourceForParent() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val subsection = rad.subsection(1, 1)
+        // Drop the stream's hold so only {rad, subsection} retain the shared accessor.
+        inputStream.close()
+
+        subsection.close()
+        subsection.close()
+
+        // The parent shares the same accessor and was never closed: it must stay usable.
+        assertEquals(1, rad.readByteAt(1))
+        assertEquals(BYTES, rad.readAllBytes())
+    }
+
     @Test
     fun inputStreamReadPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
         val subsection = rad.subsection(1, 2)

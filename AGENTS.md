@@ -181,6 +181,27 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   that should refresh deps, run `gh workflow run dependency-submission.yml --ref dev` to
   re-submit; the 4 `.kotlin-js-store/yarn.lock` npm alerts persist regardless (GitHub
   auto-detects that lockfile; no per-path graph exclusion — inherent, benign).
+  **Stale-manifest zombie alerts (root-caused, NOT lag, NOT a broken fix):** the manual
+  re-submit produces a *clean* 42-pkg snapshot (verified: download the run's
+  `dependency_submission-dependency-submission.json` artifact — only consumer deps
+  androidx-annotation/kotlin-stdlib/jsr305/coroutines, zero bouncycastle/protobuf/commons-*/
+  httpclient), yet ~15 maven alerts persist. Reason: they sit on a *different* manifest
+  literally named **`settings.gradle.kts`** (`created_at == updated_at`, never refreshed)
+  submitted by the **old** `setup-gradle` auto-graph that the pre-modernization build.yml ran
+  on `dev` (`dependency-graph: …'generate-and-submit'…`, no allowlist → buildscript classpath
+  incl. tooling). #29 disabled that (`GITHUB_DEPENDENCY_GRAPH_ENABLED: false`) but the new
+  submitter uses a **different correlator** (`dependency_submission-dependency-submission`), so
+  it cannot overwrite the orphan. GitHub keeps the last snapshot per correlator
+  **indefinitely** and never auto-evicts when its producer stops — so the orphaned manifest's
+  alerts are zombies. To clear at the root: POST an empty snapshot to
+  `/repos/<o>/<r>/dependency-graph/snapshots` under the **old** correlator (derives as
+  `build-buildAndCheck` = old workflow `Build` + job `buildAndCheck`) so its deps read as
+  removed → alerts auto-dismiss; or dismiss the alerts `not_used` (honest — build tooling never
+  shipped, absent from the live consumer graph — but leaves the zombie manifest so a future CVE
+  on those pinned tooling versions could re-alert). Both are outward-facing security-state
+  writes → **owner decision**. Diagnose with: download the submitted artifact (ground truth,
+  not the aggregated `/dependency-graph/sbom` which merges every manifest incl. orphans), and
+  `gh api …/dependabot/alerts --jq '…manifest_path…'`.
 - **Dependabot proposes untagged re-publishes; adopt only endorsed versions.** It
   reads a registry's `<versions>` *list*, not `<latest>`/upstream tags, so it can
   suggest an artifact the maintainer never blessed. Cautionary case: `com.osacky.doctor

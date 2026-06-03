@@ -193,15 +193,21 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   submitter uses a **different correlator** (`dependency_submission-dependency-submission`), so
   it cannot overwrite the orphan. GitHub keeps the last snapshot per correlator
   **indefinitely** and never auto-evicts when its producer stops — so the orphaned manifest's
-  alerts are zombies. To clear at the root: POST an empty snapshot to
-  `/repos/<o>/<r>/dependency-graph/snapshots` under the **old** correlator (derives as
-  `build-buildAndCheck` = old workflow `Build` + job `buildAndCheck`) so its deps read as
-  removed → alerts auto-dismiss; or dismiss the alerts `not_used` (honest — build tooling never
-  shipped, absent from the live consumer graph — but leaves the zombie manifest so a future CVE
-  on those pinned tooling versions could re-alert). Both are outward-facing security-state
-  writes → **owner decision**. Diagnose with: download the submitted artifact (ground truth,
-  not the aggregated `/dependency-graph/sbom` which merges every manifest incl. orphans), and
-  `gh api …/dependabot/alerts --jq '…manifest_path…'`.
+  alerts are zombies. **Root-cause eviction is NOT reliably possible — RESOLVED by `not_used`
+  dismissal (2026-06-03).** The empty-snapshot overwrite (POST `/repos/<o>/<r>/dependency-graph/
+  snapshots` under the orphan's correlator → its deps read as removed → auto-dismiss) was tried
+  under the derived correlator `build-buildAndCheck` (id 69645949, SUCCESS) and did NOT clear the
+  alerts in ~37 min. Why it can't be made reliable: **GitHub exposes no API to read an existing
+  submitted snapshot's correlator** (no GET/list; `/dependency-graph/sbom` aggregates without
+  correlator labels; legacy GraphQL `dependencyGraphManifests` is blind to submitted snapshots —
+  returns `dependenciesCount:0`), and setup-gradle's auto-submit correlator need not match the
+  standalone action's `<wf-name>-<job>` rule — so the orphan's true correlator is unrecoverable
+  and the overwrite can't target it. So the 15 were dismissed `not_used` (honest: build tooling,
+  never shipped, absent from the live allowlisted consumer graph). The orphan manifest persists →
+  a future CVE on those frozen tooling versions can raise a NEW alert; dismiss likewise. NEW
+  orphans are structurally prevented (auto-graph disabled + single stable-correlator submitter).
+  Diagnose via the submitted run artifact (ground truth — NOT the cached SBOM nor legacy GraphQL,
+  both blind to submitted-snapshot removals) + `gh api …/dependabot/alerts --jq '…manifest_path…'`.
 - **Dependabot proposes untagged re-publishes; adopt only endorsed versions.** It
   reads a registry's `<versions>` *list*, not `<latest>`/upstream tags, so it can
   suggest an artifact the maintainer never blessed. Cautionary case: `com.osacky.doctor

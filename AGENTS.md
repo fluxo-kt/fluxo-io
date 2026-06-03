@@ -172,6 +172,15 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   build tooling into the submitted graph → phantom
   `security_update_dependency_not_found` Dependabot jobs. Excluding build tooling
   from the *consumer* graph is accurate (consumers never see it), not vuln-hiding.
+  **Effectiveness gotcha (same GITHUB_TOKEN root as publishSnapshot):** the submitted
+  graph only refreshes when `dependency-submission.yml` actually runs (`push` to `dev` /
+  `workflow_dispatch` / Mon cron). A `/ff` land is GITHUB_TOKEN-authored → no `push`
+  trigger → the graph stays **stale**, so old Security-tab alerts linger even after the
+  in-tree fix (observed post-#29: build-tooling alerts + an assertj-core HIGH flagging
+  `<=3.27.6` though the catalogue was already on the patched `3.27.7`). After any `/ff`
+  that should refresh deps, run `gh workflow run dependency-submission.yml --ref dev` to
+  re-submit; the 4 `.kotlin-js-store/yarn.lock` npm alerts persist regardless (GitHub
+  auto-detects that lockfile; no per-path graph exclusion — inherent, benign).
 - **Dependabot proposes untagged re-publishes; adopt only endorsed versions.** It
   reads a registry's `<versions>` *list*, not `<latest>`/upstream tags, so it can
   suggest an artifact the maintainer never blessed. Cautionary case: `com.osacky.doctor

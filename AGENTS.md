@@ -157,6 +157,13 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   guard) — so build.yml/publishSnapshot do not run on a `/ff` merge. Verified: dev
   FF to a new tip produced zero build.yml runs. To actually publish a snapshot, push
   to `dev` with a real user/PAT (or dispatch the publish manually) — not via `/ff`.
+  When it *does* fire without secrets, the steps reading `secrets.MAVEN_CENTRAL_*`/
+  `SIGNING_*` hard-fail → the job reds meaning "secrets absent", not "publish broken"
+  (a false-red class). Proper fix *if that red becomes noise*: a preflight job emitting
+  a `has_secrets` boolean output and gating `publishSnapshot` on it (secrets are
+  unreadable in a job-level `if:`). NOT `continue-on-error` — that would mask real
+  publish failures too. Deferred deliberately: it doesn't fire on `/ff` lands, and its
+  only firing window (a real push/dispatch) coincides with secret provisioning.
 - **dep-submission graph is an allowlist, not a denylist.**
   `DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS=".*(Compile|Runtime)Classpath"` (full-
   string `String.matches`) ships only consumer-facing resolved classpaths. The
@@ -165,6 +172,16 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   build tooling into the submitted graph → phantom
   `security_update_dependency_not_found` Dependabot jobs. Excluding build tooling
   from the *consumer* graph is accurate (consumers never see it), not vuln-hiding.
+- **Dependabot proposes untagged re-publishes; adopt only endorsed versions.** It
+  reads a registry's `<versions>` *list*, not `<latest>`/upstream tags, so it can
+  suggest an artifact the maintainer never blessed. Cautionary case: `com.osacky.doctor
+  0.12.1` (PR #25) — no `v0.12.1` git tag (tags jump `v0.11.0→v0.12.0`), latest GitHub
+  release is `0.12.0`, POM byte-identical to 0.12.0, published 2.5 min after it, and the
+  Plugin Portal `<latest>`/`<release>` stay at `0.12.0`: a publish-mechanics re-cut, not
+  an upgrade. Rule: before folding a dep/plugin bump, confirm a matching upstream
+  tag/release AND registry `<latest>` — else keep the endorsed version and close the PR.
+  Dep-verification checksums the bytes you declare; it does NOT catch "non-endorsed", so
+  this review is the only gate.
 - **Action pins rot.** Every remote action needs a 40-char SHA + `# vX.Y.Z`
   comment (policy-enforced); when bumping a major, verify Node-runtime compat
   (e.g. github-script v7/Node20 → v9/Node24). Pinned-action rot is real: a pinned

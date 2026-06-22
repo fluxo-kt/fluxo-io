@@ -37,9 +37,9 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   aggregation, resolves `extra["androidJar"]` from `local.properties` /
   `ANDROID_SDK_ROOT` / `ANDROID_HOME` so non-Android source sets can
   `compileOnly` the SDK jar.
-- `gradle/libs.versions.toml` — single source of truth for versions and
-  toolchain (Kotlin lang/JVM target, AGP, minSdk because `AutoCloseable`
-  requires API 19).
+- `gradle/libs.versions.toml` — version+toolchain SoT; per-pin rationale
+  lives in catalog comments (minSdk floor is pinned to the modern
+  Android/Kotlin toolchain baseline, NOT to `AutoCloseable`'s API 19 floor).
 - `config/{detekt.yml,lint.xml}`; `.editorconfig` (ktlint_official,
   line=100, indent=4 for `.kt`/`.kts`).
 

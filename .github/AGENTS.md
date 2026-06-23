@@ -51,6 +51,21 @@ silently breaks two pipelines after a `/ff` to `dev`:
   or release config; keep `dokka-base`/`templating-plugin` in verification
   metadata.
 
+### Tag protection ruleset — load-bearing release prereq
+
+`release.yml:60` hard-gates on `github.ref_protected != 'true'` before any
+signing/publish step. Without a tag ruleset matching the pushed tag, the
+workflow aborts at "Verify release version" with "Release tags must be
+protected". This is the security boundary that prevents a write-access
+holder from publishing via an unprotected ad-hoc tag — keep it.
+
+Repo-level rulesets are free; org-level ones gate behind GitHub Team
+(`gh api orgs/fluxo-kt/rulesets` returns 403). The minimal ruleset that
+flips `ref_protected=true` for `v*` tags ships in `RELEASING.md`
+Prerequisites. **Trap:** rulesets do not auto-exist on a fresh repo; an
+agent pushing `v1.x.y` to a never-released repo will red the workflow on
+the FIRST step. Inspect `gh api repos/<o>/<r>/rulesets` before tag-push.
+
 ### Signing — single subkey, key-id derived from key body
 
 Workflows bind only `SIGNING_KEY` and `SIGNING_PASSWORD` (existing org

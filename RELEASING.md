@@ -6,6 +6,15 @@ Sonatype snapshot URLs or the generic `publish` task for Central releases.
 ## Prerequisites
 
 - Central Portal namespace `io.github.fluxo-kt` is verified.
+- Tag ruleset matching `refs/tags/v*` is active on the repo. `release.yml`
+  hard-gates on `github.ref_protected`; without a matching ruleset the
+  workflow exits before signing/publish (security boundary: an attacker
+  with write access must not be able to publish via an unprotected tag).
+  Create once with:
+  `gh api -X POST repos/fluxo-kt/fluxo-io/rulesets --input ruleset.json`
+  where `ruleset.json` defines `target=tag`, `enforcement=active`,
+  `conditions.ref_name.include=["refs/tags/v*"]`, and at least one rule
+  (deletion-block, non-fast-forward-block, required-signatures).
 - GitHub secrets exist (org-level, all set up):
   - `MAVEN_CENTRAL_USERNAME`
   - `MAVEN_CENTRAL_PASSWORD`

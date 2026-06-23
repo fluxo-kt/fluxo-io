@@ -63,19 +63,25 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
         override val size: Long get() = factory.size
 
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            checkOpen()
-            // Try to find a suitable stream in the pool or open new.
-            // Use TreeMap thread safely.
+            // `checkOpen` + `factory()` MUST be under the pool monitor, the same lock
+            // `onSharedClose` drains under. Else a concurrent close after a release-time
+            // `checkOpen` could drain the empty pool, then this read would open a fresh
+            // stream against the (now-closed) source and return data — a contract
+            // violation. Holding the lock through `factory` is bounded (open is fast)
+            // and serialises with the one-shot drain. `stream.read` stays outside.
             val pool = pool
             var streamOffset = 0L
             val stream = synchronized(pool) b@{
+                checkOpen()
                 val entry = pool.floorEntry(position)
-                    ?: return@b null
-                val key = entry.key
-                streamOffset = key!!
-                pool.remove(key)
-                entry.value
-            } ?: factory()
+                if (entry != null) {
+                    val key = entry.key!!
+                    streamOffset = key
+                    pool.remove(key)
+                    return@b entry.value
+                }
+                factory()
+            }
 
             val read: Int
             var closeStream = true

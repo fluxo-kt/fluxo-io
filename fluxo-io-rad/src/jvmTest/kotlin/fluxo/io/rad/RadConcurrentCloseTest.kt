@@ -73,15 +73,79 @@ internal class RadConcurrentCloseTest {
             }
         }
 
-        assertTrue(readEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "read never entered")
-        rad.close() // drains the empty pool (stream is checked out); resource now freed
-        proceed.countDown() // in-flight read resumes and attempts to re-pool its stream
+        try {
+            assertTrue(readEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "read never entered")
+            rad.close() // drains the empty pool (stream is checked out); resource now freed
+        } finally {
+            // Always release the reader so a failed pre-close assertion doesn't strand the
+            // thread blocked on `proceed.await()` past the test method return.
+            proceed.countDown()
+        }
         reader.join(TIMEOUT_S * 1000)
 
         assertFalse(reader.isAlive, "reader did not finish")
         assertNull(readerError.get())
         assertTrue(opened.get() >= 1, "no stream was opened")
         assertEquals(opened.get(), closed.get(), "a re-pooled stream leaked after concurrent close")
+    }
+
+    /**
+     * A read that opens a fresh stream (pool miss) MUST hold the pool monitor through the
+     * factory call, else a concurrent close can drain the (already-empty) pool and return
+     * *before* the factory opens its stream — a ghost read against an officially-closed
+     * holder. Without the under-lock guard the closer is uncontested (reader pauses inside
+     * factory holding no lock), reaches `RUNNABLE→TERMINATED` instead of `BLOCKED`, and
+     * `closeDone` flips while the loop still spins — RED. The fix keeps `factory` inside
+     * `synchronized(pool)` so the closer's drain parks behind it.
+     */
+    @Test
+    fun closeBlocksWhileReadOpensFreshStream() {
+        val factoryEntered = CountDownLatch(1)
+        val proceedFactory = CountDownLatch(1)
+        val readerError = AtomicReference<Throwable?>()
+
+        val rad = StreamFactoryRadAccessor(DATA.size.toLong()) {
+            factoryEntered.countDown()
+            proceedFactory.await()
+            object : InputStream() {
+                private val src = ByteArrayInputStream(DATA)
+                override fun read(): Int = src.read()
+                override fun read(b: ByteArray, off: Int, len: Int): Int = src.read(b, off, len)
+                override fun close() = src.close()
+            }
+        }
+
+        val reader = thread {
+            try {
+                rad.readFrom(0, PARTIAL)
+            } catch (e: Throwable) {
+                readerError.set(e)
+            }
+        }
+        val closeDone = AtomicBoolean(false)
+        var closer: Thread? = null
+        try {
+            assertTrue(factoryEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "factory never entered")
+            closer = thread {
+                rad.close()
+                closeDone.set(true)
+            }
+            // The closer must park on the pool monitor while the reader is inside `factory`
+            // (i.e. holding `synchronized(pool)`). If it reaches TERMINATED before BLOCKED,
+            // the under-lock guard is missing — `closeDone` flips first and reds the loop.
+            val deadline = System.nanoTime() + TIMEOUT_S * 1_000_000_000L
+            while (closer.state != Thread.State.BLOCKED) {
+                assertFalse(closeDone.get(), "close completed mid-factory — ghost-read race")
+                if (System.nanoTime() > deadline) fail("closer never blocked on the pool monitor")
+                Thread.onSpinWait()
+            }
+        } finally {
+            proceedFactory.countDown()
+        }
+        reader.join(TIMEOUT_S * 1000)
+        closer?.join(TIMEOUT_S * 1000)
+        assertNull(readerError.get())
+        assertTrue(closeDone.get(), "close never completed after factory released the pool")
     }
 
     /**
@@ -117,25 +181,32 @@ internal class RadConcurrentCloseTest {
                 transferError.set(e)
             }
         }
-        assertTrue(writeEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "transfer never entered")
-
         val closeDone = AtomicBoolean(false)
-        val closer = thread {
-            rad.close()
-            closeDone.set(true)
-        }
+        var closer: Thread? = null
+        try {
+            // The closer is started only after the transfer is in the resource monitor —
+            // otherwise close could win the monitor, unmap, and the transfer's checkOpen
+            // would throw instead of demonstrating the in-flight-blocks-close invariant.
+            assertTrue(writeEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "transfer never entered")
+            closer = thread {
+                rad.close()
+                closeDone.set(true)
+            }
 
-        // The closer must park on the resource monitor until the in-flight transfer releases it.
-        val deadline = System.nanoTime() + TIMEOUT_S * 1_000_000_000L
-        while (closer.state != Thread.State.BLOCKED) {
-            assertFalse(closeDone.get(), "close finished mid-read — unmap not serialised")
-            if (System.nanoTime() > deadline) fail("closer never blocked on the resource monitor")
-            Thread.onSpinWait()
+            // The closer must park on the resource monitor until the in-flight transfer releases.
+            val deadline = System.nanoTime() + TIMEOUT_S * 1_000_000_000L
+            while (closer.state != Thread.State.BLOCKED) {
+                assertFalse(closeDone.get(), "close finished mid-read — unmap not serialised")
+                if (System.nanoTime() > deadline) fail("closer never blocked on resource monitor")
+                Thread.onSpinWait()
+            }
+        } finally {
+            // Always release the transfer so a failed assertion doesn't strand it blocked
+            // on `proceed.await()`; the closer (if started) is no longer parked behind it either.
+            proceed.countDown()
         }
-
-        proceed.countDown()
         transfer.join(TIMEOUT_S * 1000)
-        closer.join(TIMEOUT_S * 1000)
+        closer?.join(TIMEOUT_S * 1000)
         assertNull(transferError.get())
         assertTrue(closeDone.get(), "close did not complete after the read released the monitor")
     }

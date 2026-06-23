@@ -274,6 +274,21 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     /**
+     * Closing a subsection while its parent is still open MUST leave reads on the (now-closed)
+     * subsection valid: the read-after-close guard rejects access only when the *shared*
+     * resource has been freed, not per-holder. Pins the by-design behaviour AGENTS.md
+     * documents — a renamed/removed guard that began rejecting per-holder would red this.
+     */
+    @Test
+    fun closingSubsectionLeavesItReadableWhileParentOpen() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val subsection = rad.subsection(1, 2)
+        subsection.close()
+        // Shared resource still alive (root + inputStream retain): subsection reads succeed.
+        assertEquals(1, subsection.readByteAt(0)) // global offset 1, BYTES[1]=1
+        assertEquals(2, subsection.readByteAt(1)) // global offset 2, BYTES[2]=2
+    }
+
+    /**
      * Reading a resource-backed holder after it has been closed must fail cleanly with
      * [IOException], never return stale bytes and never touch a freed resource. For a
      * memory-mapped/direct `ByteBuffer` the freed region is unmapped, so an unguarded read is a

@@ -24,9 +24,15 @@ internal class RandomAccessDataArrayTest : AbstractRandomAccessDataTest(
         inputStream.close()
         rad.close()
         val sink = Channels.newChannel(ByteArrayOutputStream())
-        assertEquals(0, rad.readByteAt(0))
-        assertEquals(byteArrayOf(0), rad.readFrom(0, 1))
-        assertEquals(1, rad.read(ByteBuffer.allocate(1), 0))
+        // Assert at non-zero indices: BYTES[i]=i.toByte(), so a regression that
+        // cleared/zeroed the backing on close would still pass `==0` assertions by
+        // accident. Non-zero indices + content checks distinguish a real read from a
+        // zeroed read.
+        assertEquals(5, rad.readByteAt(5))
+        assertEquals(byteArrayOf(3, 4, 5), rad.readFrom(3, 3))
+        val buf = ByteBuffer.allocate(1)
+        assertEquals(1, rad.read(buf, 7))
+        assertEquals(7, buf.array()[0].toInt())
         assertEquals(BYTES.size.toLong(), rad.transferTo(sink))
     }
 

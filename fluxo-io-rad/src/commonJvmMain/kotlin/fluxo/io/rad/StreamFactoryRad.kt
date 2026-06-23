@@ -63,15 +63,12 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
         override val size: Long get() = factory.size
 
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            // Two-phase to keep concurrent close non-blocking even under a slow/hostile
-            // user `factory()`. Phase 1 (under pool monitor — the lock `onSharedClose`
-            // drains under): `checkOpen` + pool lookup, atomic. Phase 2 (no lock): open
-            // a fresh stream on miss. Phase 3 (under pool monitor): recheck `isOpen` —
-            // if `close` raced ahead, defensively close the fresh stream and reject.
-            // Without phase 3 a fresh stream against an officially-closed holder could
-            // return data (contract violation); with `factory` inside phase 1 a hostile
-            // factory would park `close` on the monitor (DoS) — the recheck is what
-            // restores both invariants.
+            // Three-phase, so a slow/hostile user `factory()` can't park concurrent `close`:
+            // (1) under pool monitor (same lock `onSharedClose` drains under) — `checkOpen`
+            // + pool lookup. (2) no lock — open fresh on miss. (3) under pool monitor —
+            // recheck `isOpen`; if `close` raced ahead, defensively close the fresh stream
+            // and reject. Holding `factory` under the monitor (the prior shape) DoS'd close;
+            // skipping (3) lets a fresh stream return data after the holder is closed.
             val pool = pool
             var streamOffset = 0L
             var stream: PooledStream<*>? = synchronized(pool) {

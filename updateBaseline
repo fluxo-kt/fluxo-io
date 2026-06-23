@@ -7,8 +7,11 @@ if [ -z "${GRADLE_USER_HOME}" ]; then
   export GRADLE_USER_HOME="${PWD}/.gradle/update-baseline"
 fi
 
-BASELINE_TASKS="apiDump dependencyGuardBaseline detektBaselineMerge"
-VERIFICATION_BASELINE_TASKS="dependencyGuardBaseline detektBaselineMerge"
+# `detektBaselineMerge` is intentionally NOT listed: no such task exists under the
+# current fluxo-kmp-conf / Detekt setup (only per-target `detektBaselineXxx`).
+# The repo does not adopt detekt baselines; if it does later, wire the merge here.
+BASELINE_TASKS="apiDump dependencyGuardBaseline"
+VERIFICATION_BASELINE_TASKS="dependencyGuardBaseline"
 COMMON_TASKS="${BASELINE_TASKS} --continue -Dlint.baselines.continue=true"
 GRADLE_BASE_ARGS="--no-daemon --no-configuration-cache"
 VERIFY_TASKS="help kotlinUpgradeYarnLock"

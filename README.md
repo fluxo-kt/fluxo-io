@@ -27,7 +27,7 @@ plugins {
   kotlin("multiplatform") version "2.2.21"
 }
 dependencies {
-  implementation("io.github.fluxo-kt:fluxo-io-rad:<published-version>") // <-- add here
+  implementation("io.github.fluxo-kt:fluxo-io-rad:0.1.1")
 }
 ```
 

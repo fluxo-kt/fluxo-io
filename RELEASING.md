@@ -6,12 +6,16 @@ Sonatype snapshot URLs or the generic `publish` task for Central releases.
 ## Prerequisites
 
 - Central Portal namespace `io.github.fluxo-kt` is verified.
-- GitHub secrets exist:
+- GitHub secrets exist (org-level, all set up):
   - `MAVEN_CENTRAL_USERNAME`
   - `MAVEN_CENTRAL_PASSWORD`
-  - `SIGNING_IN_MEMORY_KEY`
-  - `SIGNING_IN_MEMORY_KEY_PASSWORD`
-  - `SIGNING_IN_MEMORY_KEY_ID` when the exported key needs an explicit key ID
+  - `SIGNING_KEY` — ASCII-armored PGP private key (`gpg --armor --export-secret-keys <key-id>`)
+  - `SIGNING_PASSWORD` — passphrase for the signing key
+- Vanniktech's `signingInMemoryKeyId` is intentionally NOT wired: the plugin
+  auto-derives the subkey from the imported in-memory key body. If `SIGNING_KEY`
+  carries multiple signing subkeys and Vanniktech picks the wrong one, the fix
+  is to add `signingInMemoryKeyId` env+secret in the publish steps — not the
+  default.
 - Release artifacts are uploaded with:
   `./gradlew publishToMavenCentral --no-configuration-cache`.
 - Release publication is manual in Central Portal. The build must not call

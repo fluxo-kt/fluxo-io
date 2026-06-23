@@ -51,21 +51,20 @@ silently breaks two pipelines after a `/ff` to `dev`:
   or release config; keep `dokka-base`/`templating-plugin` in verification
   metadata.
 
-### Signing-secrets gap (open, maintainer-action)
+### Signing — single subkey, key-id derived from key body
 
-`release.yml` + `build.yml` reference `SIGNING_IN_MEMORY_KEY[_ID|_PASSWORD]`
-(also documented in `RELEASING.md`). The fluxo-kt **org** secrets store
-holds only `SIGNING_KEY` + `SIGNING_PASSWORD` (no `_ID` of any name). Latent
-since `b968333` because `release.yml` has never run and `publishSnapshot` is
-suppressed on `/ff`. Two unblock routes:
-
-1. Create org secrets matching workflow refs (`gpg --list-secret-keys
-   --keyid-format=long` derives the `_ID`).
-2. Edit workflow refs to use existing names + add only `SIGNING_KEY_ID`.
-   Keep `ORG_GRADLE_PROJECT_signingInMemoryKey` env-var name (vanniktech
-   reads that property).
-
-Until fixed, do not push a non-SNAPSHOT release tag — it surfaces here.
+Workflows bind only `SIGNING_KEY` and `SIGNING_PASSWORD` (existing org
+secrets); the Gradle property name `ORG_GRADLE_PROJECT_signingInMemoryKey*`
+stays — vanniktech reads those. `signingInMemoryKeyId` is intentionally
+**not** wired: the plugin auto-derives the signing subkey from the
+imported in-memory key. **Trap (graceful):** if `SIGNING_KEY` carries
+multiple signing subkeys, vanniktech may pick the wrong one — the publish
+step reds with a clean error. Fallback: add the `_KeyId` env line back
+plus a `SIGNING_KEY_ID` org secret (`gpg --list-secret-keys
+--keyid-format=long`). Historical context: workflows previously referenced
+non-existent `SIGNING_IN_MEMORY_KEY[_ID|_PASSWORD]` secrets, latent since
+`b968333`; the rename + drop made the path runnable with zero new
+secrets.
 
 ## `pr-baseline.yml`
 

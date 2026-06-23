@@ -38,8 +38,7 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   `ANDROID_SDK_ROOT` / `ANDROID_HOME` so non-Android source sets can
   `compileOnly` the SDK jar.
 - `gradle/libs.versions.toml` — version+toolchain SoT; per-pin rationale
-  lives in catalog comments (minSdk floor is pinned to the modern
-  Android/Kotlin toolchain baseline, NOT to `AutoCloseable`'s API 19 floor).
+  lives in catalog comments.
 - `config/{detekt.yml,lint.xml}`; `.editorconfig` (ktlint_official,
   line=100, indent=4 for `.kt`/`.kts`).
 

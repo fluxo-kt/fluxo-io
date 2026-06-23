@@ -190,18 +190,16 @@ internal class RadConcurrentCloseTest {
                 transferError.set(e)
             }
         }
+        // Closer is started only after the transfer is in the resource monitor —
+        // otherwise close could win the monitor, unmap, and the transfer's checkOpen
+        // would throw instead of demonstrating the in-flight-blocks-close invariant.
+        assertTrue(writeEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "transfer never entered")
         val closeDone = AtomicBoolean(false)
-        var closer: Thread? = null
+        val closer = thread {
+            rad.close()
+            closeDone.set(true)
+        }
         try {
-            // The closer is started only after the transfer is in the resource monitor —
-            // otherwise close could win the monitor, unmap, and the transfer's checkOpen
-            // would throw instead of demonstrating the in-flight-blocks-close invariant.
-            assertTrue(writeEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "transfer never entered")
-            closer = thread {
-                rad.close()
-                closeDone.set(true)
-            }
-
             // The closer must park on the resource monitor until the in-flight transfer releases.
             val deadline = System.nanoTime() + TIMEOUT_S * 1_000_000_000L
             while (closer.state != Thread.State.BLOCKED) {
@@ -211,11 +209,11 @@ internal class RadConcurrentCloseTest {
             }
         } finally {
             // Always release the transfer so a failed assertion doesn't strand it blocked
-            // on `proceed.await()`; the closer (if started) is no longer parked behind it either.
+            // on `proceed.await()`; the closer is no longer parked behind it either.
             proceed.countDown()
         }
         transfer.join(TIMEOUT_S * 1000)
-        closer?.join(TIMEOUT_S * 1000)
+        closer.join(TIMEOUT_S * 1000)
         assertNull(transferError.get())
         assertTrue(closeDone.get(), "close did not complete after the read released the monitor")
     }

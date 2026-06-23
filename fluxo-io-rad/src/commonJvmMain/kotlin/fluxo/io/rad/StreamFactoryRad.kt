@@ -133,7 +133,7 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
             return read
         }
 
-        override fun onSharedClose() {
+        override fun releaseApi() {
             val pool = pool
             synchronized(pool) {
                 var t: Throwable? = null

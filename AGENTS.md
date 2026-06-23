@@ -93,6 +93,12 @@ module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
   parent is still open succeeds (by design).
 - `SharedDataAccessor` owns the JVM resource and the only
   `read(bytes, position, offset, length)` primitive.
+  `onSharedClose()` is **`final` template** — releasing the API-specific
+  resource (mmap unmap, drain pool) goes in a `protected open fun releaseApi()`
+  override; the template wraps it so a release-throw still closes the
+  `resources` AutoCloseable array (latest exception primary, prior suppressed).
+  Pinned by `SharedDataAccessorReleaseApiTest`. Direct `onSharedClose` overrides
+  are compile-blocked — bug class is structurally impossible.
   `AccessorAwareRad<A>` wraps it with offset/size + bounds checks
   (`fluxo.io.util.IoUtil`). `BasicRad` (expect/actual) carries the JVM
   common impl: `readByteAt`, `transferTo`, `read(ByteBuffer, position)`,

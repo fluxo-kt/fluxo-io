@@ -148,11 +148,10 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
             return len.toLong()
         }
 
-        override fun onSharedClose() {
+        override fun releaseApi() {
             // Serialise the unmap with reads on the same monitor so an in-flight read can never
             // observe a half-freed buffer; see [checkOpen]. [isOpen] is already false here.
             synchronized(api) { api.releaseCompat() }
-            super.onSharedClose()
         }
     }
 }

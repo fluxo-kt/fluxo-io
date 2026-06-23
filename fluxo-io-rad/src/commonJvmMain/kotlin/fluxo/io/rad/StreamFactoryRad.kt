@@ -63,24 +63,34 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
         override val size: Long get() = factory.size
 
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            // `checkOpen` + `factory()` MUST be under the pool monitor, the same lock
-            // `onSharedClose` drains under. Else a concurrent close after a release-time
-            // `checkOpen` could drain the empty pool, then this read would open a fresh
-            // stream against the (now-closed) source and return data — a contract
-            // violation. Holding the lock through `factory` is bounded (open is fast)
-            // and serialises with the one-shot drain. `stream.read` stays outside.
+            // Two-phase to keep concurrent close non-blocking even under a slow/hostile
+            // user `factory()`. Phase 1 (under pool monitor — the lock `onSharedClose`
+            // drains under): `checkOpen` + pool lookup, atomic. Phase 2 (no lock): open
+            // a fresh stream on miss. Phase 3 (under pool monitor): recheck `isOpen` —
+            // if `close` raced ahead, defensively close the fresh stream and reject.
+            // Without phase 3 a fresh stream against an officially-closed holder could
+            // return data (contract violation); with `factory` inside phase 1 a hostile
+            // factory would park `close` on the monitor (DoS) — the recheck is what
+            // restores both invariants.
             val pool = pool
             var streamOffset = 0L
-            val stream = synchronized(pool) b@{
+            var stream: PooledStream<*>? = synchronized(pool) {
                 checkOpen()
-                val entry = pool.floorEntry(position)
-                if (entry != null) {
-                    val key = entry.key!!
-                    streamOffset = key
-                    pool.remove(key)
-                    return@b entry.value
+                val entry = pool.floorEntry(position) ?: return@synchronized null
+                val key = entry.key!!
+                streamOffset = key
+                pool.remove(key)
+                entry.value
+            }
+            if (stream == null) {
+                val fresh = factory()
+                try {
+                    synchronized(pool) { checkOpen() }
+                } catch (e: Throwable) {
+                    runCatching { fresh.close() }.exceptionOrNull()?.let(e::addSuppressed)
+                    throw e
                 }
-                factory()
+                stream = fresh
             }
 
             val read: Int

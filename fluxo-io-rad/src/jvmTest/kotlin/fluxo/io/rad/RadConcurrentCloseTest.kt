@@ -1,5 +1,6 @@
 package fluxo.io.rad
 
+import fluxo.io.IOException
 import fluxo.io.nio.positionCompat
 import java.io.ByteArrayInputStream
 import java.io.InputStream
@@ -90,16 +91,18 @@ internal class RadConcurrentCloseTest {
     }
 
     /**
-     * A read that opens a fresh stream (pool miss) MUST hold the pool monitor through the
-     * factory call, else a concurrent close can drain the (already-empty) pool and return
-     * *before* the factory opens its stream — a ghost read against an officially-closed
-     * holder. Without the under-lock guard the closer is uncontested (reader pauses inside
-     * factory holding no lock), reaches `RUNNABLE→TERMINATED` instead of `BLOCKED`, and
-     * `closeDone` flips while the loop still spins — RED. The fix keeps `factory` inside
-     * `synchronized(pool)` so the closer's drain parks behind it.
+     * Concurrent `close` while a read is mid-`factory()` must (a) NOT park on the pool
+     * monitor — a slow/hostile user factory cannot DoS close or sibling readers; (b) cause
+     * the racing read to reject with [IOException] on the post-`factory` `isOpen` recheck;
+     * (c) defensively close the freshly-opened stream so it is not leaked into a drained
+     * pool. RED on the prior "hold `factory` under the pool monitor" band-aid (close would
+     * BLOCK and `closeDone` would never flip while factory paused). RED on a fix that
+     * rejects the read but forgets to close the orphan stream (`opened != closed`).
      */
     @Test
-    fun closeBlocksWhileReadOpensFreshStream() {
+    fun concurrentCloseDoesNotBlockOnFactoryAndOrphanStreamIsClosed() {
+        val opened = AtomicInteger()
+        val closed = AtomicInteger()
         val factoryEntered = CountDownLatch(1)
         val proceedFactory = CountDownLatch(1)
         val readerError = AtomicReference<Throwable?>()
@@ -107,11 +110,15 @@ internal class RadConcurrentCloseTest {
         val rad = StreamFactoryRadAccessor(DATA.size.toLong()) {
             factoryEntered.countDown()
             proceedFactory.await()
+            opened.incrementAndGet()
             object : InputStream() {
                 private val src = ByteArrayInputStream(DATA)
                 override fun read(): Int = src.read()
                 override fun read(b: ByteArray, off: Int, len: Int): Int = src.read(b, off, len)
-                override fun close() = src.close()
+                override fun close() {
+                    closed.incrementAndGet()
+                    src.close()
+                }
             }
         }
 
@@ -123,29 +130,31 @@ internal class RadConcurrentCloseTest {
             }
         }
         val closeDone = AtomicBoolean(false)
-        var closer: Thread? = null
+        val closer = thread {
+            rad.close()
+            closeDone.set(true)
+        }
         try {
             assertTrue(factoryEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "factory never entered")
-            closer = thread {
-                rad.close()
-                closeDone.set(true)
-            }
-            // The closer must park on the pool monitor while the reader is inside `factory`
-            // (i.e. holding `synchronized(pool)`). If it reaches TERMINATED before BLOCKED,
-            // the under-lock guard is missing — `closeDone` flips first and reds the loop.
-            val deadline = System.nanoTime() + TIMEOUT_S * 1_000_000_000L
-            while (closer.state != Thread.State.BLOCKED) {
-                assertFalse(closeDone.get(), "close completed mid-factory — ghost-read race")
-                if (System.nanoTime() > deadline) fail("closer never blocked on the pool monitor")
-                Thread.onSpinWait()
-            }
+            // The closer ran while the reader paused inside factory. The proper fix opens
+            // factory OUTSIDE the pool monitor, so close drains the empty pool and returns
+            // promptly — `closeDone` flips well within `quickJoinMs`. The prior band-aid
+            // (`factory` under the pool monitor) parks close behind reader's await; closer
+            // would stay alive past the deadline → RED with a clear assertion, no hang.
+            val quickJoinMs = TIMEOUT_S * 1000 / 4
+            closer.join(quickJoinMs)
+            assertTrue(closeDone.get(), "close parked on factory (DoS-on-close band-aid)")
         } finally {
             proceedFactory.countDown()
         }
         reader.join(TIMEOUT_S * 1000)
-        closer?.join(TIMEOUT_S * 1000)
-        assertNull(readerError.get())
-        assertTrue(closeDone.get(), "close never completed after factory released the pool")
+        closer.join(TIMEOUT_S * 1000)
+
+        assertFalse(reader.isAlive, "reader did not finish")
+        val err = readerError.get()
+        assertTrue(err is IOException, "read should have rejected with IOException; was $err")
+        assertEquals(1, opened.get(), "factory ran exactly once")
+        assertEquals(1, closed.get(), "orphan stream was leaked after concurrent close")
     }
 
     /**

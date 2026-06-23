@@ -129,18 +129,23 @@ internal class RadConcurrentCloseTest {
                 readerError.set(e)
             }
         }
+        // Closer started only after the reader is parked INSIDE factory — else a scheduler
+        // that runs closer first (observed on Windows CI under load) drains the empty pool,
+        // and reader's phase-1 `checkOpen` rejects before factory is ever entered. That race
+        // would shadow the actual invariant being tested with a misleading "factory never
+        // entered" failure.
+        assertTrue(factoryEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "factory never entered")
         val closeDone = AtomicBoolean(false)
         val closer = thread {
             rad.close()
             closeDone.set(true)
         }
         try {
-            assertTrue(factoryEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "factory never entered")
-            // The closer ran while the reader paused inside factory. The proper fix opens
-            // factory OUTSIDE the pool monitor, so close drains the empty pool and returns
-            // promptly — `closeDone` flips well within `quickJoinMs`. The prior band-aid
-            // (`factory` under the pool monitor) parks close behind reader's await; closer
-            // would stay alive past the deadline → RED with a clear assertion, no hang.
+            // Proper fix opens factory OUTSIDE the pool monitor, so close drains the empty
+            // pool and returns promptly — `closeDone` flips well within `quickJoinMs`. The
+            // prior band-aid (`factory` under the pool monitor) parked close behind reader's
+            // await; closer would stay alive past the deadline → RED with a clear assertion,
+            // no hang.
             val quickJoinMs = TIMEOUT_S * 1000 / 4
             closer.join(quickJoinMs)
             assertTrue(closeDone.get(), "close parked on factory (DoS-on-close band-aid)")

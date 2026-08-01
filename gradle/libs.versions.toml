@@ -48,7 +48,7 @@ android-gradle-plugin = "9.1.1"
 # Kotlin code coverage plugin
 # https://github.com/Kotlin/kotlinx-kover/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx.kover/org.jetbrains.kotlinx.kover.gradle.plugin
-kover = "0.9.8"
+kover = "0.9.9"
 
 # Dokka is a documentation engine for Kotlin/Java
 # https://github.com/Kotlin/dokka/releases
@@ -124,9 +124,9 @@ fluxo-kmp-conf = { id = "io.github.fluxo-kt.fluxo-kmp-conf", version = "0.14.1" 
 # https://github.com/vanniktech/gradle-maven-publish-plugin/blob/main/docs/what.md
 # https://github.com/vanniktech/gradle-maven-publish-plugin/releases
 # https://mvnrepository.com/artifact/com.vanniktech.maven.publish.base/com.vanniktech.maven.publish.base.gradle.plugin
-vanniktech-mvn-publish = { id = "com.vanniktech.maven.publish", version = "0.36.0" }
+vanniktech-mvn-publish = { id = "com.vanniktech.maven.publish", version = "0.37.0" }
 
 # Gradle Doctor: helps diagnose and fix common build problems.
 # https://runningcode.github.io/gradle-doctor/
 # https://plugins.gradle.org/plugin/com.osacky.doctor
-gradle-doctor = { id = "com.osacky.doctor", version = "0.12.0" }
+gradle-doctor = { id = "com.osacky.doctor", version = "0.12.1" }

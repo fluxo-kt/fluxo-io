@@ -32,7 +32,7 @@ coroutines = "1.11.0"
 
 # https://github.com/square/okio/tags
 # https://mvnrepository.com/artifact/com.squareup.okio/okio
-okio = "3.17.0"
+okio = "3.18.1"
 
 # https://github.com/Kotlin/kotlinx-io/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-io-core

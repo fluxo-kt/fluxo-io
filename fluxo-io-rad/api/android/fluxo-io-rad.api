@@ -31,6 +31,7 @@ public final class fluxo/io/nio/BufferUtil {
 }
 
 public abstract interface class fluxo/io/rad/AsyncRandomAccessData : java/lang/AutoCloseable {
+	public static final field Companion Lfluxo/io/rad/AsyncRandomAccessData$Companion;
 	public abstract fun close ()V
 	public abstract fun getSize ()J
 	public abstract fun read ([BJIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -40,6 +41,9 @@ public abstract interface class fluxo/io/rad/AsyncRandomAccessData : java/lang/A
 	public abstract fun share ()Lfluxo/io/rad/AsyncRandomAccessData;
 	public abstract fun slice (JJ)Lfluxo/io/rad/AsyncRandomAccessData;
 	public static synthetic fun slice$default (Lfluxo/io/rad/AsyncRandomAccessData;JJILjava/lang/Object;)Lfluxo/io/rad/AsyncRandomAccessData;
+}
+
+public final class fluxo/io/rad/AsyncRandomAccessData$Companion {
 }
 
 public final class fluxo/io/rad/Rad {
@@ -155,6 +159,7 @@ public final class fluxo/io/rad/Rad {
 }
 
 public abstract interface class fluxo/io/rad/RandomAccessData : java/io/Closeable, java/lang/AutoCloseable {
+	public static final field Companion Lfluxo/io/rad/RandomAccessData$Companion;
 	public abstract fun asInputStream ()Ljava/io/InputStream;
 	public abstract fun getSize ()J
 	public abstract fun read (Ljava/nio/ByteBuffer;J)I
@@ -180,6 +185,9 @@ public abstract interface class fluxo/io/rad/RandomAccessData : java/io/Closeabl
 	public abstract fun transferTo (Ljava/nio/channels/WritableByteChannel;IZ)J
 	public static synthetic fun transferTo$default (Lfluxo/io/rad/RandomAccessData;Ljava/io/OutputStream;IILjava/lang/Object;)J
 	public static synthetic fun transferTo$default (Lfluxo/io/rad/RandomAccessData;Ljava/nio/channels/WritableByteChannel;IZILjava/lang/Object;)J
+}
+
+public final class fluxo/io/rad/RandomAccessData$Companion {
 }
 
 public final class fluxo/io/util/IoUtil {

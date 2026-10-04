@@ -77,4 +77,7 @@ public actual interface RandomAccessData : AutoCloseable {
         offset: Int,
         maxLength: Int,
     ): Int
+
+    /** Home of the `RandomAccessData.open(…)` factories (see the common declaration). */
+    public actual companion object
 }

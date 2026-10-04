@@ -73,4 +73,11 @@ public interface AsyncRandomAccessData : AutoCloseable {
 
     /** Closes this handle; idempotent. Does nothing on a [slice]. */
     override fun close()
+
+    /**
+     * Home of the `AsyncRandomAccessData.open(…)` factories for natively non-blocking sources
+     * (browser `Blob`, Node `fs.promises`, JVM `AsynchronousFileChannel`), added per platform
+     * as extensions on this companion.
+     */
+    public companion object
 }

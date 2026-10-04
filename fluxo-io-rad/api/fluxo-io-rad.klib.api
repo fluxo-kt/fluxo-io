@@ -15,6 +15,8 @@ abstract interface fluxo.io.rad/AsyncRandomAccessData : kotlin/AutoCloseable { /
     abstract fun slice(kotlin/Long, kotlin/Long = ...): fluxo.io.rad/AsyncRandomAccessData // fluxo.io.rad/AsyncRandomAccessData.slice|slice(kotlin.Long;kotlin.Long){}[0]
     abstract suspend fun read(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/AsyncRandomAccessData.read|read(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
     abstract suspend fun readFully(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/AsyncRandomAccessData.readFully|readFully(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
+
+    final object Companion // fluxo.io.rad/AsyncRandomAccessData.Companion|null[0]
 }
 
 abstract interface fluxo.io.rad/RandomAccessData : kotlin/AutoCloseable { // fluxo.io.rad/RandomAccessData|null[0]
@@ -30,6 +32,8 @@ abstract interface fluxo.io.rad/RandomAccessData : kotlin/AutoCloseable { // flu
     abstract fun subsection(kotlin/Long, kotlin/Long = ...): fluxo.io.rad/RandomAccessData // fluxo.io.rad/RandomAccessData.subsection|subsection(kotlin.Long;kotlin.Long){}[0]
     abstract suspend fun readAsync(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/RandomAccessData.readAsync|readAsync(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
     abstract suspend fun readFullyAsync(kotlin/ByteArray, kotlin/Long = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int // fluxo.io.rad/RandomAccessData.readFullyAsync|readFullyAsync(kotlin.ByteArray;kotlin.Long;kotlin.Int;kotlin.Int){}[0]
+
+    final object Companion // fluxo.io.rad/RandomAccessData.Companion|null[0]
 }
 
 abstract class fluxo.io/SharedCloseable : kotlin/AutoCloseable { // fluxo.io/SharedCloseable|null[0]

@@ -239,4 +239,11 @@ public expect interface RandomAccessData : AutoCloseable {
         offset: Int = 0,
         maxLength: Int = Int.MAX_VALUE,
     ): Int
+
+    /**
+     * Home of the `RandomAccessData.open(…)` factories, so Kotlin and Java (via `@JvmStatic`)
+     * spell the obvious entry point the same way. Platform-only overloads are added as
+     * members of a platform's `actual` companion or as extensions on it.
+     */
+    public companion object
 }

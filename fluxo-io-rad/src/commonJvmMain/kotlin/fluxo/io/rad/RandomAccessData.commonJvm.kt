@@ -230,7 +230,8 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     public fun transferTo(stream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long
 
 
-    private companion object {
+    /** Home of the `RandomAccessData.open(…)` factories (see the common declaration). */
+    public actual companion object {
         private const val DEFAULT_BUFFER_SIZE = 128 * 1024
     }
 }

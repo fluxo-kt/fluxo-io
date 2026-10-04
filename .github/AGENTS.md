@@ -204,6 +204,17 @@ path. After a dep change, re-run `./updateBaseline` and confirm every
 metadata `<trusted-key>` id has matching key material in the keyring before
 pushing.
 
+### A key must never be both ignored and trusted
+
+`artifact was signed but all keys were ignored` + `checksum is missing`
+right after a version bump, for a key whose full fingerprint has a
+`<trusted-key>` entry, means a stale `<ignored-key>` (written once when
+a keyserver was down). The writer then trusts the key and records no
+checksum, the reader applies the ignore first and fails. Fix: delete the
+`<ignored-key>` whose id is the suffix of a trusted fingerprint present in
+`gradle/verification-keyring.keys`, then rerun `./updateBaseline`; never
+add a checksum by hand to paper over it.
+
 ### Trust-by-coordinate vs. checksum (general rule)
 
 **Verify shipped/library artifacts by checksum; trust non-shipped build

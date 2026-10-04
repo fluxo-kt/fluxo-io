@@ -11,6 +11,9 @@ import fluxo.io.util.checkPositionAndMaxLength
 import fluxo.io.util.toIntChecked
 import kotlin.math.min
 
+internal actual fun byteArrayRad(array: ByteArray, offset: Int, length: Int): RandomAccessData =
+    ByteArrayRad(array, offset, length)
+
 /**
  * [RandomAccessData] implementation backed by a [ByteArray].
  *
@@ -19,7 +22,7 @@ import kotlin.math.min
  * @param length the length of the section
  */
 @ThreadSafe
-internal actual class ByteArrayRad
+internal class ByteArrayRad
 private constructor(
     private val array: ByteArray,
     private val offset: Int,
@@ -27,7 +30,7 @@ private constructor(
     owner: RadHandle?,
 ) : BasicRad(owner) {
 
-    actual constructor(array: ByteArray, offset: Int, length: Int) :
+    constructor(array: ByteArray, offset: Int, length: Int) :
         this(array, offset, length, owner = null)
 
     override val size: Long get() = length.toLong()

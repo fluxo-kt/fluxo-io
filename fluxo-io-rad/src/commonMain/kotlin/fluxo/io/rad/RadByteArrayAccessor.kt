@@ -22,4 +22,4 @@ public fun RadByteArrayAccessor(
     base: ByteArray,
     offset: Int = 0,
     size: Int = base.size - offset,
-): RandomAccessData = ByteArrayRad(base, offset, size)
+): RandomAccessData = byteArrayRad(base, offset, size)

@@ -1,18 +1,11 @@
 package fluxo.io.rad
 
-import fluxo.io.internal.BasicRad
-import fluxo.io.internal.ThreadSafe
-
 /**
- * [RandomAccessData] implementation backed by a [ByteArray].
+ * Opens a [RandomAccessData] over `array[offset, offset + length)` (the platform `ByteArrayRad`).
  *
- * @param array the underlying data
- * @param offset the offset of the section
- * @param length the length of the section
+ * A factory function, not an `expect class`: common code only needs the instance as
+ * [RandomAccessData], while an `expect class` extending the abstract `BasicRad` makes the
+ * common-metadata compiler demand every abstract hook in the `expect` declaration too.
+ * Test compilations never run that check, so such a break surfaced only in publishing builds.
  */
-@ThreadSafe
-internal expect class ByteArrayRad(
-    array: ByteArray,
-    offset: Int,
-    length: Int,
-) : BasicRad
+internal expect fun byteArrayRad(array: ByteArray, offset: Int, length: Int): RandomAccessData

@@ -14,9 +14,14 @@ Workflow / release / verification-metadata traps live in
 - **Small, fast, allocation-careful, no deps.** `CONTRIBUTING.md` says:
   don't add deps or major new functionality. `kotlinx-coroutines` and
   `androidx-annotation` are `compileOnly` — consumers opt in.
-- **Tests use real temp files, not mocks.** Every JVM impl is exercised
-  through `AbstractRandomAccessDataTest` with concurrency + randomized
-  reads. Tests live ONLY in `jvmTest`.
+- **Tests use real temp files, not mocks.** Behaviour every impl must
+  share lives in ONE table, `commonTest/.../RadContract.kt`, run on every
+  target (`ByteArrayRadContractTest`) and against every JVM impl over a
+  temp file (`AbstractRandomAccessDataTest.contract`). A new common rule
+  goes into that table, never into a per-platform copy; platform-only API
+  (streams, `ByteBuffer`, `transferTo`, `readByteAt`, concurrency) is
+  tested in its platform test source set. `docs/spec/random-access-data.md`
+  states the same rules for future ports; change both together.
 - **Public API is locked** by JVM/KLIB Binary Compatibility Validator and
   TS API dumps. Dumps under `fluxo-io-rad/api/`. Any intended ABI change
   must be reflected via `apiDump`. CI fails on drift.
@@ -165,7 +170,9 @@ Workflow / release / verification-metadata traps live in
 3. Public factory in `FooRadAccessor.kt` with
    `@file:JvmName("Rad") @file:JvmMultifileClass` and `@JvmName("forFoo")`
    per overload. Mark `@Blocking` if the constructor opens resources.
-4. Test: extend `AbstractRandomAccessDataTest(factory)`.
+4. Test: extend `AbstractRandomAccessDataTest(factory)` (JVM) or call
+   `RadContract.verify { bytes -> … }` from that platform's test set; the
+   factory must open the bytes it is given.
 5. Run `./updateBaseline`. Inspect `api/jvm/fluxo-io-rad.api` diff
    before committing.
 6. **Adding a new submodule** → also update

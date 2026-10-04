@@ -1,6 +1,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.BasicRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.Blocking
 import fluxo.io.internal.ThreadSafe
 import fluxo.io.util.EMPTY_BYTE_ARRAY
@@ -9,8 +10,6 @@ import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPosOffsetAndMaxLength
 import fluxo.io.util.checkPositionAndMaxLength
 import fluxo.io.util.toIntChecked
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.WritableByteChannel
@@ -26,11 +25,15 @@ import kotlin.math.min
  */
 @ThreadSafe
 internal actual class ByteArrayRad
-actual constructor(
+private constructor(
     private val array: ByteArray,
     private val offset: Int,
     private val length: Int,
-) : BasicRad() {
+    owner: RadHandle?,
+) : BasicRad(owner) {
+
+    actual constructor(array: ByteArray, offset: Int, length: Int) :
+        this(array, offset, length, owner = null)
 
     override val size: Long get() = length.toLong()
 
@@ -39,14 +42,14 @@ actual constructor(
     }
 
 
-    override fun asInputStream0(): InputStream =
-        ByteArrayInputStream(array, offset, length)
 
-    @Blocking
-    override fun subsection(position: Long, length: Long): RandomAccessData {
-        checkOffsetAndCount(size, position, length)
-        return ByteArrayRad(array, offset + position.toIntChecked(), length.toInt())
-    }
+    override fun view(position: Long, length: Long, owner: RadHandle?): RandomAccessData =
+        ByteArrayRad(array, offset + position.toIntChecked(), length.toInt(), owner)
+
+    // A heap array has nothing to retain or release: the GC frees it once unreachable.
+    override fun acquireShared() {}
+
+    override fun releaseShared() {}
 
 
     @Blocking
@@ -132,7 +135,4 @@ actual constructor(
         }
         return srcLen.toLong()
     }
-
-
-    override fun close() {}
 }

@@ -2,6 +2,7 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
 import fluxo.io.nio.positionCompat
@@ -30,8 +31,8 @@ import kotlin.math.min
  */
 @ThreadSafe
 internal class ByteBufferRad
-private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
-    AccessorAwareRad<ByteBufferAccess>(access, offset.toLong(), size.toLong()) {
+private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: RadHandle? = null) :
+    AccessorAwareRad<ByteBufferAccess>(access, offset.toLong(), size.toLong(), owner) {
 
     constructor(array: ByteArray, offset: Int, size: Int)
         : this(ByteBuffer.wrap(array), offset, size, EMPTY_AUTO_CLOSEABLE_ARRAY)
@@ -40,10 +41,9 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
         : this(ByteBufferAccess(buffer, resources), offset, size)
 
 
-    override fun getSubsection0(
-        access: ByteBufferAccess, globalPosition: Long, length: Long,
-    ) = ByteBufferRad(access, globalPosition.toInt(), length.toInt())
-
+    override fun view0(
+        access: ByteBufferAccess, globalPosition: Long, length: Long, owner: RadHandle?,
+    ) = ByteBufferRad(access, globalPosition.toInt(), length.toInt(), owner)
 
     private fun toAccessPos(position: Long) =
         (offset + position).toIntChecked()

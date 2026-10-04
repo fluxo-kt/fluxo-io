@@ -11,10 +11,11 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Interface that provides read-only random access to some underlying data.
  * Implementations must allow concurrent reads in a thread-safe manner.
- * Instances can be shared, [subsectioned][subsection], and closed independently.
  *
- * **WARNING: Remember to close the [RandomAccessData] when finished
- * to properly release resources!*
+ * A factory returns a *handle*: close it when finished to release the underlying resource.
+ * [slice] gives a no-copy view of a range that needs no close and reads only while its
+ * handle is open; [share] gives another handle that keeps the data open on its own.
+ * A closed handle (and every slice of it) throws [IOException] on read.
  *
  * All implementations are thread-safe!
  * For JVM and Android, it also implements [java.io.Closeable] interface.
@@ -35,17 +36,42 @@ public expect interface RandomAccessData : AutoCloseable {
 
 
     /**
-     * Returns a new [RandomAccessData] for a specific subsection of this data.
-     * Underlying resources are properly shared between the original and the new data.
-     * No data is copied for the subsection.
+     * Returns a view of `[position, position + length)` of this data. No data is copied.
      *
-     * @param position the position of the subsection
-     * @param length the length of the subsection
+     * The view needs no [close][AutoCloseable.close] (closing it does nothing) and reads
+     * only while the handle it came from is open: afterwards every read throws
+     * [IOException]. To keep a range open independently, use `slice(…).share()`.
      *
-     * @return a new subsection [RandomAccessData].
+     * @param position the start of the range, relative to this data
+     * @param length the length of the range
+     *
+     * @throws IndexOutOfBoundsException if the [position] or [length] is invalid
+     * @throws IOException if this data is already closed
+     */
+    public fun slice(
+        position: Long,
+        length: Long = size - position,
+    ): RandomAccessData
+
+    /**
+     * Returns a new handle over the same range that keeps the underlying data open on its
+     * own: it stays readable after this one is closed, and must itself be closed once.
+     * The data is released when the last handle is closed.
+     *
+     * @throws IOException if this data is already closed
+     */
+    public fun share(): RandomAccessData
+
+    /**
+     * Returns a new handle for a specific range of this data, which must be closed.
      *
      * @throws IndexOutOfBoundsException if the [position] or [length] is invalid
      */
+    @Deprecated(
+        "Use slice(position, length).share(): the same owned sub-range, made explicit.",
+        ReplaceWith("slice(position, length).share()"),
+        DeprecationLevel.ERROR,
+    )
     public fun subsection(
         position: Long,
         length: Long = size - position,

@@ -4,6 +4,7 @@ import fluxo.io.Closeable
 import fluxo.io.EOFException
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.rad.StreamFactoryRad.StreamFactory
 import fluxo.io.rad.StreamFactoryRad.StreamFactoryAccess
@@ -30,8 +31,8 @@ import javax.annotation.concurrent.ThreadSafe
 @ThreadSafe
 @Suppress("KDocUnresolvedReference")
 internal class StreamFactoryRad
-private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
-    AccessorAwareRad<StreamFactoryAccess>(access, offset, size) {
+private constructor(access: StreamFactoryAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+    AccessorAwareRad<StreamFactoryAccess>(access, offset, size, owner) {
 
     constructor(
         factory: StreamFactory<*>,
@@ -41,10 +42,9 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
     ) : this(StreamFactoryAccess(factory, maxPoolSize), offset, size)
 
 
-    override fun getSubsection0(
-        access: StreamFactoryAccess, globalPosition: Long, length: Long,
-    ) = StreamFactoryRad(access, globalPosition, length)
-
+    override fun view0(
+        access: StreamFactoryAccess, globalPosition: Long, length: Long, owner: RadHandle?,
+    ) = StreamFactoryRad(access, globalPosition, length, owner)
 
     internal class StreamFactoryAccess(
         private val factory: StreamFactory<*>,

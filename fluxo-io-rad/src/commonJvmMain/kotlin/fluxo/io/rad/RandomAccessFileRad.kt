@@ -4,6 +4,7 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.rad.RandomAccessFileRad.RafAccess
 import java.io.RandomAccessFile
@@ -30,15 +31,16 @@ import javax.annotation.concurrent.ThreadSafe
  */
 @ThreadSafe
 internal class RandomAccessFileRad
-private constructor(access: RafAccess, offset: Long, size: Long) :
-    AccessorAwareRad<RafAccess>(access, offset, size) {
+private constructor(access: RafAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+    AccessorAwareRad<RafAccess>(access, offset, size, owner) {
 
     constructor(raf: RandomAccessFile, offset: Long, size: Long)
         : this(RafAccess(raf), offset, size)
 
 
-    override fun getSubsection0(access: RafAccess, globalPosition: Long, length: Long) =
-        RandomAccessFileRad(access, globalPosition, length)
+    override fun view0(
+        access: RafAccess, globalPosition: Long, length: Long, owner: RadHandle?,
+    ) = RandomAccessFileRad(access, globalPosition, length, owner)
 
 
     override fun readByteAt0(position: Long): Int =

@@ -8,8 +8,22 @@
 Next version: 0.2.0. Version 0.1.1 was tagged but never published to Maven
 Central; its changes ship here.
 
+### Added
+
+- `RandomAccessData.slice(position, length)`: a no-copy range view that needs no
+  close (it cannot leak) and reads only while its handle is open.
+- `RandomAccessData.share()`: another handle that keeps the data open on its
+  own; close it once.
+
 ### Changed
 
+- **A closed handle never reads**: every read of a closed `RandomAccessData`, or
+  of a slice taken from it, throws `IOException`, even while another handle keeps
+  the data open. Before, such reads succeeded until the last handle closed, and
+  `ByteArray`-backed instances kept reading after `close()`.
+- `subsection(position, length)` is deprecated (error level), replaced by
+  `slice(position, length).share()`; it will be removed in the next release.
+  Most callers that never closed their subsections want plain `slice(...)`.
 - **Artifact coordinate renamed** to `io.github.fluxo-kt:fluxo-io-rad` (was
   `fluxo-io` / `fluxo-io-jvm` / platform klibs in 0.1.0). Migrate the
   dependency coord; the old artifacts are no longer published.
@@ -22,9 +36,8 @@ Central; its changes ship here.
   and silent stream-handle leak in `StreamFactoryRad`. Reads on a freed
   shared resource now throw `IOException`; a close during a read defers the
   release until that read ends, and `close()` never waits for readers.
-- `AccessorAwareRad.close()` is idempotent per holder — a `Closeable`-legal
-  double-close no longer prematurely frees the shared resource still used
-  by parent or siblings.
+- `close()` is idempotent per handle: a `Closeable`-legal double close no
+  longer frees the shared resource still used by other handles.
 - `StreamFactoryRad` ghost-read race + DoS-on-close: a slow user factory no
   longer blocks `close()`, and no stream leaks past the pool drain.
 - `SharedDataAccessor.onSharedClose` is `final`; release goes in an overridable

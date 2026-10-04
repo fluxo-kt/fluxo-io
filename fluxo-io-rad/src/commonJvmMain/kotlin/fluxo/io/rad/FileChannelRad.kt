@@ -1,6 +1,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.AccessorAwareRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
 import fluxo.io.rad.FileChannelRad.FileChannelAccess
@@ -20,8 +21,8 @@ import kotlin.math.min
  */
 @ThreadSafe
 internal class FileChannelRad
-private constructor(access: FileChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<FileChannelAccess>(access, offset, size) {
+private constructor(access: FileChannelAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+    AccessorAwareRad<FileChannelAccess>(access, offset, size, owner) {
 
     constructor(
         channel: FileChannel,
@@ -31,10 +32,9 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
     ) : this(FileChannelAccess(channel, resources), offset, size)
 
 
-    override fun getSubsection0(
-        access: FileChannelAccess, globalPosition: Long, length: Long,
-    ) = FileChannelRad(access, globalPosition, length)
-
+    override fun view0(
+        access: FileChannelAccess, globalPosition: Long, length: Long, owner: RadHandle?,
+    ) = FileChannelRad(access, globalPosition, length, owner)
 
     @Throws(IOException::class)
     override fun read0(buffer: ByteBuffer, position: Long): Int {

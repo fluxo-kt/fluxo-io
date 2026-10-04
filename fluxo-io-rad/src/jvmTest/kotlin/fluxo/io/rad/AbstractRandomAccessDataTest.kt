@@ -105,9 +105,9 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun readWhenOffsetIsBeyondEndOfSubsectionShouldThrowException() {
-        val subsection = rad.subsection(0, 10)
-        assertIOB { subsection.readFrom(11, 0) }
+    fun readWhenOffsetIsBeyondEndOfSliceShouldThrowException() {
+        val slice = rad.slice(0, 10)
+        assertIOB { slice.readFrom(11, 0) }
     }
 
     @Test
@@ -118,10 +118,10 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun readWhenOffsetPlusLengthGreaterThanEndOfSubsectionShouldThrowException() {
-        val subsection = rad.subsection(0, 10)
-        assertEquals(EMPTY_BYTE_ARRAY, subsection.readFrom(10, 1))
-        assertIOB { subsection.readFrom(11, 1) }
+    fun readWhenOffsetPlusLengthGreaterThanEndOfSliceShouldThrowException() {
+        val slice = rad.slice(0, 10)
+        assertEquals(EMPTY_BYTE_ARRAY, slice.readFrom(10, 1))
+        assertIOB { slice.readFrom(11, 1) }
     }
 
     @Test
@@ -208,116 +208,114 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun subsectionNegativeOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
-        assertIOB { rad.subsection(-1, 1) }
+    fun sliceNegativeOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
+        assertIOB { rad.slice(-1, 1) }
     }
 
     @Test
-    fun subsectionNegativeLength() = runTest(timeout = DEFAULT_TIMEOUT) {
-        assertIOB { rad.subsection(0, -1) }
+    fun sliceNegativeLength() = runTest(timeout = DEFAULT_TIMEOUT) {
+        assertIOB { rad.slice(0, -1) }
     }
 
     @Test
-    fun subsectionZeroLength() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(0, 0)
-        assertEquals(-1, subsection.asInputStream().read())
+    fun sliceZeroLength() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val slice = rad.slice(0, 0)
+        assertEquals(-1, slice.asInputStream().read())
     }
 
     @Test
-    fun subsectionTooBig() = runTest(timeout = DEFAULT_TIMEOUT) {
-        rad.subsection(0, 256)
-        assertIOB { rad.subsection(0, 257) }
+    fun sliceTooBig() = runTest(timeout = DEFAULT_TIMEOUT) {
+        rad.slice(0, 256)
+        assertIOB { rad.slice(0, 257) }
     }
 
     @Test
-    fun subsectionTooBigWithOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
-        rad.subsection(1, 255)
-        assertIOB { rad.subsection(1, 256) }
+    fun sliceTooBigWithOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
+        rad.slice(1, 255)
+        assertIOB { rad.slice(1, 256) }
     }
 
     @Test
-    fun subsection() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 1)
-        assertEquals(1, subsection.asInputStream().read())
+    fun slice() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val slice = rad.slice(1, 1)
+        assertEquals(1, slice.asInputStream().read())
     }
 
     @Test
-    fun subsectionOutlivesParentClose() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 1)
-        inputStream.close()
-
+    fun shareOutlivesParentClose() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val shared = rad.slice(1, 1).share()
         rad.close()
 
-        assertEquals(1, subsection.readByteAt(0))
-        subsection.close()
+        assertEquals(1, shared.readByteAt(0))
+        shared.close()
     }
 
     /**
-     * Closing one holder more than once must be a no-op, per the [java.io.Closeable]
-     * contract ("if the stream is already closed then invoking this method has no
-     * effect"). A second close must NOT decrement the shared refcount again, else it
-     * prematurely frees the underlying resource still in use by the parent (and any
-     * sibling subsections), corrupting their reads.
+     * Closing one handle more than once must be a no-op, per the [java.io.Closeable]
+     * contract. A second close must NOT give back the ownership again, else it frees the
+     * underlying resource still in use by other handles.
      */
     @Test
-    fun doubleClosingSubsectionKeepsSharedResourceForParent() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 1)
-        // Drop the stream's hold so only {rad, subsection} retain the shared accessor.
-        inputStream.close()
+    fun doubleClosingShareKeepsDataForParent() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val shared = rad.share()
+        shared.close()
+        shared.close()
 
-        subsection.close()
-        subsection.close()
-
-        // The parent shares the same accessor and was never closed: it must stay usable.
         assertEquals(1, rad.readByteAt(1))
         assertEquals(BYTES, rad.readAllBytes())
     }
 
     /**
-     * Closing a subsection while its parent is still open MUST leave reads on the (now-closed)
-     * subsection valid: the read-after-close guard rejects access only when the *shared*
-     * resource has been freed, not per-holder. Pins the by-design behaviour AGENTS.md
-     * documents — a renamed/removed guard that began rejecting per-holder would red this.
+     * A closed handle and its slices reject reads even while another handle keeps the same
+     * data open: a read-after-close must fail at the bug, never depend on unrelated handles.
+     * Closing a slice does nothing.
      */
     @Test
-    fun closingSubsectionLeavesItReadableWhileParentOpen() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 2)
-        subsection.close()
-        // Shared resource still alive (root + inputStream retain): subsection reads succeed.
-        assertEquals(1, subsection.readByteAt(0)) // global offset 1, BYTES[1]=1
-        assertEquals(2, subsection.readByteAt(1)) // global offset 2, BYTES[2]=2
+    fun closedHandleRejectsReadsWhileOtherHandleIsOpen() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val shared = rad.slice(1, 2).share()
+        val view = shared.slice(1)
+        assertEquals(2, view.readByteAt(0))
+        shared.close()
+
+        assertFailsWith<IOException> { shared.readByteAt(0) }
+        assertFailsWith<IOException> { view.readByteAt(0) }
+        assertFailsWith<IOException> { shared.slice(0) }
+        assertFailsWith<IOException> { shared.share() }
+
+        rad.slice(0, 1).close()
+        assertEquals(2, rad.readByteAt(2))
     }
 
     /**
-     * Reading a resource-backed holder after it has been closed must fail cleanly with
-     * [IOException], never return stale bytes and never touch a freed resource. For a
-     * memory-mapped/direct `ByteBuffer` the freed region is unmapped, so an unguarded read is a
-     * native use-after-free that crashes the JVM; a stream pool would leak a re-created stream.
+     * After its handle closes, every public read path of the handle and of its slices fails
+     * with [IOException] instead of returning bytes. Each path is listed because an
+     * implementation may route it through its own fast-path override.
      *
-     * Exercises every resource-touching entry point, because each may have a per-impl perf
-     * override that bypasses the shared `read(bytes)` primitive: `readByteAt`/`readFrom` plus
-     * `read(ByteBuffer)` and `transferTo`. Dropping the guard from any one override must turn
-     * this red — otherwise the gate covers only some paths and a UAF leaks through the rest.
-     *
-     * [RandomAccessDataArrayTest] overrides this: a `ByteArray` holds no releasable resource, so
-     * its `close()` is a no-op and reads stay valid — there is nothing to make unsafe.
+     * Sequentially this rejects at the handle, before any resource is touched. Memory safety
+     * when a close races an in-flight read rests on the resource lease, which
+     * [RadConcurrentCloseTest] exercises.
      */
     @Test
-    open fun readingClosedHolderThrowsNotCrashes() = runTest(timeout = DEFAULT_TIMEOUT) {
-        inputStream.close()
-        rad.close() // root was the only holder, so the shared resource is now freed
+    fun readingClosedHolderThrowsNotCrashes() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val view = rad.slice(1)
+        rad.close()
 
         val sink = Channels.newChannel(ByteArrayOutputStream())
-        assertFailsWith<IOException> { rad.readByteAt(0) }
-        assertFailsWith<IOException> { rad.readFrom(0, 1) }
-        assertFailsWith<IOException> { rad.read(ByteBuffer.allocate(1), 0) }
-        assertFailsWith<IOException> { rad.transferTo(sink) }
+        for (closed in arrayOf(rad, view)) {
+            assertFailsWith<IOException> { closed.readByteAt(0) }
+            assertFailsWith<IOException> { closed.readFrom(0, 1) }
+            assertFailsWith<IOException> { closed.read(ByteArray(1)) }
+            assertFailsWith<IOException> { closed.read(ByteBuffer.allocate(1), 0) }
+            assertFailsWith<IOException> { closed.transferTo(sink) }
+            assertFailsWith<IOException> { closed.readAllBytes() }
+            assertFailsWith<IOException> { closed.asInputStream() }
+        }
     }
 
     @Test
-    fun inputStreamReadPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 2)
-        val inputStream = subsection.asInputStream()
+    fun inputStreamReadPastSlice() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val slice = rad.slice(1, 2)
+        val inputStream = slice.asInputStream()
         assertEquals(2, inputStream.available())
         assertEquals(1, inputStream.read())
         assertEquals(2, inputStream.read())
@@ -325,9 +323,9 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadBytesPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 2)
-        val inputStream = subsection.asInputStream()
+    fun inputStreamReadBytesPastSlice() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val slice = rad.slice(1, 2)
+        val inputStream = slice.asInputStream()
         assertEquals(2, inputStream.available())
         val b = ByteArray(3)
         assertEquals(2, inputStream.read(b))
@@ -335,9 +333,9 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamSkipPastSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val subsection = rad.subsection(1, 2)
-        val inputStream = subsection.asInputStream()
+    fun inputStreamSkipPastSlice() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val slice = rad.slice(1, 2)
+        val inputStream = slice.asInputStream()
         assertEquals(2, inputStream.available())
         assertEquals(2L, inputStream.skip(3))
         assertEquals(-1, inputStream.read())
@@ -356,15 +354,15 @@ internal abstract class AbstractRandomAccessDataTest(
             threadPool.submit<Unit> {
                 val d = "task #$taskIndex"
                 val len = BYTES.size
-                val subsection = rad.subsection(0, len.toLong())
+                val slice = rad.slice(0, len.toLong())
 
-                val stream = subsection.asInputStream()
+                val stream = slice.asInputStream()
                 assertEquals(len, stream.available())
                 val b = ByteArray(len)
                 assertEquals(len, stream.read(b), d)
                 assertEquals(BYTES, b, d)
 
-                arrayOf(rad, subsection).forEachIndexed { ri, rad ->
+                arrayOf(rad, slice).forEachIndexed { ri, rad ->
                     assertRead("$d rad #$ri", rad) { array, position ->
                         try {
                             randRead(array, position)
@@ -392,9 +390,9 @@ internal abstract class AbstractRandomAccessDataTest(
     @Test
     fun testSize() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(BYTES.size.toLong(), rad.size)
-        assertEquals(rad.size, rad.subsection(0, rad.size).size)
-        assertEquals(8, rad.subsection(10, 8).size)
-        assertEquals(12, rad.subsection(123, 12).size)
+        assertEquals(rad.size, rad.slice(0, rad.size).size)
+        assertEquals(8, rad.slice(10, 8).size)
+        assertEquals(12, rad.slice(123, 12).size)
     }
 
     @Test
@@ -403,9 +401,9 @@ internal abstract class AbstractRandomAccessDataTest(
             inputStream,
             rad.asInputStream(),
             rad.asInputStream().buffered(),
-            rad.subsection(0, rad.size).asInputStream(),
-            rad.subsection(0, rad.size)
-                .subsection(0, rad.size).asInputStream(),
+            rad.slice(0, rad.size).asInputStream(),
+            rad.slice(0, rad.size)
+                .slice(0, rad.size).asInputStream(),
         )
         for (stream in streams) {
             assertEquals(true, stream.markSupported())
@@ -437,7 +435,7 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testSubsection() = runTest(timeout = DEFAULT_TIMEOUT) {
+    fun testSlice() = runTest(timeout = DEFAULT_TIMEOUT) {
         val finished = AtomicBoolean(false)
         val thread = Thread.currentThread()
         val timeoutThread = Thread {
@@ -453,7 +451,7 @@ internal abstract class AbstractRandomAccessDataTest(
         try {
             timeoutThread.start()
 
-            val copy = rad.subsection(0, rad.size)
+            val copy = rad.slice(0, rad.size)
             assertEquals(BYTES.size.toLong(), copy.size)
             assertEquals(BYTES, copy.readAllBytes())
 
@@ -461,39 +459,39 @@ internal abstract class AbstractRandomAccessDataTest(
             assertEquals(copy.readByteAt(156), rad.readByteAt(156))
             assertEquals(copy.readByteAt(BYTES.size + 12L), rad.readByteAt(BYTES.size + 12L))
 
-            assertIOB { rad.subsection(0, BYTES.size + 1L) }
-            assertIOB { rad.subsection(1, BYTES.size.toLong()) }
-            assertIOB { rad.subsection(-1, 5) }
-            assertIOB { rad.subsection(0, -1) }
-            assertIOB { rad.subsection(rad.size + 1, 0) }
-            assertIOB { rad.subsection(rad.size, 1) }
+            assertIOB { rad.slice(0, BYTES.size + 1L) }
+            assertIOB { rad.slice(1, BYTES.size.toLong()) }
+            assertIOB { rad.slice(-1, 5) }
+            assertIOB { rad.slice(0, -1) }
+            assertIOB { rad.slice(rad.size + 1, 0) }
+            assertIOB { rad.slice(rad.size, 1) }
 
 
-            val part = rad.subsection(5, 8)
-            assertIOB { part.subsection(0, 9) }
-            assertIOB { part.subsection(1, 8) }
-            assertIOB { part.subsection(-1, 5) }
+            val part = rad.slice(5, 8)
+            assertIOB { part.slice(0, 9) }
+            assertIOB { part.slice(1, 8) }
+            assertIOB { part.slice(-1, 5) }
 
             assertEquals(BYTES.copyOfRange(5, 13), part.readAllBytes())
             assertEquals(BYTES.copyOfRange(5, 13), part.readFrom(0L, Int.MAX_VALUE))
             assertEquals(BYTES.copyOfRange(6, 13), part.readFrom(1L, Int.MAX_VALUE))
             assertIOB { part.readFrom(-1L, 1) }
 
-            assertEmptyRad(rad.subsection(0, 0))
-            assertEmptyRad(rad.subsection(0, 0).subsection(0, 0))
-            assertEmptyRad(rad.subsection(9, 0))
-            assertEmptyRad(rad.subsection(rad.size, 0))
+            assertEmptyRad(rad.slice(0, 0))
+            assertEmptyRad(rad.slice(0, 0).slice(0, 0))
+            assertEmptyRad(rad.slice(9, 0))
+            assertEmptyRad(rad.slice(rad.size, 0))
 
-            assertIOB { rad.subsection(0, LONG_GIVES_INT_MINUS_2) }
-            assertIOB { rad.subsection(0, LONG_GIVES_INT_0) }
-            assertIOB { rad.subsection(0, LONG_GIVES_INT_2) }
-            assertIOB { rad.subsection(0, LONG_NEG_GIVES_INT_2) }
-            assertIOB { rad.subsection(0, Int.MAX_VALUE.toLong()) }
-            assertIOB { rad.subsection(LONG_GIVES_INT_MINUS_2, 1) }
-            assertIOB { rad.subsection(LONG_GIVES_INT_0, 1) }
-            assertIOB { rad.subsection(LONG_GIVES_INT_2, 1) }
-            assertIOB { rad.subsection(LONG_NEG_GIVES_INT_2, 1) }
-            assertIOB { rad.subsection(Int.MAX_VALUE.toLong(), 1) }
+            assertIOB { rad.slice(0, LONG_GIVES_INT_MINUS_2) }
+            assertIOB { rad.slice(0, LONG_GIVES_INT_0) }
+            assertIOB { rad.slice(0, LONG_GIVES_INT_2) }
+            assertIOB { rad.slice(0, LONG_NEG_GIVES_INT_2) }
+            assertIOB { rad.slice(0, Int.MAX_VALUE.toLong()) }
+            assertIOB { rad.slice(LONG_GIVES_INT_MINUS_2, 1) }
+            assertIOB { rad.slice(LONG_GIVES_INT_0, 1) }
+            assertIOB { rad.slice(LONG_GIVES_INT_2, 1) }
+            assertIOB { rad.slice(LONG_NEG_GIVES_INT_2, 1) }
+            assertIOB { rad.slice(Int.MAX_VALUE.toLong(), 1) }
         } finally {
             finished.set(true)
             timeoutThread.interrupt()
@@ -504,7 +502,7 @@ internal abstract class AbstractRandomAccessDataTest(
     fun testAllBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
         assertEquals(BYTES, inputStream.readBytes())
 
-        for (rad in arrayOf(rad, rad.subsection(0, rad.size))) {
+        for (rad in arrayOf(rad, rad.slice(0, rad.size))) {
             assertEquals(BYTES.size.toLong(), rad.size)
             assertEquals(BYTES.copyOf(BYTES.size), rad.readAllBytes())
             assertEquals(BYTES.copyOfRange(0, BYTES.size), rad.readAllBytes())
@@ -539,7 +537,7 @@ internal abstract class AbstractRandomAccessDataTest(
                 // ignore this error from older JDK versions
             }
 
-            val part = rad.subsection(34, 145)
+            val part = rad.slice(34, 145)
             val expected = BYTES.copyOfRange(34, 179)
             assertEquals(145L, part.size)
             assertEquals(expected, part.readAllBytes())
@@ -560,7 +558,7 @@ internal abstract class AbstractRandomAccessDataTest(
 
     @Test
     fun testReadToNewArray() = runTest(timeout = DEFAULT_TIMEOUT) {
-        arrayOf(rad, rad.subsection(0, rad.size)).forEachIndexed { ri, rad ->
+        arrayOf(rad, rad.slice(0, rad.size)).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
             val size = rad.size
             val sizeInt = size.toIntChecked()
@@ -607,7 +605,7 @@ internal abstract class AbstractRandomAccessDataTest(
             assertEquals(byteArrayOf(BYTES[123]), rad.readFrom(123, 1), d)
             assertEquals(byteArrayOf(BYTES[200]), rad.readFrom(200, 1), d)
 
-            val part = rad.subsection(5, 8)
+            val part = rad.slice(5, 8)
             assertEquals(BYTES.copyOfRange(5, 13), part.readFrom(0L, BYTES.size), d)
             assertEquals(BYTES.copyOfRange(7, 13), part.readFrom(2L, Int.MAX_VALUE), d)
             assertEquals(EMPTY_BYTE_ARRAY, part.readFrom(3L, 0), d)
@@ -615,7 +613,7 @@ internal abstract class AbstractRandomAccessDataTest(
             assertEquals(BYTES.copyOfRange(8, 13), part.readFrom(3L, Int.MAX_VALUE), d)
         }
 
-        val part = rad.subsection(40, 60)
+        val part = rad.slice(40, 60)
         val expected = BYTES.copyOfRange(40, 100)
         assertEquals(60L, part.size)
         assertEquals(EMPTY_BYTE_ARRAY, part.readFrom(0, 0))
@@ -636,8 +634,8 @@ internal abstract class AbstractRandomAccessDataTest(
     fun testReadArray() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
-            rad.subsection(0, rad.size),
-            rad.subsection(0, rad.size - 11),
+            rad.slice(0, rad.size),
+            rad.slice(0, rad.size - 11),
         ).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
 
@@ -755,7 +753,7 @@ internal abstract class AbstractRandomAccessDataTest(
             assertEquals(1, rad.read(ba1, 124, 0, Int.MAX_VALUE), d)
             assertEquals(byteArrayOf(BYTES[124]), ba1, d)
 
-            val part = rad.subsection(5, 8)
+            val part = rad.slice(5, 8)
             ba = ByteArray(sizeInt)
             assertIOB(d) { part.read(ba, 0L, sizeInt + 1) }
             assertIOB(d) { part.read(ba, position = 0L, offset = sizeInt + 1) }
@@ -772,8 +770,8 @@ internal abstract class AbstractRandomAccessDataTest(
     fun testAsyncReadArray() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
-            rad.subsection(0, rad.size),
-            rad.subsection(0, rad.size - 11),
+            rad.slice(0, rad.size),
+            rad.slice(0, rad.size - 11),
         ).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
             assertRead(d, rad) { array, position ->
@@ -790,8 +788,8 @@ internal abstract class AbstractRandomAccessDataTest(
 
     @Test
     fun testReadByte() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val copy = rad.subsection(0, rad.size)
-        arrayOf(rad, copy, rad.subsection(0, 8)).forEachIndexed { ri, rad ->
+        val copy = rad.slice(0, rad.size)
+        arrayOf(rad, copy, rad.slice(0, 8)).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
             val size = rad.size
             for (i in 0 until size.toIntChecked()) {
@@ -818,8 +816,8 @@ internal abstract class AbstractRandomAccessDataTest(
     fun testReadBuffer() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
-            rad.subsection(0, rad.size),
-            rad.subsection(0, rad.size - 11),
+            rad.slice(0, rad.size),
+            rad.slice(0, rad.size - 11),
         ).forEachIndexed { ri, rad ->
             assertRead("rad #$ri", rad) { array, position ->
                 read(ByteBuffer.wrap(array), position)
@@ -849,8 +847,8 @@ internal abstract class AbstractRandomAccessDataTest(
     fun testReadBufferAsync() = runTest(timeout = DEFAULT_TIMEOUT) {
         arrayOf(
             rad,
-            rad.subsection(0, rad.size),
-            rad.subsection(0, rad.size - 11),
+            rad.slice(0, rad.size),
+            rad.slice(0, rad.size - 11),
         ).forEachIndexed { ri, rad ->
             assertRead("rad #$ri", rad) { array, position ->
                 runBlocking {
@@ -867,7 +865,7 @@ internal abstract class AbstractRandomAccessDataTest(
         )
         arrayOf(
             rad,
-            rad.subsection(0, rad.size),
+            rad.slice(0, rad.size),
         ).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
 
@@ -885,7 +883,7 @@ internal abstract class AbstractRandomAccessDataTest(
                 )
             }
 
-            val emptyRad = rad.subsection(0, 0)
+            val emptyRad = rad.slice(0, 0)
 
             var tempFile = File.createTempFile("tempTransferToFile1", "tmp")
             try {

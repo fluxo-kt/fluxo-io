@@ -72,19 +72,19 @@ internal class RadByteBufferAccessorTest(
 internal class RadByteBufferAccessorResourceTest {
 
     @Test
-    fun subsectionRetainsSharedResourcesUntilItCloses() {
+    fun shareRetainsSharedResourcesUntilItCloses() {
         val closeCount = AtomicInteger()
         val bytes = byteArrayOf(1, 2, 3)
         val resource = AutoCloseable { closeCount.incrementAndGet() }
         val rad = RadByteBufferAccessor(ByteBuffer.wrap(bytes), 0, bytes.size, resource)
-        val subsection = rad.subsection(1, 1)
+        val shared = rad.slice(1, 1).share()
 
         rad.close()
         assertEquals(0, closeCount.get())
-        assertEquals(2, subsection.readByteAt(0))
+        assertEquals(2, shared.readByteAt(0))
 
-        subsection.close()
-        subsection.close()
+        shared.close()
+        shared.close()
         rad.close()
 
         assertEquals(1, closeCount.get())

@@ -12,7 +12,7 @@ import fluxo.io.rad.RadByteArrayAccessor
 @ThreadSafe
 @InternalFluxoIoApi
 internal expect abstract class BasicRad
-internal constructor() : RandomAccessData {
+internal constructor(owner: RadHandle?) : RadHandle {
 
     @Blocking
     final override fun readAllBytes(): ByteArray

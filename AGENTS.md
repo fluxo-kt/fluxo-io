@@ -56,20 +56,27 @@ Workflow / release / verification-metadata traps live in
   `@SubclassOptInRequired(InternalFluxoIoApi::class)`. JVM `actual` adds
   `Closeable`, `ByteBuffer` reads, `asInputStream()`, `transferTo`,
   `readByteAt`.
-- **`SharedCloseable`** (atomicfu refcount) is the keystone:
-  `subsection()` calls `retain()` on the underlying
-  `SharedDataAccessor`; closing decrements; resource frees on the last
-  close. **Each subsection MUST be closed independently** — otherwise the
-  underlying handle leaks. Conversely, **`close()` is idempotent per holder**
-  (`AccessorAwareRad` has a private atomicfu `closed` guard, `final`
-  override): a holder owns exactly one retain, so it must release at most
-  once. Without the guard a `Closeable`-legal double-close (`use{}` +
-  manual, defensive close) would decrement the *shared* refcount twice and
-  prematurely free the resource still used by parent/siblings —
-  `IOException` for file impls, a **JVM `SIGABRT` use-after-free** for
-  direct/mmap `ByteBuffer`. Regression:
-  `AbstractRandomAccessDataTest.doubleClosingSubsectionKeepsSharedResourceForParent`
-  runs across every impl, so a new RAD that drops the guard can't pass CI.
+- **Handles and slices (`fluxo.io.internal.RadHandle`).** A factory or
+  `share()` returns a *handle*: it holds one ownership of the
+  `SharedDataAccessor` (`SharedCloseable` refcount) and must be closed
+  once; the resource is released when the last handle closes. `slice()`
+  returns a *view*: owns nothing, close is a no-op, so views cannot leak.
+  **A closed handle never reads, nor do its slices**, even while another
+  handle keeps the data open: `ensureOpen()` (one volatile read) runs first
+  in every `final` public read of `BasicRad`, and implementations override
+  only the protected `…0` hooks, so no fast path can skip it. Why strict:
+  otherwise a read-after-close succeeds or fails depending on unrelated
+  handles, hiding the caller's bug. Applies to ByteArray too (one rule for
+  every impl and future ports). `close()` is idempotent per handle
+  (a double close must not give back the ownership twice, which would free
+  data other handles use: `IOException` for files, **JVM `SIGABRT`** for
+  mmap/direct `ByteBuffer`). `subsection()` is deprecated as
+  `slice(p, l).share()`. Regressions run on every impl:
+  `doubleClosingShareKeepsDataForParent`,
+  `closedHandleRejectsReadsWhileOtherHandleIsOpen`,
+  `readingClosedHolderThrowsNotCrashes` (all public read paths; only the
+  ByteArray run can catch a missing `ensureOpen`, since resource-backed
+  impls still fail via the lease).
 - **Every access to a releasable resource runs inside
   `SharedCloseable.withLease { … }`**, the only read-after-close guard.
   A lease is one atomic add, granted only while an owner exists; once the
@@ -82,14 +89,10 @@ Workflow / release / verification-metadata traps live in
   run in parallel. Keep the lease inside the accessor (`api` is `private`
   there), never in `AccessorAwareRad`: per-impl perf overrides
   (`readByteAt0`, `read(ByteBuffer, position)`, `transferTo`) bypass the
-  base `read`. **ByteArray is deliberately exempt**: nothing to release,
-  `close()` is a no-op (`RandomAccessDataArrayTest` asserts reads stay
-  valid). Regressions: `AbstractRandomAccessDataTest.readingClosedHolderThrowsNotCrashes`
-  hits all four entry points on every impl; `RadConcurrentCloseTest`
-  latch-freezes a real in-flight read across `close()` (no sleeps) and is
-  RED when the lease is removed. NB: this rejects reads after the
-  *shared* resource is released, NOT per holder: reading a closed
-  subsection whose parent is still open succeeds (by design).
+  base `read`. ByteArray needs no lease (nothing to release). Sequential
+  read-after-close is rejected earlier, at the handle; the lease matters
+  when a close races an in-flight read, which `RadConcurrentCloseTest`
+  latch-freezes (no sleeps) and which is RED when the lease is removed.
 - `SharedDataAccessor` owns the JVM resource and the only
   `read(bytes, position, offset, length)` primitive.
   `onSharedClose()` is `final`; release the API in
@@ -142,8 +145,9 @@ Workflow / release / verification-metadata traps live in
    AccessorAwareRad<FooAccess>(access, offset, size)`. Inner
    `FooAccess(api, resources) : SharedDataAccessor(resources)` exposes
    `size: Long` + `read(bytes, position, offset, length)`.
-   `getSubsection0` returns `FooRad(access, globalPosition, length)` —
-   same `access`, parent retains.
+   `view0(access, globalPosition, length, owner)` returns
+   `FooRad(access, globalPosition, length, owner)`: same `access`; the
+   handle lifetime is inherited from `RadHandle`, never reimplemented.
 2. Keep `api` `private` in `FooAccess`; every `FooAccess` method that
    touches it runs inside `withLease { … }` (read-after-close UAF/leak).
    Optional perf overrides (`read(ByteBuffer, position)`,

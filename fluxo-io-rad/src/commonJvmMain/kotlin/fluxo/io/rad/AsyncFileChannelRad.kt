@@ -4,6 +4,7 @@ package fluxo.io.rad
 
 import androidx.annotation.RequiresApi
 import fluxo.io.internal.AccessorAwareRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.aRead
 import fluxo.io.nio.limitCompat
@@ -34,8 +35,8 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(26)
 @Deprecated("Not recommended for usage, it's super slow and often has OOM problems.")
 internal class AsyncFileChannelRad
-private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<AsyncFileChannelAccess>(access, offset, size) {
+private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+    AccessorAwareRad<AsyncFileChannelAccess>(access, offset, size, owner) {
 
     /**
      * Create a new [AsyncFileChannelRad] backed by the specified [channel].
@@ -56,10 +57,9 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
         this(AsynchronousFileChannel.open(file.toPath()), offset, size)
 
 
-    override fun getSubsection0(
-        access: AsyncFileChannelAccess, globalPosition: Long, length: Long,
-    ) = AsyncFileChannelRad(access, globalPosition, length)
-
+    override fun view0(
+        access: AsyncFileChannelAccess, globalPosition: Long, length: Long, owner: RadHandle?,
+    ) = AsyncFileChannelRad(access, globalPosition, length, owner)
 
     override suspend fun readAsync0(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,

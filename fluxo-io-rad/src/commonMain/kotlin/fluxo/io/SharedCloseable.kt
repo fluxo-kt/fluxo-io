@@ -97,13 +97,18 @@ public abstract class SharedCloseable : Closeable {
      * access to a freed resource.
      */
     public fun retain() {
+        check(tryRetain()) { "Attempt to retain an already released instance: $this" }
+    }
+
+    /** [retain] that reports a released instance with `false` instead of throwing. */
+    internal fun tryRetain(): Boolean {
         while (true) {
             val current = state.value
-            check(current >= ONE_OWNER) {
-                "Attempt to retain an already released instance: $this"
+            if (current < ONE_OWNER) {
+                return false
             }
             if (state.compareAndSet(current, current + ONE_OWNER)) {
-                return
+                return true
             }
         }
     }

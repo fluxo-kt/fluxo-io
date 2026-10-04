@@ -12,23 +12,32 @@ import fluxo.io.util.readFullyImpl
  */
 @ThreadSafe
 @InternalFluxoIoApi
-internal actual abstract class BasicRad : RandomAccessData {
+internal actual abstract class BasicRad
+internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
     @Blocking
-    actual final override fun readAllBytes(): ByteArray = readAllBytes0()
+    actual final override fun readAllBytes(): ByteArray {
+        ensureOpen()
+        return readAllBytes0()
+    }
 
     protected actual open fun readAllBytes0(): ByteArray = readAllBytesImpl()
 
     @Blocking
-    actual final override fun readFrom(position: Long, maxLength: Int): ByteArray =
-        readFrom0(position, maxLength)
+    actual final override fun readFrom(position: Long, maxLength: Int): ByteArray {
+        ensureOpen()
+        return readFrom0(position, maxLength)
+    }
 
     protected actual abstract fun readFrom0(position: Long, maxLength: Int): ByteArray
 
     @Blocking
     actual final override fun read(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
-    ): Int = read0(buffer, position, offset, maxLength)
+    ): Int {
+        ensureOpen()
+        return read0(buffer, position, offset, maxLength)
+    }
 
     protected actual abstract fun read0(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,

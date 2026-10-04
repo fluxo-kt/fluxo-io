@@ -2,6 +2,7 @@ package fluxo.io.rad
 
 import androidx.annotation.RequiresApi
 import fluxo.io.internal.AccessorAwareRad
+import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
 import fluxo.io.rad.SeekableByteChannelRad.SeekableChannelAccess
@@ -27,8 +28,8 @@ import kotlin.math.min
 @ThreadSafe
 @RequiresApi(24)
 internal class SeekableByteChannelRad
-private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
-    AccessorAwareRad<SeekableChannelAccess>(access, offset, size) {
+private constructor(access: SeekableChannelAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+    AccessorAwareRad<SeekableChannelAccess>(access, offset, size, owner) {
 
     /**
      * Create a new [SeekableByteChannelRad] backed by the specified [channel].
@@ -42,10 +43,9 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
     ) : this(SeekableChannelAccess(channel, resources), offset, size)
 
 
-    override fun getSubsection0(
-        access: SeekableChannelAccess, globalPosition: Long, length: Long,
-    ) = SeekableByteChannelRad(access, globalPosition, length)
-
+    override fun view0(
+        access: SeekableChannelAccess, globalPosition: Long, length: Long, owner: RadHandle?,
+    ) = SeekableByteChannelRad(access, globalPosition, length, owner)
 
     @Suppress("ReturnCount")
     @Throws(IOException::class)

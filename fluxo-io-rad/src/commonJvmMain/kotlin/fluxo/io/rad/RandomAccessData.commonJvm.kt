@@ -30,6 +30,15 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     @Throws(IOException::class)
     public fun asInputStream(): InputStream
 
+    public actual fun slice(position: Long, length: Long): RandomAccessData
+
+    public actual fun share(): RandomAccessData
+
+    @Deprecated(
+        "Use slice(position, length).share(): the same owned sub-range, made explicit.",
+        ReplaceWith("slice(position, length).share()"),
+        DeprecationLevel.ERROR,
+    )
     public actual fun subsection(position: Long, length: Long): RandomAccessData
 
 

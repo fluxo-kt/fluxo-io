@@ -8,7 +8,6 @@ import fluxo.io.util.calcLength
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPositionAndMaxLength
 import kotlin.math.min
-import kotlinx.atomicfu.atomic
 
 @ThreadSafe
 internal abstract class AccessorAwareRad<A : SharedDataAccessor>
@@ -20,23 +19,32 @@ internal constructor(
     protected val offset: Long,
 
     final override val size: Long,
-) : BasicRad() {
+
+    owner: RadHandle?,
+) : BasicRad(owner) {
 
     init {
         checkOffsetAndCount(access.size, offset, size)
     }
 
-    override fun subsection(position: Long, length: Long): RandomAccessData {
-        checkOffsetAndCount(size, position, length)
-        access.retain()
-        return getSubsection0(access, offset + position, length)
-    }
+    final override fun view(position: Long, length: Long, owner: RadHandle?): RandomAccessData =
+        view0(access, offset + position, length, owner)
 
-    protected abstract fun getSubsection0(
+    /** A new instance of the implementation over the same [access]; positions are global. */
+    protected abstract fun view0(
         access: A,
         globalPosition: Long,
         length: Long,
+        owner: RadHandle?,
     ): RandomAccessData
+
+    final override fun acquireShared() {
+        if (!access.tryRetain()) {
+            throw IOException("RandomAccessData is already closed")
+        }
+    }
+
+    final override fun releaseShared() = access.close()
 
 
     @Throws(IOException::class)
@@ -74,25 +82,5 @@ internal constructor(
         }
         val pos = this.offset + position
         return access.read(buffer, pos, offset, len)
-    }
-
-
-    /**
-     * Guards [close] for one-shot release. Each holder — the root or any [subsection] —
-     * owns exactly one retain on the shared [access], so it must release at most once.
-     */
-    private val closed = atomic(false)
-
-    /**
-     * Idempotent, per the [java.io.Closeable] contract ("if already closed, invoking this
-     * method has no effect"). A repeated close must NOT decrement the shared refcount again:
-     * doing so would prematurely free the resource still in use by the parent or sibling
-     * subsections — for a memory-mapped buffer that is a use-after-free that crashes the JVM,
-     * not merely an [IOException]. Final so no subclass can reintroduce the unguarded path.
-     */
-    final override fun close() {
-        if (closed.compareAndSet(expect = false, update = true)) {
-            access.close()
-        }
     }
 }

@@ -82,13 +82,13 @@ public abstract class SharedCloseable : Closeable {
             if (current < ONE_OWNER) {
                 return
             }
-            val update = current - ONE_OWNER
-            if (state.compareAndSet(current, update)) {
-                if (update == 0L) {
-                    release()?.let { throw it }
-                }
-                return
+            if (!state.compareAndSet(current, current - ONE_OWNER)) {
+                continue
             }
+            if (current == ONE_OWNER) {
+                release()?.let { throw it }
+            }
+            return
         }
     }
 
@@ -167,26 +167,11 @@ public abstract class SharedCloseable : Closeable {
         }
 
         // Drain in batches: a listener registered while earlier ones run (even from inside one)
-        // is still notified. Only an empty registry is sealed with `null`, after which adds
-        // return silently because nothing is left to observe.
+        // is still notified.
         var listenerFailure: Throwable? = null
         while (true) {
-            val batch = listeners.value ?: break
-            if (batch.isEmpty()) {
-                if (listeners.compareAndSet(batch, null)) break else continue
-            }
-            if (!listeners.compareAndSet(batch, emptyArray())) {
-                continue
-            }
-            for (listener in batch) {
-                @Suppress("TooGenericExceptionCaught")
-                try {
-                    listener(closeCause)
-                } catch (e: Throwable) {
-                    val first = listenerFailure
-                    if (first == null) listenerFailure = e else first.addSuppressed(e)
-                }
-            }
+            val batch = takeListeners() ?: break
+            listenerFailure = notifyListeners(batch, closeCause, listenerFailure)
         }
 
         if (closeCause != null) {
@@ -194,6 +179,40 @@ public abstract class SharedCloseable : Closeable {
             return closeCause
         }
         return listenerFailure
+    }
+
+    /**
+     * Takes the registered listeners, leaving an empty registry. Only an empty registry is
+     * sealed with `null` (then `null` is returned), after which adds return silently because
+     * nothing is left to observe.
+     */
+    private fun takeListeners(): Array<SharedCloseListener>? {
+        while (true) {
+            val batch = listeners.value ?: return null
+            val next = if (batch.isEmpty()) null else emptyArray<SharedCloseListener>()
+            if (listeners.compareAndSet(batch, next)) {
+                return if (next == null) null else batch
+            }
+        }
+    }
+
+    /** Notifies every listener even if some throw; returns the first failure, others suppressed. */
+    private fun notifyListeners(
+        batch: Array<SharedCloseListener>,
+        cause: Throwable?,
+        failure: Throwable?,
+    ): Throwable? {
+        var first = failure
+        for (listener in batch) {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                listener(cause)
+            } catch (e: Throwable) {
+                val f = first
+                if (f == null) first = e else f.addSuppressed(e)
+            }
+        }
+        return first
     }
 
     /**

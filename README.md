@@ -27,9 +27,12 @@ plugins {
   kotlin("multiplatform") version "2.2.21"
 }
 dependencies {
-  implementation("io.github.fluxo-kt:fluxo-io-rad:0.1.1")
+  implementation("io.github.fluxo-kt:fluxo-io:0.1.0")
 }
 ```
+
+`0.1.0` is the latest published version. From `0.2.0` the coordinate becomes
+`io.github.fluxo-kt:fluxo-io-rad`.
 
 Use only versions that exist in Maven Central or the Central Portal snapshot
 repository. This module is alpha; do not assume unpublished coordinates are

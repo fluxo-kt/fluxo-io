@@ -239,6 +239,9 @@ Workflow / release / verification-metadata traps live in
   a single local copy is what stranded the toolchain modernization).
   Divergence happens — expect to rebase onto `origin/dev` before an
   `--ff-only` land.
+- **Before judging an API break, check what Maven Central actually serves**
+  under every coordinate this library has used (`fluxo-io` up to 0.1.0,
+  `fluxo-io-rad` after). Git tags list candidate releases only.
 
 ## Surprises rule (READ THIS)
 

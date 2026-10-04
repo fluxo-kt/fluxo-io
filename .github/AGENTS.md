@@ -42,6 +42,9 @@ silently breaks two pipelines after a `/ff` to `dev`:
 - **Central Portal only.** S01/OSSRH and legacy host APIs are dead;
   workflows must use `publishToMavenCentral` with **manual Portal release**
   (`automaticRelease = false`). Do not call `publishAndReleaseToMavenCentral`.
+- **A tag is not a release.** A version counts as released only once
+  `repo1.maven.org` serves it; a tag whose release workflow fails publishes
+  nothing. Docs must name only published versions.
 - **Never re-add `jit` + `pack` (the well-known Linux-only Gradle build
   service).** It does not support KMP (`jitpack#3853`); this lib has
   Apple/Native targets → broken metadata-incomplete artifact. The

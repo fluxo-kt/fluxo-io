@@ -56,6 +56,9 @@ repositories {
    version.
 7. Let `.github/workflows/release.yml` run `publishToMavenCentral`.
 8. Review the deployment in Central Portal, then publish it manually.
+9. Confirm `https://repo1.maven.org/maven2/io/github/fluxo-kt/fluxo-io-rad/<version>/`
+   exists before README or CHANGELOG present the version as released. A pushed
+   tag proves nothing: if the release workflow fails, nothing is published.
 
 ## Verification
 

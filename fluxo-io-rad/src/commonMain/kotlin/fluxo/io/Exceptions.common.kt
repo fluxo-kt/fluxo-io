@@ -7,7 +7,7 @@ package fluxo.io
  *
  * @see java.io.IOException
  */
-public expect open class IOException : Exception
+public expect open class IOException(message: String) : Exception
 
 /**
  * Signals that the end of the file or stream was reached unexpectedly during an input operation.

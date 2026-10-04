@@ -16,57 +16,143 @@ private typealias SharedCloseListener = (cause: Throwable?) -> Unit
 @ThreadSafe
 public abstract class SharedCloseable : Closeable {
 
-    private val state = atomic<CloseState>(CloseState.Open(retains = 1))
+    /**
+     * Owners and leases packed into one atomic `Long`, so every transition is a single
+     * allocation-free CAS or add, on every target.
+     *
+     * - Owners (high 32 bits): holders that must [close] once ([retain] adds one).
+     * - Leases (low 32 bits): in-flight accesses to the resource (see [tryAcquireLease]).
+     *
+     * Two counters, not one: a lease is only granted while an owner exists, so once the last
+     * owner closes, new accesses fail at once while in-flight ones finish. A single shared
+     * count would let a steady stream of reads keep a closed resource alive forever.
+     *
+     * The resource is released by whichever decrement produces exactly zero. Nothing can
+     * increment once owners reach zero, so exactly one caller observes the zero: release runs
+     * once, without a separate flag.
+     */
+    private val state = atomic(ONE_OWNER)
 
+    /**
+     * Listeners live apart from [state] because they change rarely and only matter at release;
+     * `null` once release has taken them for notification.
+     */
+    private val listeners = atomic<Array<SharedCloseListener>?>(emptyArray())
+
+    /** `false` from the moment the last owner closes, before [onSharedClose] runs. */
     public val isOpen: Boolean
-        get() = state.value is CloseState.Open
+        get() = state.value >= ONE_OWNER
 
     public fun addOnSharedCloseListener(cb: (cause: Throwable?) -> Unit) {
         while (true) {
-            when (val current = state.value) {
-                is CloseState.Closed -> return
-                is CloseState.Closing -> {
-                    val update = current.copy(listeners = addListener(current.listeners, cb))
-                    if (state.compareAndSet(expect = current, update = update)) {
-                        return
-                    }
-                }
-                is CloseState.Open -> {
-                    val update = current.copy(listeners = addListener(current.listeners, cb))
-                    if (state.compareAndSet(expect = current, update = update)) {
-                        return
-                    }
-                }
+            val current = listeners.value
+            if (current == null || current.any { it == cb }) {
+                return
+            }
+            if (listeners.compareAndSet(current, current + cb)) {
+                return
             }
         }
     }
 
     public fun removeOnSharedCloseListener(cb: (cause: Throwable?) -> Unit) {
         while (true) {
-            when (val current = state.value) {
-                is CloseState.Closed -> return
-                is CloseState.Closing -> {
-                    val update = current.copy(listeners = removeListener(current.listeners, cb))
-                    if (state.compareAndSet(expect = current, update = update)) {
-                        return
-                    }
-                }
-                is CloseState.Open -> {
-                    val update = current.copy(listeners = removeListener(current.listeners, cb))
-                    if (state.compareAndSet(expect = current, update = update)) {
-                        return
-                    }
-                }
+            val current = listeners.value ?: return
+            val index = current.indexOfFirst { it == cb }
+            if (index < 0) {
+                return
+            }
+            val update = Array(current.size - 1) { current[if (it < index) it else it + 1] }
+            if (listeners.compareAndSet(current, update)) {
+                return
             }
         }
     }
 
-
+    /**
+     * Releases one ownership. A repeated close after the last owner is gone is a no-op.
+     *
+     * Never waits for in-flight leases: when one is still running, the release happens at
+     * the end of that access instead (and its failures go to the fluxo-io logger, as no caller
+     * is left to receive them).
+     */
     public final override fun close() {
-        if (!releaseRetain()) {
-            return
+        while (true) {
+            val current = state.value
+            if (current < ONE_OWNER) {
+                return
+            }
+            val update = current - ONE_OWNER
+            if (state.compareAndSet(current, update)) {
+                if (update == 0L) {
+                    release()?.let { throw it }
+                }
+                return
+            }
         }
+    }
 
+    /**
+     * Adds an owner. Fails for an already released instance: reviving it would hand out
+     * access to a freed resource.
+     */
+    public fun retain() {
+        while (true) {
+            val current = state.value
+            check(current >= ONE_OWNER) {
+                "Attempt to retain an already released instance: $this"
+            }
+            if (state.compareAndSet(current, current + ONE_OWNER)) {
+                return
+            }
+        }
+    }
+
+    /**
+     * Starts an access to the resource; `false` once the last owner closed. Every `true` must
+     * be paired with exactly one [releaseLease], which keeps the resource alive until then.
+     */
+    internal fun tryAcquireLease(): Boolean {
+        while (true) {
+            val current = state.value
+            if (current < ONE_OWNER) {
+                return false
+            }
+            if (state.compareAndSet(current, current + 1L)) {
+                return true
+            }
+        }
+    }
+
+    /**
+     * Runs [block] while the resource is guaranteed alive: it cannot be released before
+     * [block] returns, and once the last owner closed this throws instead of touching it.
+     * The only sound way to reach a releasable resource (an unmapped buffer or a reused file
+     * descriptor would otherwise be read).
+     */
+    @Throws(IOException::class)
+    internal inline fun <T> withLease(block: () -> T): T {
+        if (!tryAcquireLease()) {
+            throw IOException("RandomAccessData is already closed")
+        }
+        try {
+            return block()
+        } finally {
+            releaseLease()
+        }
+    }
+
+    /** Ends an access started by a successful [tryAcquireLease]. */
+    internal fun releaseLease() {
+        if (state.addAndGet(-1L) == 0L) {
+            release()?.let { e ->
+                LOGGER?.invoke("Failed to release a shared resource after its last access", e)
+            }
+        }
+    }
+
+    /** Runs once, by the caller whose decrement made [state] zero. Returns the failure. */
+    private fun release(): Throwable? {
         var closeCause: Throwable? = null
         @Suppress("TooGenericExceptionCaught")
         try {
@@ -75,114 +161,38 @@ public abstract class SharedCloseable : Closeable {
             closeCause = e
         }
 
-        val listenerCause = notifyAndClose(closeCause)
+        // Drain in batches: a listener registered while earlier ones run (even from inside one)
+        // is still notified. Only an empty registry is sealed with `null`, after which adds
+        // return silently because nothing is left to observe.
+        var listenerFailure: Throwable? = null
+        while (true) {
+            val batch = listeners.value ?: break
+            if (batch.isEmpty()) {
+                if (listeners.compareAndSet(batch, null)) break else continue
+            }
+            if (!listeners.compareAndSet(batch, emptyArray())) {
+                continue
+            }
+            for (listener in batch) {
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    listener(closeCause)
+                } catch (e: Throwable) {
+                    val first = listenerFailure
+                    if (first == null) listenerFailure = e else first.addSuppressed(e)
+                }
+            }
+        }
+
         if (closeCause != null) {
-            if (listenerCause != null) {
-                closeCause.addSuppressed(listenerCause)
-            }
-            throw closeCause
+            listenerFailure?.let { closeCause.addSuppressed(it) }
+            return closeCause
         }
-        if (listenerCause != null) {
-            throw listenerCause
-        }
-    }
-
-    private fun releaseRetain(): Boolean {
-        while (true) {
-            when (val current = state.value) {
-                is CloseState.Closed,
-                is CloseState.Closing -> return false
-                is CloseState.Open -> {
-                    val update = current.release() ?: CloseState.Closing(current.listeners)
-                    if (state.compareAndSet(expect = current, update = update)) {
-                        return update is CloseState.Closing
-                    }
-                }
-            }
-        }
-    }
-
-    private fun notifyAndClose(closeCause: Throwable?): Throwable? {
-        var failure: Throwable? = null
-        while (true) {
-            when (val current = state.value) {
-                is CloseState.Closed -> return failure
-                is CloseState.Closing -> {
-                    if (current.listeners.isNotEmpty() && state.compareAndSet(
-                            expect = current,
-                            update = current.withoutListeners(),
-                        )
-                    ) {
-                        failure = notifyListenersOnce(current.listeners, closeCause, failure)
-                    } else if (state.compareAndSet(
-                            expect = current,
-                            update = CloseState.Closed,
-                        )
-                    ) {
-                        return failure
-                    }
-                }
-                is CloseState.Open -> error("SharedCloseable reopened during close: $this")
-            }
-        }
-    }
-
-    private fun notifyListenersOnce(
-        listeners: Array<SharedCloseListener>,
-        closeCause: Throwable?,
-        initialFailure: Throwable?,
-    ): Throwable? {
-        var failure = initialFailure
-        for (listener in listeners) {
-            try {
-                listener(closeCause)
-            } catch (e: Throwable) {
-                val currentFailure = failure
-                if (currentFailure == null) {
-                    failure = e
-                } else {
-                    currentFailure.addSuppressed(e)
-                }
-            }
-        }
-        return failure
-    }
-
-    private fun addListener(
-        listeners: Array<SharedCloseListener>,
-        cb: SharedCloseListener,
-    ): Array<SharedCloseListener> {
-        for (listener in listeners) {
-            if (listener == cb) {
-                return listeners
-            }
-        }
-        return Array(listeners.size + 1) { index ->
-            if (index == listeners.size) cb else listeners[index]
-        }
-    }
-
-    private fun removeListener(
-        listeners: Array<SharedCloseListener>,
-        cb: SharedCloseListener,
-    ): Array<SharedCloseListener> {
-        var removeIndex = -1
-        for (index in listeners.indices) {
-            if (listeners[index] == cb) {
-                removeIndex = index
-                break
-            }
-        }
-        if (removeIndex < 0) {
-            return listeners
-        }
-        return Array(listeners.size - 1) { index ->
-            listeners[if (index < removeIndex) index else index + 1]
-        }
+        return listenerFailure
     }
 
     /**
-     * Called at most once when the last consumer releases the resource.
+     * Called exactly once, when the last owner has closed and no access is in flight.
      *
      * Implementations should release any resources held by the instance.
      *
@@ -191,42 +201,7 @@ public abstract class SharedCloseable : Closeable {
     @Throws(IOException::class)
     protected abstract fun onSharedClose()
 
-
-    public fun retain() {
-        while (true) {
-            when (val current = state.value) {
-                is CloseState.Closed,
-                is CloseState.Closing -> {
-                    check(false) {
-                        "Attempt to retain an already released instance: $this"
-                    }
-                }
-                is CloseState.Open -> {
-                    val update = current.copy(retains = current.retains + 1)
-                    if (state.compareAndSet(expect = current, update = update)) {
-                        return
-                    }
-                }
-            }
-        }
-    }
-
-    private sealed interface CloseState {
-        data class Open(
-            val retains: Int,
-            val listeners: Array<SharedCloseListener> = emptyArray(),
-        ) : CloseState {
-            fun release(): Open? =
-                if (retains > 1) copy(retains = retains - 1) else null
-        }
-
-        data class Closing(
-            val listeners: Array<SharedCloseListener>,
-        ) : CloseState {
-            fun withoutListeners(): Closing =
-                copy(listeners = emptyArray())
-        }
-
-        data object Closed : CloseState
+    private companion object {
+        private const val ONE_OWNER = 1L shl 32
     }
 }

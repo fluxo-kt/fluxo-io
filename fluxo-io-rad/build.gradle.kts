@@ -108,10 +108,6 @@ fkcSetupMultiplatform(
         // Kotlin/JS doesn't support an older standard library than the compiler.
         implementation(libs.kotlin.stdlib)
     }
-
-    commonNative.main.dependencies {
-        implementation(libs.stately.concurrent.collections)
-    }
 }
 
 apiValidation {

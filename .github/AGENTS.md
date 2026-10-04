@@ -233,6 +233,10 @@ Code JARs stay **checksum-verified**.
   config-cache instrumentation (CI path) are unreachable to the write-pass
   → some transitives (lincheck-on-bump, parent POMs) need a primed cache
   before `./updateBaseline` can capture them.
+- Passes `-Pfluxo.unsignedLocalPublish=true`: its `publishToMavenLocal`
+  only resolves publication dependencies, and a non-SNAPSHOT version
+  otherwise fails at `sign*Publication` on any keyless machine or job
+  (`pr-baseline.yml` has no signing secrets).
 
 ## Repository policy enforcement
 

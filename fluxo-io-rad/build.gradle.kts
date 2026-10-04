@@ -155,8 +155,8 @@ mavenPublishing {
     }
 }
 
-// Opt-in for scripts/consumer-check.sh only: it publishes to mavenLocal on machines and CI jobs
-// that hold no signing key. Gradle's Sign tasks then skip when no key is configured. Without the
+// Opt-in for local mavenLocal publishes on machines and CI jobs that hold no signing key
+// (scripts/consumer-check.sh, updateBaseline). Never set it for a real release. Gradle's Sign tasks then skip when no key is configured. Without the
 // property, vanniktech keeps signing required for every non-SNAPSHOT publication (releases).
 if (providers.gradleProperty("fluxo.unsignedLocalPublish").orNull == "true") {
     extensions.configure<org.gradle.plugins.signing.SigningExtension> { isRequired = false }

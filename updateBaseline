@@ -13,7 +13,9 @@ fi
 BASELINE_TASKS="apiDump dependencyGuardBaseline"
 VERIFICATION_BASELINE_TASKS="dependencyGuardBaseline"
 COMMON_TASKS="${BASELINE_TASKS} --continue -Dlint.baselines.continue=true"
-GRADLE_BASE_ARGS="--no-daemon --no-configuration-cache"
+# publishToMavenLocal runs only to resolve publication-only dependencies (Dokka, javadoc jars) into
+# the verification metadata; signatures are irrelevant, and a non-SNAPSHOT version demands a key.
+GRADLE_BASE_ARGS="--no-daemon --no-configuration-cache -Pfluxo.unsignedLocalPublish=true"
 VERIFY_TASKS="help kotlinUpgradeYarnLock"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinJvm"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileAndroidMain"

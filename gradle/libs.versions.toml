@@ -24,6 +24,9 @@ kotlinCoreLibraries = "2.2.21"
 # https://github.com/JetBrains/kotlin/releases
 # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-gradle-plugin
 # WARN: Don't forget to update kotlin version badge in ../README.md
+# "What's new" pages do not list removed targets. Before claiming a bump keeps every target,
+# run `./gradlew help` at the new version: a target KGP dropped fails configuration with
+# NoSuchMethodError from fluxo-kmp-conf (watchosArm32 is gone in 2.5).
 kotlin = "2.4.20"
 
 # https://github.com/Kotlin/kotlinx.coroutines/releases

@@ -31,7 +31,12 @@ import javax.annotation.concurrent.ThreadSafe
 @ThreadSafe
 @Suppress("KDocUnresolvedReference")
 internal class StreamFactoryRad
-private constructor(access: StreamFactoryAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+private constructor(
+    access: StreamFactoryAccess,
+    offset: Long,
+    size: Long,
+    owner: RadHandle? = null,
+) :
     AccessorAwareRad<StreamFactoryAccess>(access, offset, size, owner) {
 
     constructor(

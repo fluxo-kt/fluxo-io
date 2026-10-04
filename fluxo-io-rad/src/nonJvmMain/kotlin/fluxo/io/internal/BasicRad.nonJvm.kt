@@ -52,7 +52,11 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
 
     @Blocking
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     actual final override suspend fun readAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
@@ -60,7 +64,11 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         return read(buffer, position, offset, maxLength)
     }
 
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     actual final override suspend fun readFullyAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int = readFully(buffer, position, offset, maxLength)

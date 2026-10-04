@@ -96,8 +96,12 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
 
 
     @Deprecated(
-        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).",
-        ReplaceWith("asAsync(Dispatchers.IO).read(buffer, position, offset, maxLength)", "kotlinx.coroutines.Dispatchers"),
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        ReplaceWith(
+            "asAsync(Dispatchers.IO).read(buffer, position, offset, maxLength)",
+            "kotlinx.coroutines.Dispatchers",
+        ),
         DeprecationLevel.ERROR,
     )
     @JvmSynthetic
@@ -109,8 +113,12 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     ): Int
 
     @Deprecated(
-        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).",
-        ReplaceWith("asAsync(Dispatchers.IO).readFully(buffer, position, offset, maxLength)", "kotlinx.coroutines.Dispatchers"),
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        ReplaceWith(
+            "asAsync(Dispatchers.IO).readFully(buffer, position, offset, maxLength)",
+            "kotlinx.coroutines.Dispatchers",
+        ),
         DeprecationLevel.ERROR,
     )
     @JvmSynthetic
@@ -158,7 +166,11 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.nio.channels.AsynchronousFileChannel.read
      * @see java.nio.channels.AsynchronousByteChannel.read
      */
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     @JvmSynthetic
     public suspend fun readAsync(buffer: ByteBuffer, position: Long): Int
 

@@ -32,6 +32,12 @@ complexity:
     ignoreOverridden: true
     ignoreAnnotatedFunctions: ['Preview']
 
+coroutines:
+  InjectDispatcher:
+    # A test choosing the context it passes to `asAsync` IS the injection; library code never
+    # names a dispatcher (callers choose it), so the rule stays on for production sources.
+    excludes: [ '**/*Test/**' ]
+
 empty-blocks:
   EmptyFunctionBlock:
     ignoreOverridden: true

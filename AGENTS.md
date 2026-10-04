@@ -207,8 +207,11 @@ Workflow / release / verification-metadata traps live in
   artifact. Removal + the repository ban are correct — keep both. (See
   also `.github/AGENTS.md` "Release publication".)
 - Build floors are deliberate: `javaLangTarget=17`, `androidMinSdk=21`,
-  `kotlinLangVersion=2.1`. Do not raise Kotlin language without fresh
-  fluxo-kmp-conf/Detekt compatibility evidence.
+  `kotlinLangVersion=2.2` (maintainer ruling: the library follows the newest
+  compiler that still accepts this language version). Native/JS/Wasm consumers
+  need a compiler >= the language version; JVM consumers one version older.
+  Detekt supports at most Kotlin language 2.1, so fluxo-kmp-conf clamps
+  Detekt's `--language-version` and logs it; that log is expected.
 - `kotlinx-io`, Okio, and JMH are catalogue-reserved; don't wire them
   without an actual feature need.
 - JSR305 stays at `3.0.2`; upstream has no newer release.
@@ -217,7 +220,9 @@ Workflow / release / verification-metadata traps live in
   `:fluxo-io-rad`; fluxo-kmp-conf `klibValidationEnabled = true` alone did
   not enable BCV 0.18 KLIB tasks here.
 - Current warning debt is upstream/plugin-shaped: Detekt calls deprecated
-  Gradle `ReportingExtension.file`, Kotlin/JS resolves `*NpmAggregated`
+  Gradle `ReportingExtension.file`, Dokka 2.2 and BCV call
+  `Configuration.setVisible`, gradle-doctor calls `Project.getProperties`
+  (find owners with `-Dorg.gradle.deprecation.trace=true`), Kotlin/JS resolves `*NpmAggregated`
   during configuration, and `Java8BufferCompat` keeps Kotlin internal
   `InlineOnly` for source-compatible Java 8 buffer wrappers.
 - Generated/build outputs (`build/`, `.gradle/`, `.kotlin/`) — never edit;

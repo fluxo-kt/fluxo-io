@@ -7,7 +7,7 @@ Please make every effort to follow existing conventions and style to keep the co
 as readable as possible.
 
 Please also make sure your code is ready by running:<br>
-`./gradlew check`.
+`./gradlew build` (what CI runs; `check` alone skips the common-metadata compilation that catches expect/actual mismatches).
 
 - If updated dependencies, don't forget to call `./gradlew dependencyGuardBaseline`
 

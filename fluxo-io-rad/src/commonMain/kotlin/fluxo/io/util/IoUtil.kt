@@ -4,6 +4,7 @@
 package fluxo.io.util
 
 import fluxo.io.EOFException
+import fluxo.io.IOException
 import fluxo.io.rad.RandomAccessData
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -133,6 +134,11 @@ private inline fun readFully0(
             throw EOFException(
                 "Unexpected end of data at ${position + n}, expected $size bytes",
             )
+        }
+        if (count == 0) {
+            // A positional read inside the data that returns nothing will keep doing so;
+            // retrying would spin forever instead of reporting the broken source.
+            throw IOException("Read made no progress at ${position + n} of $size")
         }
         n += count
     } while (n < len)

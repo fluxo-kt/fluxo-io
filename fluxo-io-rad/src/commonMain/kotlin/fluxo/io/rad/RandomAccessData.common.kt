@@ -20,9 +20,6 @@ import kotlin.coroutines.cancellation.CancellationException
  * All implementations are thread-safe!
  * For JVM and Android, it also implements [java.io.Closeable] interface.
  *
- * See [RandomAccessDataBenchmark] findings if you want to choose implementation
- * rationally for your use case.
- *
  * @see org.springframework.boot.loader.data.RandomAccessData
  */
 @ThreadSafe
@@ -193,7 +190,11 @@ public expect interface RandomAccessData : AutoCloseable {
      * @see java.nio.channels.FileChannel.read
      * @see java.io.RandomAccessFile.read
      */
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     public suspend fun readAsync(
         buffer: ByteArray,
         position: Long = 0L,
@@ -227,7 +228,11 @@ public expect interface RandomAccessData : AutoCloseable {
      * @see java.io.DataInput.readFully
      * @see java.io.InputStream.readNBytes
      */
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     public suspend fun readFullyAsync(
         buffer: ByteArray,
         position: Long = 0L,

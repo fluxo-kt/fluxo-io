@@ -4,6 +4,7 @@ import fluxo.io.internal.BasicRad
 import fluxo.io.internal.RadHandle
 import fluxo.io.internal.Blocking
 import fluxo.io.internal.ThreadSafe
+import fluxo.io.nio.writeFully
 import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.MAX_BYTE
 import fluxo.io.util.checkOffsetAndCount
@@ -120,12 +121,8 @@ private constructor(
         if (srcLen == 0) {
             return 0L
         }
-        val buffer = ByteBuffer.wrap(array, offset, srcLen)
-        var written = 0
-        do {
-            written += channel.write(buffer)
-        } while (written < srcLen)
-        return written.toLong()
+        channel.writeFully(ByteBuffer.wrap(array, offset, srcLen))
+        return srcLen.toLong()
     }
 
     override fun transferTo0(stream: OutputStream, bufferSize: Int): Long {

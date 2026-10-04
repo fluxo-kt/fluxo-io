@@ -7,6 +7,7 @@ import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
 import fluxo.io.nio.positionCompat
 import fluxo.io.nio.releaseCompat
+import fluxo.io.nio.writeFully
 import fluxo.io.rad.ByteBufferRad.ByteBufferAccess
 import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
 import fluxo.io.util.MAX_BYTE
@@ -127,10 +128,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
                 val buf = api.duplicate()
                 buf.limitCompat(position + len)
                 buf.positionCompat(position)
-                var written = 0
-                do {
-                    written += channel.write(buf)
-                } while (written < len)
+                channel.writeFully(buf)
             }
             return len.toLong()
         }

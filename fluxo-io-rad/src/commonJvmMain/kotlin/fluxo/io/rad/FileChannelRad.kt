@@ -74,11 +74,17 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long, owner: 
         var position = 0L
         while (true) {
             val written = access.transferTo(position + offset, srcLen - position, channel)
-            if (written > 0) {
-                position += written
-                if (position == srcLen) {
-                    break
-                }
+            if (written <= 0) {
+                // FileChannel.transferTo returns 0 when the file shrank below the position or
+                // the target is a non-blocking channel with no room; retrying would spin forever.
+                throw IOException(
+                    "transferTo made no progress at $position of $srcLen: the file was " +
+                        "truncated or the target channel is non-blocking",
+                )
+            }
+            position += written
+            if (position == srcLen) {
+                break
             }
         }
         return position

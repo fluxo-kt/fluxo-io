@@ -37,6 +37,11 @@ Central; its changes ship here.
 
 ### Fixed
 
+- Reads and transfers no longer spin forever when the source returns 0 bytes, the
+  file shrinks under `transferTo`, or a non-blocking target channel accepts nothing:
+  they now throw `IOException` naming the cause.
+- `transferTo` on implementations without a native `ByteBuffer` read (random-access
+  file, stream factory) no longer allocates a temporary array per chunk.
 - Read-after-(last-)close on direct/mmap `ByteBuffer` (was: JVM `SIGABRT`)
   and silent stream-handle leak in `StreamFactoryRad`. Reads on a freed
   shared resource now throw `IOException`; a close during a read defers the

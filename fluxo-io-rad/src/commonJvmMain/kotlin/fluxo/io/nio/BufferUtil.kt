@@ -302,3 +302,23 @@ private object BufferUtil0 {
 @RequiresApi(9)
 public fun Buffer?.releaseCompat(): ByteBuffer =
     BufferUtil0.releaseBuffer(this)
+
+
+/**
+ * Writes all [ByteBuffer.remaining] bytes of [buffer] to this channel.
+ *
+ * A write that accepts nothing fails instead of being retried: a blocking channel never does
+ * that, so it means a non-blocking channel with no room, and retrying would spin a core
+ * until the reader drains it, possibly forever.
+ */
+@Throws(java.io.IOException::class)
+internal fun java.nio.channels.WritableByteChannel.writeFully(buffer: ByteBuffer) {
+    while (buffer.hasRemaining()) {
+        if (write(buffer) == 0) {
+            throw java.io.IOException(
+                "Target channel accepted no bytes (${buffer.remaining()} left): " +
+                    "transferTo needs a blocking channel",
+            )
+        }
+    }
+}

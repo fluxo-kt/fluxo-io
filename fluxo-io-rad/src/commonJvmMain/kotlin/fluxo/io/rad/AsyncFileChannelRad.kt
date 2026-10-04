@@ -35,7 +35,12 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(26)
 @Deprecated("Not recommended for usage, it's super slow and often has OOM problems.")
 internal class AsyncFileChannelRad
-private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+private constructor(
+    access: AsyncFileChannelAccess,
+    offset: Long,
+    size: Long,
+    owner: RadHandle? = null,
+) :
     AccessorAwareRad<AsyncFileChannelAccess>(access, offset, size, owner) {
 
     /**
@@ -56,6 +61,8 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long, ow
     constructor(file: File, offset: Long, size: Long) :
         this(AsynchronousFileChannel.open(file.toPath()), offset, size)
 
+
+    override val hasNativeBufferRead: Boolean get() = true
 
     override fun view0(
         access: AsyncFileChannelAccess, globalPosition: Long, length: Long, owner: RadHandle?,

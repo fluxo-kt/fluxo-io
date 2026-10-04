@@ -3,7 +3,9 @@ package fluxo.io.internal
 import fluxo.io.IOException
 import fluxo.io.nio.clearCompat
 import fluxo.io.nio.flipCompat
+import fluxo.io.nio.limitCompat
 import fluxo.io.nio.positionCompat
+import fluxo.io.nio.writeFully
 import fluxo.io.nio.releaseCompat
 import fluxo.io.rad.InputStreamFromRad
 import fluxo.io.rad.RandomAccessData
@@ -105,7 +107,11 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
 
     @Blocking
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     actual final override suspend fun readAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
@@ -120,7 +126,11 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         return read(buffer, position, offset, maxLength)
     }
 
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     actual final override suspend fun readFullyAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int = readFully(buffer, position, offset, maxLength)
@@ -164,7 +174,11 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
     }
 
     @Blocking
-    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
+    @Deprecated(
+        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
+            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        level = DeprecationLevel.ERROR,
+    )
     final override suspend fun readAsync(buffer: ByteBuffer, position: Long): Int {
         ensureOpen()
         return readAsync0(buffer, position)
@@ -187,8 +201,20 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         return transferTo0(channel, bufferSize, directBuffer)
     }
 
+    /**
+     * `true` when [read0] (`ByteBuffer`) fills a direct buffer without an intermediate array.
+     * Only then does a direct transfer buffer save a copy; otherwise the default `ByteBuffer`
+     * read would allocate a temporary array on every call.
+     */
+    protected open val hasNativeBufferRead: Boolean get() = false
+
+    /**
+     * Generic copy loop for implementations without a cheaper native transfer. Uses ONE buffer
+     * for the whole transfer: direct only when [hasNativeBufferRead], else a heap array read
+     * through the `ByteArray` primitive. A read or write that makes no progress fails rather
+     * than spinning.
+     */
     @Throws(IOException::class)
-    @Suppress("NestedBlockDepth")
     protected open fun transferTo0(
         channel: WritableByteChannel,
         bufferSize: Int,
@@ -199,33 +225,31 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
             return 0L
         }
         val bufSize = min(max(bufferSize, DEFAULT_TRANSFER_BUF_SIZE).toLong(), srcLen).toInt()
-        val buffer = when {
-            directBuffer -> ByteBuffer.allocateDirect(bufSize)
-            else -> ByteBuffer.wrap(ByteArray(bufSize))
-        }
+        val array = if (directBuffer && hasNativeBufferRead) null else ByteArray(bufSize)
+        val buffer = array?.let(ByteBuffer::wrap) ?: ByteBuffer.allocateDirect(bufSize)
         try {
             var position = 0L
-            while (true) {
-                val read = read(buffer, position)
-                if (read > 0) {
-                    buffer.flipCompat()
-                    var written = 0
-                    do {
-                        written += channel.write(buffer)
-                    } while (written < read)
-                } else if (read < 0) {
-                    throw EOFException(
+            while (position < srcLen) {
+                buffer.clearCompat()
+                val read = if (array == null) {
+                    read0(buffer, position).also { buffer.flipCompat() }
+                } else {
+                    read0(array, position, 0, bufSize).also { buffer.limitCompat(max(it, 0)) }
+                }
+                when {
+                    read < 0 -> throw EOFException(
                         "Unexpected end of data at $position, expected $srcLen bytes",
                     )
+                    read == 0 -> throw IOException("Read made no progress at $position of $srcLen")
                 }
+                channel.writeFully(buffer)
                 position += read
-                if (position == srcLen) {
-                    return position
-                }
-                buffer.clearCompat()
             }
+            return position
         } finally {
-            buffer?.releaseCompat()
+            if (array == null) {
+                buffer.releaseCompat()
+            }
         }
     }
 

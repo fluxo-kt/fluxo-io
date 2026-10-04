@@ -28,7 +28,12 @@ import kotlin.math.min
 @ThreadSafe
 @RequiresApi(24)
 internal class SeekableByteChannelRad
-private constructor(access: SeekableChannelAccess, offset: Long, size: Long, owner: RadHandle? = null) :
+private constructor(
+    access: SeekableChannelAccess,
+    offset: Long,
+    size: Long,
+    owner: RadHandle? = null,
+) :
     AccessorAwareRad<SeekableChannelAccess>(access, offset, size, owner) {
 
     /**
@@ -42,6 +47,8 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long, own
         resources: Array<out AutoCloseable>,
     ) : this(SeekableChannelAccess(channel, resources), offset, size)
 
+
+    override val hasNativeBufferRead: Boolean get() = true
 
     override fun view0(
         access: SeekableChannelAccess, globalPosition: Long, length: Long, owner: RadHandle?,

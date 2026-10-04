@@ -42,9 +42,9 @@ Workflow / release / verification-metadata traps live in
     Wasm-WASI is **explicitly disabled**
     (`allDefaultTargets(wasmWasi = false)`).
 - Root `build.gradle.kts` — umbrella via `fkcSetupRaw {…}`, Kover
-  aggregation, resolves `extra["androidJar"]` from `local.properties` /
-  `ANDROID_SDK_ROOT` / `ANDROID_HOME` so non-Android source sets can
-  `compileOnly` the SDK jar.
+  aggregation. `commonJvmMain` compiles against the Android SDK jar taken
+  from AGP's `sdkComponents.bootClasspath` (`fluxo-io-rad/build.gradle.kts`);
+  never build an SDK path by hand, SDK directory names vary (`android-37.0`).
 - `gradle/libs.versions.toml` — version+toolchain SoT; per-pin rationale
   lives in catalog comments.
 - `config/{detekt.yml,lint.xml}`; `.editorconfig` (ktlint_official,

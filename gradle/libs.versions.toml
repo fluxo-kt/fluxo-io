@@ -13,9 +13,9 @@ version = "0.2.0"
 # AutoCloseable requires API level 19 (Android 4.4); project floor is kept
 # higher to match the modern Android/Kotlin toolchain baseline.
 androidMinSdk = "21"
-androidTargetSdk = "36"
-androidCompileSdk = "36"
-androidBuildTools = "36.0.0"
+androidTargetSdk = "37"
+androidCompileSdk = "37"
+androidBuildTools = "37.0.0"
 
 javaLangTarget = "17"
 kotlinLangVersion = "2.2"

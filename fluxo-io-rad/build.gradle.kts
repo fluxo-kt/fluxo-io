@@ -13,6 +13,14 @@ plugins {
     alias(libs.plugins.fluxo.bcv.js)
 }
 
+// `android.os.Build` is read (guarded by a runtime Android check) from shared JVM code, so
+// `commonJvmMain` compiles against the Android SDK jar. AGP's boot classpath is that jar for the
+// configured compileSdk; no SDK location or `platforms/android-<N>` directory name is guessed.
+val androidBootClasspath = files(
+    extensions.getByType<com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension>()
+        .sdkComponents.bootClasspath,
+)
+
 fkcSetupMultiplatform(
     namespace = "kt.fluxo.io.rad",
     optIns = listOf(
@@ -75,7 +83,7 @@ fkcSetupMultiplatform(
 
     val commonJvm = commonJvm
     commonJvm.main.dependencies {
-        compileOnly(rootProject.extra["androidJar"]!!)
+        compileOnly(androidBootClasspath)
         compileOnly(libs.androidx.annotation)
         compileOnly(libs.jetbrains.annotation)
         compileOnly(libs.jsr305)

@@ -39,7 +39,8 @@ Workflow / release / verification-metadata traps live in
 ## Layout
 
 - `:fluxo-io-rad` — only published module.
-  - `commonMain` — `expect interface RandomAccessData` + `ByteArrayRad`.
+  - `commonMain` — `expect interface RandomAccessData` + `expect fun byteArrayRad`
+    (each platform's `ByteArrayRad` is a plain internal class behind it).
   - `commonJvmMain` — JVM+Android impl set (`ByteBuffer`, mmap,
     `FileChannel`, `RandomAccessFile`, `SeekableByteChannel`, stream
     factories, async).
@@ -61,6 +62,17 @@ Workflow / release / verification-metadata traps live in
   `@SubclassOptInRequired(InternalFluxoIoApi::class)`. JVM `actual` adds
   `Closeable`, `ByteBuffer` reads, `asInputStream()`, `transferTo`,
   `readByteAt`.
+- **Expose a platform implementation to common code through an
+  `expect fun` factory, never an `expect class` extending `BasicRad`.** The
+  common-metadata compiler demands every abstract `BasicRad` hook in the
+  `expect class` too, test compilations never run that check, and the
+  break shows only in `build`/publishing (`compileCommonMainKotlinMetadata`).
+- **The obvious entry point is `RandomAccessData.open(…)` in Kotlin and Java**
+  (maintainer ruling; no `Rad.open`). Overloads live on the interface's
+  companion: `@JvmStatic` members of the JVM `actual companion`, Kotlin
+  extensions on the companion for Android-only types, and
+  `AsyncRandomAccessData.Companion` extensions for natively async sources.
+  The explicit `Rad.forX` factories stay.
 - **Handles and slices (`fluxo.io.internal.RadHandle`).** A factory or
   `share()` returns a *handle*: it holds one ownership of the
   `SharedDataAccessor` (`SharedCloseable` refcount) and must be closed

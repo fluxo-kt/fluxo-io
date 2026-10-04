@@ -27,11 +27,11 @@ internal class RadByteBufferAccessorTest(
         @JvmStatic
         @Parameters
         fun data() = arrayOf<(File) -> RandomAccessData>(
-            { RadByteBufferAccessor(BYTES) },
-            {
+            { RadByteBufferAccessor(it.readBytes()) },
+            { file ->
+                val bytes = file.readBytes()
                 RadByteBufferAccessor(
-                    ByteBuffer.allocateDirect(BYTES.size)
-                        .also { it.put(BYTES).flipCompat() },
+                    ByteBuffer.allocateDirect(bytes.size).also { it.put(bytes).flipCompat() },
                 )
             },
             { RadByteBufferAccessor(it.inputStream().channel) },

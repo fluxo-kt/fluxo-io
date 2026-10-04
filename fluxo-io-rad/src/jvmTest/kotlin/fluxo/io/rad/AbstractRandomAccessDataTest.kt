@@ -94,6 +94,21 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
 
+    /** The cross-platform contract, run against this implementation over a real temp file. */
+    @Test
+    fun contract() {
+        val files = ArrayList<File>()
+        try {
+            RadContract.verify { bytes ->
+                val file = File.createTempFile("contract", "tmp").also(files::add)
+                file.writeBytes(bytes)
+                factory(file)
+            }
+        } finally {
+            files.forEach(File::delete)
+        }
+    }
+
     @Test
     fun readWithOffsetAndLengthShouldRead() = runTest(timeout = DEFAULT_TIMEOUT) {
         val read = rad.readFrom(2, 3)

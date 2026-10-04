@@ -80,6 +80,9 @@ fkcSetupMultiplatform(
     common.main.dependencies {
         // implementation(libs.kotlinx.io.core)
     }
+    common.test.dependencies {
+        implementation(libs.kotlin.test)
+    }
 
     val commonJvm = commonJvm
     commonJvm.main.dependencies {

@@ -7,7 +7,7 @@ import kotlin.test.Test
  * Tests for [RadByteArrayAccessor].
  */
 internal class RandomAccessDataArrayTest : AbstractRandomAccessDataTest(
-    { RadByteArrayAccessor(BYTES) }
+    { RadByteArrayAccessor(it.readBytes()) }
 ) {
     @Test
     fun creationBoundaries() {

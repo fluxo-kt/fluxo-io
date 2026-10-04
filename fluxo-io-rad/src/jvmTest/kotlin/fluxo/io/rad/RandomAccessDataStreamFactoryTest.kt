@@ -20,7 +20,10 @@ internal class RandomAccessDataStreamFactoryTest(
         fun data() = arrayOf<(File) -> RandomAccessData>(
             { StreamFactoryRadAccessor(it) },
             { StreamFactoryRadAccessor(it.length()) { it.inputStream() } },
-            { StreamFactoryRadAccessor(BYTES.size.toLong()) { BYTES.inputStream() } },
+            { file ->
+                val bytes = file.readBytes()
+                StreamFactoryRadAccessor(bytes.size.toLong()) { bytes.inputStream() }
+            },
 
             { DataInputFactoryRadAccessor(it.length()) { RandomAccessFile(it, "r") } },
             { DataInputFactoryRadAccessor(it.length()) { DataInputStream(it.inputStream()) } },

@@ -71,6 +71,9 @@ lincheck = "3.7"
 
 
 [libraries]
+# Test libraries follow the compiler, not kotlinCoreLibraries: the JS/Wasm compiler rejects an
+# older kotlin-test klib ("ABI version not compatible"), as it does an older stdlib.
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-stdlib-js = { module = "org.jetbrains.kotlin:kotlin-stdlib-js", version.ref = "kotlin" }

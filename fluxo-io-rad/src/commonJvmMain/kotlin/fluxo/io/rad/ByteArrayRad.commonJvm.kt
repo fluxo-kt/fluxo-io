@@ -32,29 +32,29 @@ actual constructor(
     private val length: Int,
 ) : BasicRad() {
 
-    actual override val size: Long get() = length.toLong()
+    override val size: Long get() = length.toLong()
 
     init {
         checkOffsetAndCount(array.size, offset, length)
     }
 
 
-    override fun asInputStream(): InputStream =
+    override fun asInputStream0(): InputStream =
         ByteArrayInputStream(array, offset, length)
 
     @Blocking
-    actual override fun subsection(position: Long, length: Long): RandomAccessData {
+    override fun subsection(position: Long, length: Long): RandomAccessData {
         checkOffsetAndCount(size, position, length)
         return ByteArrayRad(array, offset + position.toIntChecked(), length.toInt())
     }
 
 
     @Blocking
-    actual override fun readAllBytes(): ByteArray =
+    override fun readAllBytes0(): ByteArray =
         Arrays.copyOfRange(array, offset, offset + length)
 
     @Blocking
-    actual override fun readFrom(position: Long, maxLength: Int): ByteArray {
+    override fun readFrom0(position: Long, maxLength: Int): ByteArray {
         checkPositionAndMaxLength(size = size, position = position, maxLength = maxLength)
         val positionInt = position.toInt()
         val len = min(maxLength, length - positionInt)
@@ -66,7 +66,7 @@ actual constructor(
     }
 
     @Blocking
-    actual override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
+    override fun read0(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
         checkPosOffsetAndMaxLength(size, buffer, position, offset, maxLength)
         val srcLen = length
         if (position >= srcLen) {
@@ -90,7 +90,7 @@ actual constructor(
 
 
     @Blocking
-    override fun read(buffer: ByteBuffer, position: Long): Int {
+    override fun read0(buffer: ByteBuffer, position: Long): Int {
         val srcLen = length
         if (position < 0L) {
             throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")
@@ -110,7 +110,7 @@ actual constructor(
     }
 
 
-    override fun transferTo(
+    override fun transferTo0(
         channel: WritableByteChannel, bufferSize: Int, directBuffer: Boolean,
     ): Long {
         val srcLen = length
@@ -125,7 +125,7 @@ actual constructor(
         return written.toLong()
     }
 
-    override fun transferTo(stream: OutputStream, bufferSize: Int): Long {
+    override fun transferTo0(stream: OutputStream, bufferSize: Int): Long {
         val srcLen = length
         if (srcLen != 0) {
             stream.write(array, offset, srcLen)
@@ -134,5 +134,5 @@ actual constructor(
     }
 
 
-    actual override fun close() {}
+    override fun close() {}
 }

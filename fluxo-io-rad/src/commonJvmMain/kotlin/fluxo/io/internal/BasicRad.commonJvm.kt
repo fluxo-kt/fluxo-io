@@ -20,21 +20,43 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Common logic for [RandomAccessData] implementations
+ * Common logic for [RandomAccessData] implementations.
+ *
+ * Every public read method is `final` and delegates to a protected `…0` hook that
+ * implementations override. The public layer is the single place where per-call rules
+ * apply to every path, so an implementation's fast-path override can never bypass them.
  */
 @ThreadSafe
 @InternalFluxoIoApi
 internal actual abstract class BasicRad : RandomAccessData {
 
-    override fun asInputStream(): InputStream =
-        InputStreamFromRad(this)
+    final override fun asInputStream(): InputStream = asInputStream0()
+
+    protected open fun asInputStream0(): InputStream = InputStreamFromRad(this)
 
 
     @Blocking
-    actual override fun readAllBytes(): ByteArray = readAllBytesImpl()
+    actual final override fun readAllBytes(): ByteArray = readAllBytes0()
+
+    protected actual open fun readAllBytes0(): ByteArray = readAllBytesImpl()
 
     @Blocking
-    actual override fun readFully(
+    actual final override fun readFrom(position: Long, maxLength: Int): ByteArray =
+        readFrom0(position, maxLength)
+
+    protected actual abstract fun readFrom0(position: Long, maxLength: Int): ByteArray
+
+    @Blocking
+    actual final override fun read(
+        buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
+    ): Int = read0(buffer, position, offset, maxLength)
+
+    protected actual abstract fun read0(
+        buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
+    ): Int
+
+    @Blocking
+    actual final override fun readFully(
         buffer: ByteArray,
         position: Long,
         offset: Int,
@@ -70,14 +92,18 @@ internal actual abstract class BasicRad : RandomAccessData {
 
 
     @Blocking
-    actual override suspend fun readAsync(
+    actual final override suspend fun readAsync(
+        buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
+    ): Int = readAsync0(buffer, position, offset, maxLength)
+
+    protected open suspend fun readAsync0(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
         @Suppress("BlockingMethodInNonBlockingContext")
         return read(buffer, position, offset, maxLength)
     }
 
-    actual override suspend fun readFullyAsync(
+    actual final override suspend fun readFullyAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
         return readFullyAsyncImpl(buffer, position, offset, maxLength)
@@ -86,7 +112,10 @@ internal actual abstract class BasicRad : RandomAccessData {
 
     @Blocking
     @Throws(IOException::class)
-    override fun read(buffer: ByteBuffer, position: Long): Int {
+    final override fun read(buffer: ByteBuffer, position: Long): Int = read0(buffer, position)
+
+    @Throws(IOException::class)
+    protected open fun read0(buffer: ByteBuffer, position: Long): Int {
         val srcLen = size
         if (position < 0L) {
             throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")
@@ -116,7 +145,10 @@ internal actual abstract class BasicRad : RandomAccessData {
     }
 
     @Blocking
-    override suspend fun readAsync(buffer: ByteBuffer, position: Long): Int {
+    final override suspend fun readAsync(buffer: ByteBuffer, position: Long): Int =
+        readAsync0(buffer, position)
+
+    protected open suspend fun readAsync0(buffer: ByteBuffer, position: Long): Int {
         @Suppress("BlockingMethodInNonBlockingContext")
         return read(buffer, position)
     }
@@ -124,8 +156,15 @@ internal actual abstract class BasicRad : RandomAccessData {
 
     @Blocking
     @Throws(IOException::class)
+    final override fun transferTo(
+        channel: WritableByteChannel,
+        bufferSize: Int,
+        directBuffer: Boolean,
+    ): Long = transferTo0(channel, bufferSize, directBuffer)
+
+    @Throws(IOException::class)
     @Suppress("NestedBlockDepth")
-    override fun transferTo(
+    protected open fun transferTo0(
         channel: WritableByteChannel,
         bufferSize: Int,
         directBuffer: Boolean,
@@ -167,7 +206,11 @@ internal actual abstract class BasicRad : RandomAccessData {
 
     @Blocking
     @Throws(IOException::class)
-    override fun transferTo(stream: OutputStream, bufferSize: Int): Long {
+    final override fun transferTo(stream: OutputStream, bufferSize: Int): Long =
+        transferTo0(stream, bufferSize)
+
+    @Throws(IOException::class)
+    protected open fun transferTo0(stream: OutputStream, bufferSize: Int): Long {
         val srcLen = size
         if (srcLen == 0L) {
             return 0L

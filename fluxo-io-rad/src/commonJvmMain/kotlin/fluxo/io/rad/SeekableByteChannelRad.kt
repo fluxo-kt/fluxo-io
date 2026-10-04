@@ -49,7 +49,7 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
 
     @Suppress("ReturnCount")
     @Throws(IOException::class)
-    override fun read(buffer: ByteBuffer, position: Long): Int {
+    override fun read0(buffer: ByteBuffer, position: Long): Int {
         val srcLen = size
         if (position < 0L) {
             throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")

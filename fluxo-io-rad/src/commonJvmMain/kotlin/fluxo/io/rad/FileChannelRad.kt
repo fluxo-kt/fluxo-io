@@ -37,7 +37,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
 
 
     @Throws(IOException::class)
-    override fun read(buffer: ByteBuffer, position: Long): Int {
+    override fun read0(buffer: ByteBuffer, position: Long): Int {
         val srcLen = size
         if (position < 0L) {
             throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")
@@ -63,7 +63,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
     }
 
     @Throws(IOException::class)
-    override fun transferTo(
+    override fun transferTo0(
         channel: WritableByteChannel, bufferSize: Int, directBuffer: Boolean,
     ): Long {
         val srcLen = size

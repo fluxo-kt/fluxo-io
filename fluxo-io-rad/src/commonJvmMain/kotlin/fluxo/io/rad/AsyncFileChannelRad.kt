@@ -61,7 +61,7 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
     ) = AsyncFileChannelRad(access, globalPosition, length)
 
 
-    override suspend fun readAsync(
+    override suspend fun readAsync0(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
         checkPosOffsetAndMaxLength(size, buffer, position, offset, maxLength)
@@ -70,13 +70,13 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
     }
 
 
-    override fun read(buffer: ByteBuffer, position: Long): Int {
+    override fun read0(buffer: ByteBuffer, position: Long): Int {
         return runBlocking {
             readAsync(buffer, position)
         }
     }
 
-    override suspend fun readAsync(buffer: ByteBuffer, position: Long): Int {
+    override suspend fun readAsync0(buffer: ByteBuffer, position: Long): Int {
         val srcLen = size
         if (position < 0L) {
             throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")

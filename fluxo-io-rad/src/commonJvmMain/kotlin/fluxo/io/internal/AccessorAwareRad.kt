@@ -40,7 +40,7 @@ internal constructor(
 
 
     @Throws(IOException::class)
-    override fun readFrom(position: Long, maxLength: Int): ByteArray {
+    override fun readFrom0(position: Long, maxLength: Int): ByteArray {
         val srcLen = size
         checkPositionAndMaxLength(size = srcLen, position = position, maxLength = maxLength)
         val len = min(maxLength.toLong(), srcLen - position)
@@ -67,7 +67,7 @@ internal constructor(
     }
 
     @Throws(IOException::class)
-    override fun read(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
+    override fun read0(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
         val len = calcLength(size, buffer, position, offset, maxLength)
         if (len <= 0) {
             return len

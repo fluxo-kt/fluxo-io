@@ -30,7 +30,20 @@ public final class fluxo/io/nio/BufferUtil {
 	public static final fun releaseCompat (Ljava/nio/Buffer;)Ljava/nio/ByteBuffer;
 }
 
+public abstract interface class fluxo/io/rad/AsyncRandomAccessData : java/lang/AutoCloseable {
+	public abstract fun close ()V
+	public abstract fun getSize ()J
+	public abstract fun read ([BJIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun read$default (Lfluxo/io/rad/AsyncRandomAccessData;[BJIILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun readFully ([BJIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readFully$default (Lfluxo/io/rad/AsyncRandomAccessData;[BJIILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun share ()Lfluxo/io/rad/AsyncRandomAccessData;
+	public abstract fun slice (JJ)Lfluxo/io/rad/AsyncRandomAccessData;
+	public static synthetic fun slice$default (Lfluxo/io/rad/AsyncRandomAccessData;JJILjava/lang/Object;)Lfluxo/io/rad/AsyncRandomAccessData;
+}
+
 public final class fluxo/io/rad/Rad {
+	public static final fun asAsync (Lfluxo/io/rad/RandomAccessData;Lkotlin/coroutines/CoroutineContext;)Lfluxo/io/rad/AsyncRandomAccessData;
 	public static final fun asInputStream (Lfluxo/io/rad/RandomAccessData;)Ljava/io/InputStream;
 	public static final fun asInputStreamOld (Lfluxo/io/rad/RandomAccessData;)Ljava/io/InputStream;
 	public static final fun forArray ([B)Lfluxo/io/rad/RandomAccessData;
@@ -158,6 +171,9 @@ public abstract interface class fluxo/io/rad/RandomAccessData : java/io/Closeabl
 	public static synthetic fun readFully$default (Lfluxo/io/rad/RandomAccessData;[BJIIILjava/lang/Object;)I
 	public abstract synthetic fun readFullyAsync ([BJIILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun readFullyAsync$default (Lfluxo/io/rad/RandomAccessData;[BJIILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun share ()Lfluxo/io/rad/RandomAccessData;
+	public abstract fun slice (JJ)Lfluxo/io/rad/RandomAccessData;
+	public static synthetic fun slice$default (Lfluxo/io/rad/RandomAccessData;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
 	public abstract fun subsection (JJ)Lfluxo/io/rad/RandomAccessData;
 	public static synthetic fun subsection$default (Lfluxo/io/rad/RandomAccessData;JJILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
 	public abstract fun transferTo (Ljava/io/OutputStream;I)J

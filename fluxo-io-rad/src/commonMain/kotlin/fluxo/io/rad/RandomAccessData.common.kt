@@ -193,6 +193,7 @@ public expect interface RandomAccessData : AutoCloseable {
      * @see java.nio.channels.FileChannel.read
      * @see java.io.RandomAccessFile.read
      */
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     public suspend fun readAsync(
         buffer: ByteArray,
         position: Long = 0L,
@@ -226,6 +227,7 @@ public expect interface RandomAccessData : AutoCloseable {
      * @see java.io.DataInput.readFully
      * @see java.io.InputStream.readNBytes
      */
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     public suspend fun readFullyAsync(
         buffer: ByteArray,
         position: Long = 0L,

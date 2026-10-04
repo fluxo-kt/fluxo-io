@@ -9,7 +9,6 @@ import fluxo.io.rad.InputStreamFromRad
 import fluxo.io.rad.RandomAccessData
 import fluxo.io.util.MAX_BYTE
 import fluxo.io.util.readAllBytesImpl
-import fluxo.io.util.readFullyAsyncImpl
 import fluxo.io.util.readFullyImpl
 import java.io.EOFException
 import java.io.InputStream
@@ -106,6 +105,7 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
 
     @Blocking
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     actual final override suspend fun readAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
@@ -120,11 +120,10 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         return read(buffer, position, offset, maxLength)
     }
 
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     actual final override suspend fun readFullyAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
-    ): Int {
-        return readFullyAsyncImpl(buffer, position, offset, maxLength)
-    }
+    ): Int = readFully(buffer, position, offset, maxLength)
 
 
     @Blocking
@@ -165,6 +164,7 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
     }
 
     @Blocking
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     final override suspend fun readAsync(buffer: ByteBuffer, position: Long): Int {
         ensureOpen()
         return readAsync0(buffer, position)

@@ -54,6 +54,7 @@ public actual interface RandomAccessData : AutoCloseable {
     ): Int
 
 
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     public actual suspend fun readAsync(
         buffer: ByteArray,
         position: Long,
@@ -61,6 +62,7 @@ public actual interface RandomAccessData : AutoCloseable {
         maxLength: Int,
     ): Int
 
+    @Deprecated("Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), e.g. rad.asAsync(Dispatchers.IO).read(…).", level = DeprecationLevel.ERROR)
     public actual suspend fun readFullyAsync(
         buffer: ByteArray,
         position: Long,

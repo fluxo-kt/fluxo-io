@@ -14,6 +14,9 @@ Central; its changes ship here.
   close (it cannot leak) and reads only while its handle is open.
 - `RandomAccessData.share()`: another handle that keeps the data open on its
   own; close it once.
+- `AsyncRandomAccessData` and `RandomAccessData.asAsync(blockingContext)`: reads
+  that suspend without blocking the caller, e.g. `rad.asAsync(Dispatchers.IO)`.
+  Needs only the Kotlin stdlib; closing the adapter closes the wrapped handle.
 
 ### Changed
 
@@ -21,6 +24,8 @@ Central; its changes ship here.
   of a slice taken from it, throws `IOException`, even while another handle keeps
   the data open. Before, such reads succeeded until the last handle closed, and
   `ByteArray`-backed instances kept reading after `close()`.
+- `readAsync`/`readFullyAsync` are deprecated (error level): they suspended but
+  blocked the calling thread. Use `asAsync(dispatcher).read(...)`.
 - `subsection(position, length)` is deprecated (error level), replaced by
   `slice(position, length).share()`; it will be removed in the next release.
   Most callers that never closed their subsections want plain `slice(...)`.

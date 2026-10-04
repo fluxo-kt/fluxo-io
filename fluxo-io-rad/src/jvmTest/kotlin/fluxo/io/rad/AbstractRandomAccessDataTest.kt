@@ -26,6 +26,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -774,13 +775,12 @@ internal abstract class AbstractRandomAccessDataTest(
             rad.slice(0, rad.size - 11),
         ).forEachIndexed { ri, rad ->
             val d = "rad #$ri"
+            val async = rad.asAsync(Dispatchers.IO)
             assertRead(d, rad) { array, position ->
-                runBlocking {
-                    readAsync(array, position)
-                }
+                runBlocking { async.read(array, position) }
             }
             runBlocking {
-                assertEquals(0, rad.readAsync(EMPTY_BYTE_ARRAY, 0, maxLength = 0), d)
+                assertEquals(0, async.read(EMPTY_BYTE_ARRAY, 0, maxLength = 0), d)
             }
         }
     }
@@ -839,21 +839,6 @@ internal abstract class AbstractRandomAccessDataTest(
                 assertEquals(byteArrayOf(2, 3, 4), buffer.toArray())
             } finally {
                 buffer.releaseCompat()
-            }
-        }
-    }
-
-    @Test
-    fun testReadBufferAsync() = runTest(timeout = DEFAULT_TIMEOUT) {
-        arrayOf(
-            rad,
-            rad.slice(0, rad.size),
-            rad.slice(0, rad.size - 11),
-        ).forEachIndexed { ri, rad ->
-            assertRead("rad #$ri", rad) { array, position ->
-                runBlocking {
-                    readAsync(ByteBuffer.wrap(array), position)
-                }
             }
         }
     }
@@ -962,50 +947,13 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
 
-    @Test
-    fun suspendReads() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val array = ByteArray(3)
-        val heapBuff = ByteBuffer.wrap(array)
-        try {
-            val read = rad.readAsync(heapBuff, 2)
-            assertEquals(3, read)
-            assertEquals(byteArrayOf(2, 3, 4), array)
-        } finally {
-            heapBuff.releaseCompat()
-        }
-
-        val directBuff = ByteBuffer.allocateDirect(3)
-        try {
-            val read = rad.readAsync(directBuff, 2)
-            assertEquals(3, read)
-            assertEquals(3, directBuff.capacity())
-            assertEquals(3, directBuff.position())
-            assertEquals(3, directBuff.limit())
-            directBuff.flipCompat()
-            val bufArray = directBuff.toArray()
-            assertEquals(byteArrayOf(2, 3, 4), bufArray)
-        } finally {
-            directBuff.releaseCompat()
-        }
-    }
-
-
     private fun RandomAccessData.randRead(array: ByteArray, position: Long): Int {
         return when (RAND.nextInt(0, 6)) {
             0 -> read(array, position)
-            1 -> runBlocking {
-                readAsync(array, position)
-            }
-
-            2 -> read(ByteBuffer.wrap(array), position)
-            3 -> runBlocking {
-                readAsync(ByteBuffer.wrap(array), position)
-            }
-
+            1 -> runBlocking { asAsync(Dispatchers.IO).read(array, position) }
+            2, 3 -> read(ByteBuffer.wrap(array), position)
             4 -> readFully(array, position)
-            else -> runBlocking {
-                readFullyAsync(array, position)
-            }
+            else -> runBlocking { asAsync(Dispatchers.IO).readFully(array, position) }
         }
     }
 
@@ -1088,16 +1036,13 @@ internal abstract class AbstractRandomAccessDataTest(
         assertIOB { empty.readByteAt(-1L) }
 
         runBlocking {
-            assertEquals(-1, empty.readAsync(EMPTY_BYTE_ARRAY, 0))
-            assertEquals(-1, empty.readAsync(ByteArray(1), 0))
-            assertEquals(-1, empty.readAsync(EMPTY_BYTE_ARRAY, 1))
-            assertEquals(-1, empty.readAsync(ByteArray(1), 1))
-            assertEquals(-1, empty.readAsync(EMPTY_BYTE_ARRAY, 0, maxLength = 0))
-
-            assertEquals(-1, empty.readAsync(ByteBuffer.wrap(EMPTY_BYTE_ARRAY), 0))
-            assertEquals(-1, empty.readAsync(ByteBuffer.wrap(ByteArray(1)), 0))
-            assertEquals(-1, empty.readAsync(ByteBuffer.wrap(EMPTY_BYTE_ARRAY), 1))
-            assertEquals(-1, empty.readAsync(ByteBuffer.wrap(ByteArray(1)), 1))
+            val async = empty.asAsync(Dispatchers.IO)
+            assertEquals(-1, async.read(EMPTY_BYTE_ARRAY, 0))
+            assertEquals(-1, async.read(ByteArray(1), 0))
+            assertEquals(-1, async.read(EMPTY_BYTE_ARRAY, 1))
+            assertEquals(-1, async.read(ByteArray(1), 1))
+            assertEquals(-1, async.read(EMPTY_BYTE_ARRAY, 0, maxLength = 0))
+            assertEquals(-1, async.readFully(ByteArray(1), 0))
         }
     }
 

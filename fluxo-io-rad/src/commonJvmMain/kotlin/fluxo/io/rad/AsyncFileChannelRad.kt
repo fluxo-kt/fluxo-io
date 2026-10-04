@@ -66,13 +66,13 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long, ow
     ): Int {
         checkPosOffsetAndMaxLength(size, buffer, position, offset, maxLength)
         val buf = ByteBuffer.wrap(buffer, offset, min(maxLength, buffer.size - offset))
-        return readAsync(buf, position)
+        return readAsync0(buf, position)
     }
 
 
     override fun read0(buffer: ByteBuffer, position: Long): Int {
         return runBlocking {
-            readAsync(buffer, position)
+            readAsync0(buffer, position)
         }
     }
 

@@ -110,15 +110,6 @@ internal fun RandomAccessData.readFullyImpl(
     read(buffer, pos, offs, maxLen)
 }
 
-internal suspend fun RandomAccessData.readFullyAsyncImpl(
-    buffer: ByteArray,
-    position: Long,
-    offset: Int,
-    maxLength: Int,
-): Int = readFully0(size, buffer, position, offset, maxLength) { pos, offs, maxLen ->
-    readAsync(buffer, pos, offs, maxLen)
-}
-
 @Suppress("LongParameterList")
 private inline fun readFully0(
     size: Long,

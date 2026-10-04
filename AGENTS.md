@@ -106,8 +106,15 @@ Workflow / release / verification-metadata traps live in
 - **`Thread.interrupt()` cooperation**: `BasicRad.readFully` and
   `readByteAt` check `Thread.interrupted()` and throw
   `IOException("Thread interrupted")`. Bare `read()` does not.
-- Suspend reads (`readAsync` / `readFullyAsync`) **do NOT switch to
-  `Dispatchers.IO`** — caller must wrap.
+- **No suspend function may block its caller.** Async reads go through
+  `AsyncRandomAccessData`; `rad.asAsync(dispatcher)` runs each blocking
+  call as ONE dispatch on that dispatcher using only stdlib intrinsics
+  (`startCoroutine`), so kotlinx-coroutines stays `compileOnly`. It rejects
+  a context without a dispatcher and takes over the handle it wraps
+  (`rad.share().asAsync(…)` keeps `rad` usable). The old
+  `readAsync`/`readFullyAsync` blocked the caller and are ERROR-deprecated
+  for one release; never call them from library code (ERROR level breaks
+  our own compile) — use the `…0` hooks.
 - `@Blocking` is `expect annotation @OptionalExpectation`; JVM
   typealiases `org.jetbrains.annotations.Blocking`.
 - Logging: single global hook

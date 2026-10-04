@@ -20,12 +20,13 @@ Central; its changes ship here.
 
 - Read-after-(last-)close on direct/mmap `ByteBuffer` (was: JVM `SIGABRT`)
   and silent stream-handle leak in `StreamFactoryRad`. Reads on a freed
-  shared resource now throw `IOException` via `SharedDataAccessor.checkOpen()`.
+  shared resource now throw `IOException`; a close during a read defers the
+  release until that read ends, and `close()` never waits for readers.
 - `AccessorAwareRad.close()` is idempotent per holder — a `Closeable`-legal
   double-close no longer prematurely frees the shared resource still used
   by parent or siblings.
-- `StreamFactoryRad` ghost-read race + DoS-on-close: factory now opens outside
-  the pool monitor (three-phase); pool re-checks `isOpen` under the lock.
+- `StreamFactoryRad` ghost-read race + DoS-on-close: a slow user factory no
+  longer blocks `close()`, and no stream leaks past the pool drain.
 - `SharedDataAccessor.onSharedClose` is `final`; release goes in an overridable
   `releaseApi()` slot. A release-throw never skips closing the `resources`
   array (compile-blocked re-introduction of the bug class).

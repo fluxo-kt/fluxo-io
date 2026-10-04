@@ -5,7 +5,6 @@ import fluxo.io.EOFException
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.internal.checkOpen
 import fluxo.io.rad.StreamFactoryRad.StreamFactory
 import fluxo.io.rad.StreamFactoryRad.StreamFactoryAccess
 import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
@@ -62,17 +61,17 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
 
         override val size: Long get() = factory.size
 
-        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            // Three-phase, so a slow/hostile user `factory()` can't park concurrent `close`:
-            // (1) under pool monitor (same lock `onSharedClose` drains under) — `checkOpen`
-            // + pool lookup. (2) no lock — open fresh on miss. (3) under pool monitor —
-            // recheck `isOpen`; if `close` raced ahead, defensively close the fresh stream
-            // and reject. Holding `factory` under the monitor (the prior shape) DoS'd close;
-            // skipping (3) lets a fresh stream return data after the holder is closed.
+        // The lease keeps the pool from being drained while this read runs, so a stream taken
+        // or re-pooled here can never leak past the drain, and a slow user `factory()` never
+        // blocks `close` (the drain just runs when the last read ends). The monitor only
+        // guards the TreeMap.
+        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+            withLease { readLeased(bytes, position, offset, length) }
+
+        private fun readLeased(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
             val pool = pool
             var streamOffset = 0L
             var stream: PooledStream<*>? = synchronized(pool) {
-                checkOpen()
                 val entry = pool.floorEntry(position) ?: return@synchronized null
                 val key = entry.key!!
                 streamOffset = key
@@ -80,14 +79,7 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                 entry.value
             }
             if (stream == null) {
-                val fresh = factory()
-                try {
-                    synchronized(pool) { checkOpen() }
-                } catch (e: Throwable) {
-                    runCatching { fresh.close() }.exceptionOrNull()?.let(e::addSuppressed)
-                    throw e
-                }
-                stream = fresh
+                stream = factory()
             }
 
             val read: Int
@@ -105,11 +97,6 @@ private constructor(access: StreamFactoryAccess, offset: Long, size: Long) :
                     val newPosition = position + read
                     if (newPosition < srcLen) {
                         synchronized(pool) {
-                            // Recheck under the pool lock: if closed concurrently, onSharedClose
-                            // already drained the pool, so a put here would leak this stream
-                            // (never drained again). `isOpen` flips false before onSharedClose
-                            // runs, and the drain also holds this lock, so the check is exact.
-                            if (!isOpen) return@synchronized
                             val prev = pool.put(newPosition, stream)
                             closeStream = false
 

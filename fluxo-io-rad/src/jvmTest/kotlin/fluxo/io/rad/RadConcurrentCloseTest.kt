@@ -14,15 +14,15 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 /**
  * Deterministic reproducers for the *concurrent* close-during-read hazards (the sequential case
- * is covered by [AbstractRandomAccessDataTest.readingClosedHolderThrowsNotCrashes]). Both drive a
- * real read past its open-check, freeze it mid-flight on a latch, run a full [close] from another
+ * is covered by [AbstractRandomAccessDataTest.readingClosedHolderThrowsNotCrashes]). Each drives a
+ * real read past its lease, freeze it mid-flight on a latch, run a full [close] from another
  * thread, then resume — exercising the exact window the guards protect. No mocks: a real
  * [InputStream]/[WritableByteChannel] whose blocking point is latch-coordinated.
  */
@@ -37,9 +37,9 @@ internal class RadConcurrentCloseTest {
 
     /**
      * A stream re-pooled by a read that was in flight while the resource closed must NOT leak:
-     * `onSharedClose` drains the pool exactly once, so a put after the drain is never closed.
-     * The fix rechecks `isOpen` under the pool lock and lets the `finally` close the stream.
-     * Without it, `opened > closed` (RED).
+     * the pool is drained exactly once, so a put after the drain would never be closed. The read's
+     * lease defers the drain until the read ends, so the re-pooled stream is drained too.
+     * Without that, `opened > closed` (RED).
      */
     @Test
     fun streamRePooledDuringConcurrentCloseIsNotLeaked() {
@@ -91,13 +91,11 @@ internal class RadConcurrentCloseTest {
     }
 
     /**
-     * Concurrent `close` while a read is mid-`factory()` must (a) NOT park on the pool
-     * monitor — a slow/hostile user factory cannot DoS close or sibling readers; (b) cause
-     * the racing read to reject with [IOException] on the post-`factory` `isOpen` recheck;
-     * (c) defensively close the freshly-opened stream so it is not leaked into a drained
-     * pool. RED on the prior "hold `factory` under the pool monitor" band-aid (close would
-     * BLOCK and `closeDone` would never flip while factory paused). RED on a fix that
-     * rejects the read but forgets to close the orphan stream (`opened != closed`).
+     * Concurrent `close` while a read is mid-`factory()` must (a) NOT wait for it: a slow or
+     * hostile user factory cannot DoS close; (b) let that read, which started before the close,
+     * complete normally; (c) still close the stream it opened once it ends, never leaking it
+     * past the pool drain. RED if close waits for the factory (`closeDone` never flips), or if
+     * the opened stream outlives the release (`opened != closed`).
      */
     @Test
     fun concurrentCloseDoesNotBlockOnFactoryAndOrphanStreamIsClosed() {
@@ -129,11 +127,9 @@ internal class RadConcurrentCloseTest {
                 readerError.set(e)
             }
         }
-        // Closer started only after the reader is parked INSIDE factory — else a scheduler
-        // that runs closer first (observed on Windows CI under load) drains the empty pool,
-        // and reader's phase-1 `checkOpen` rejects before factory is ever entered. That race
-        // would shadow the actual invariant being tested with a misleading "factory never
-        // entered" failure.
+        // Closer started only after the reader is parked INSIDE factory: a closer that runs
+        // first makes the read fail before the factory is entered, which would hide the
+        // invariant under a misleading "factory never entered" failure.
         assertTrue(factoryEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "factory never entered")
         val closeDone = AtomicBoolean(false)
         val closer = thread {
@@ -141,11 +137,9 @@ internal class RadConcurrentCloseTest {
             closeDone.set(true)
         }
         try {
-            // Proper fix opens factory OUTSIDE the pool monitor, so close drains the empty
-            // pool and returns promptly — `closeDone` flips well within `quickJoinMs`. The
-            // prior band-aid (`factory` under the pool monitor) parked close behind reader's
-            // await; closer would stay alive past the deadline → RED with a clear assertion,
-            // no hang.
+            // Close only drops the last owner; the drain runs when the in-flight read ends, so
+            // `closeDone` flips well within `quickJoinMs`. A close that waited for the factory
+            // would stay alive past the deadline: RED with a clear assertion, no hang.
             val quickJoinMs = TIMEOUT_S * 1000 / 4
             closer.join(quickJoinMs)
             assertTrue(closeDone.get(), "close parked on factory (DoS-on-close band-aid)")
@@ -156,25 +150,27 @@ internal class RadConcurrentCloseTest {
         closer.join(TIMEOUT_S * 1000)
 
         assertFalse(reader.isAlive, "reader did not finish")
-        val err = readerError.get()
-        assertTrue(err is IOException, "read should have rejected with IOException; was $err")
+        assertNull(readerError.get(), "a read that started before close must complete")
         assertEquals(1, opened.get(), "factory ran exactly once")
         assertEquals(1, closed.get(), "orphan stream was leaked after concurrent close")
+        assertFailsWith<IOException> { rad.readFrom(0, PARTIAL) }
     }
 
     /**
-     * The mmap/direct unmap in `onSharedClose` must not run while a read holds the resource
-     * monitor, else it frees the buffer under an in-flight `get`/`put` (native use-after-free).
-     * Proven on a heap buffer (no crash risk): the unmap is `synchronized(api)`, so a concurrent
-     * `close` blocks on the monitor the in-flight `transferTo` holds. Without that synchronisation
-     * `close` completes mid-read (RED) — caught here before it can ever crash on a real mmap.
+     * The mmap/direct unmap must not run while a read is in flight, else it frees the buffer
+     * under an in-flight `get` (native use-after-free). Proven on a heap buffer (no crash risk)
+     * whose release is observed through a resource closed with it: `close` returns at once,
+     * but the release waits for the in-flight `transferTo` to end. Without the read's lease
+     * the resource closes mid-read (RED), caught before it can ever crash on a real mmap.
      */
     @Test
     fun unmapWaitsForInFlightRead() {
-        val rad = RadByteBufferAccessor(DATA)
         val writeEntered = CountDownLatch(1)
         val proceed = CountDownLatch(1)
         val transferError = AtomicReference<Throwable?>()
+        val released = AtomicInteger()
+        val resource = AutoCloseable { released.incrementAndGet() }
+        val rad = RadByteBufferAccessor(ByteBuffer.wrap(DATA), resources = arrayOf(resource))
 
         val channel = object : WritableByteChannel {
             override fun write(src: ByteBuffer): Int {
@@ -195,31 +191,21 @@ internal class RadConcurrentCloseTest {
                 transferError.set(e)
             }
         }
-        // Closer is started only after the transfer is in the resource monitor —
-        // otherwise close could win the monitor, unmap, and the transfer's checkOpen
-        // would throw instead of demonstrating the in-flight-blocks-close invariant.
-        assertTrue(writeEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "transfer never entered")
-        val closeDone = AtomicBoolean(false)
-        val closer = thread {
-            rad.close()
-            closeDone.set(true)
-        }
+        // Close only after the transfer is mid-write: a close that runs first makes the
+        // transfer fail on entry instead of demonstrating the in-flight case.
         try {
-            // The closer must park on the resource monitor until the in-flight transfer releases.
-            val deadline = System.nanoTime() + TIMEOUT_S * 1_000_000_000L
-            while (closer.state != Thread.State.BLOCKED) {
-                assertFalse(closeDone.get(), "close finished mid-read — unmap not serialised")
-                if (System.nanoTime() > deadline) fail("closer never blocked on resource monitor")
-                Thread.onSpinWait()
-            }
+            assertTrue(writeEntered.await(TIMEOUT_S, TimeUnit.SECONDS), "transfer never entered")
+            rad.close() // returns at once: close never waits for readers
+            assertEquals(0, released.get(), "resource released mid-read: release not deferred")
         } finally {
-            // Always release the transfer so a failed assertion doesn't strand it blocked
-            // on `proceed.await()`; the closer is no longer parked behind it either.
+            // Always release the transfer so a failed assertion doesn't strand its thread.
             proceed.countDown()
         }
         transfer.join(TIMEOUT_S * 1000)
-        closer.join(TIMEOUT_S * 1000)
+
+        assertFalse(transfer.isAlive, "transfer did not finish")
         assertNull(transferError.get())
-        assertTrue(closeDone.get(), "close did not complete after the read released the monitor")
+        assertEquals(1, released.get(), "release must run exactly once, when the read ends")
+        assertFailsWith<IOException> { rad.readByteAt(0) }
     }
 }

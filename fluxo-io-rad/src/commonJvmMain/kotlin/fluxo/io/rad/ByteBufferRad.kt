@@ -3,7 +3,6 @@ package fluxo.io.rad
 import fluxo.io.IOException
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.internal.checkOpen
 import fluxo.io.nio.limitCompat
 import fluxo.io.nio.positionCompat
 import fluxo.io.nio.releaseCompat
@@ -21,8 +20,9 @@ import kotlin.math.min
  * [RandomAccessData] implementation backed by a [ByteBuffer].
  * Can be used for memory-mapped IO via [FileChannel] or direct buffer access.
  *
- * **WARNING:
- * This implementation uses [synchronized] blocks to ensure thread safety!*
+ * Reads never move the shared buffer's cursor (absolute `get` or a private `duplicate()` view),
+ * so concurrent reads run in parallel without a monitor. Each read holds a lease, so the
+ * buffer is unmapped/freed only after the last in-flight read ends: no use-after-unmap crash.
  *
  * @param access provides access to the underlying buffer
  * @param offset the offset of the section
@@ -91,53 +91,40 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
 
         override val size: Long get() = api.capacity().toLong()
 
-        fun readByteAt(position: Int): Int = synchronized(api) {
-            checkOpen()
+        fun readByteAt(position: Int): Int = withLease {
             api.get(position).toInt() and MAX_BYTE
         }
 
         @Throws(IndexOutOfBoundsException::class)
-        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            val buf = api
-            synchronized(buf) {
-                checkOpen()
+        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+            withLease {
+                val buf = api.duplicate()
                 buf.limitCompat(buf.capacity())
                 buf.positionCompat(position.toInt())
                 val len = min(buf.remaining(), length)
                 buf.get(bytes, offset, len)
-                return len
+                len
             }
-        }
 
         @Throws(IOException::class)
-        internal fun read(buffer: ByteBuffer, position: Long): Int {
+        internal fun read(buffer: ByteBuffer, position: Long): Int = withLease {
             val pos = position.toInt()
-            val buf = api
-            synchronized(buf) {
-                checkOpen()
-                val capacity = buf.capacity()
-                var len = capacity - pos
-                buf.limitCompat(pos + len)
-                buf.positionCompat(pos)
-                val remaining = buffer.remaining()
-                if (remaining < len) {
-                    len = remaining
-                    buf.limitCompat(pos + len)
-                }
-                buffer.put(buf)
-                return len
-            }
+            val buf = api.duplicate()
+            val len = min(buf.capacity() - pos, buffer.remaining())
+            buf.limitCompat(pos + len)
+            buf.positionCompat(pos)
+            buffer.put(buf)
+            len
         }
 
         @Throws(IOException::class)
         internal fun transferTo(position: Int, count: Int, channel: WritableByteChannel): Long {
-            val buf = api
-            val len = min(buf.capacity() - position, count)
+            val len = min(api.capacity() - position, count)
             if (len == 0) {
                 return 0
             }
-            synchronized(buf) {
-                checkOpen()
+            withLease {
+                val buf = api.duplicate()
                 buf.limitCompat(position + len)
                 buf.positionCompat(position)
                 var written = 0
@@ -148,10 +135,10 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int) :
             return len.toLong()
         }
 
+        // Runs only after the last lease ended (see SharedCloseable), so no read can be
+        // touching the buffer while it is unmapped.
         override fun releaseApi() {
-            // Serialise the unmap with reads on the same monitor so an in-flight read can never
-            // observe a half-freed buffer; see [checkOpen]. [isOpen] is already false here.
-            synchronized(api) { api.releaseCompat() }
+            api.releaseCompat()
         }
     }
 }

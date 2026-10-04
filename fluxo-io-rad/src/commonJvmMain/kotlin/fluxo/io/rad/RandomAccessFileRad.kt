@@ -70,7 +70,12 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
             } while (api.filePointer != position)
         }
 
-        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
+        // Leased: the file stays open until in-flight reads end. The monitor still serialises
+        // seek+read, which share the file pointer.
+        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+            withLease { readLeased(bytes, position, offset, length) }
+
+        private fun readLeased(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
             val api = api
             // RandomAccessFile isn't reliably under a concurrent load!
             synchronized(monitor) {
@@ -99,7 +104,9 @@ private constructor(access: RafAccess, offset: Long, size: Long) :
         }
 
         @Throws(IOException::class)
-        internal fun readByte(position: Long): Int {
+        internal fun readByte(position: Long): Int = withLease { readByteLeased(position) }
+
+        private fun readByteLeased(position: Long): Int {
             val api = api
             // RandomAccessFile isn't reliably under a concurrent load!
             synchronized(monitor) {

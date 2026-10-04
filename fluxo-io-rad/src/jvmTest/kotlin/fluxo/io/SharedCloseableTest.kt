@@ -41,12 +41,9 @@ internal class SharedCloseableTest {
     }
 
     /**
-     * The read-after-close guard ([fluxo.io.internal.SharedDataAccessor]'s `checkOpen`) is only
-     * sound if `isOpen` is already `false` when the resource is released: a concurrent reader that
-     * serialises on the resource monitor must observe the closed state, not race a half-freed
-     * resource. Lock that ordering deterministically — `releaseRetain()` must leave the `Open`
-     * state before `onSharedClose()` runs. A refactor that freed resources before flipping state
-     * would turn this red, flagging the guard as unsound before it can crash the JVM.
+     * `isOpen` must already be `false` while the resource is released: callers that check it
+     * (and the lease, which reads the same state) must see the closed state, never a
+     * half-freed resource. A refactor that released before flipping the state turns this red.
      */
     @Test
     fun resourceReleaseObservesClosedState() {

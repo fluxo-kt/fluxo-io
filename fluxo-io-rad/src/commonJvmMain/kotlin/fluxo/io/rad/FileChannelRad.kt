@@ -55,7 +55,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
         if (destLen > len) {
             buffer.limitCompat(bufPos + len.toInt())
         }
-        val read = access.api.read(buffer, offset + position)
+        val read = access.read(buffer, offset + position)
         if (destLen > len) {
             buffer.limitCompat(bufLimit)
         }
@@ -73,7 +73,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
         val offset = offset
         var position = 0L
         while (true) {
-            val written = access.api.transferTo(position + offset, srcLen - position, channel)
+            val written = access.transferTo(position + offset, srcLen - position, channel)
             if (written > 0) {
                 position += written
                 if (position == srcLen) {
@@ -85,8 +85,11 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
     }
 
 
+    // Every channel call holds a lease: a concurrent close defers closing the channel until
+    // in-flight reads end instead of aborting them with AsynchronousCloseException, and reads
+    // after the last close fail with the same IOException as every other implementation.
     internal class FileChannelAccess(
-        @JvmField val api: FileChannel,
+        private val api: FileChannel,
         resources: Array<out AutoCloseable>,
     ) : SharedDataAccessor(resources) {
 
@@ -94,6 +97,14 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long) :
 
         @Throws(IOException::class)
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
-            api.read(ByteBuffer.wrap(bytes, offset, length), position)
+            withLease { api.read(ByteBuffer.wrap(bytes, offset, length), position) }
+
+        @Throws(IOException::class)
+        fun read(buffer: ByteBuffer, position: Long): Int =
+            withLease { api.read(buffer, position) }
+
+        @Throws(IOException::class)
+        fun transferTo(position: Long, count: Long, target: WritableByteChannel): Long =
+            withLease { api.transferTo(position, count, target) }
     }
 }

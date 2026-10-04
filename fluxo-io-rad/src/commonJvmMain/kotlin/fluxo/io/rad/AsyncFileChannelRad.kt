@@ -94,7 +94,7 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
         if (destLen > len) {
             buffer.limitCompat(bufPos + len.toInt())
         }
-        val read = access.api.aRead(buffer, offset + position)
+        val read = access.read(buffer, offset + position)
         if (destLen > len) {
             buffer.limitCompat(bufLimit)
         }
@@ -103,16 +103,18 @@ private constructor(access: AsyncFileChannelAccess, offset: Long, size: Long) :
 
 
     internal class AsyncFileChannelAccess(
-        @JvmField val api: AsynchronousFileChannel,
+        private val api: AsynchronousFileChannel,
     ) : SharedDataAccessor(resources = arrayOf(api)) {
 
         override val size: Long get() = api.size()
 
         @Throws(IOException::class)
-        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            return runBlocking {
-                api.aRead(ByteBuffer.wrap(bytes, offset, length), position)
-            }
-        }
+        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+            runBlocking { read(ByteBuffer.wrap(bytes, offset, length), position) }
+
+        // The lease spans the suspension, so the channel cannot be closed under a pending read.
+        @Throws(IOException::class)
+        suspend fun read(buffer: ByteBuffer, position: Long): Int =
+            withLease { api.aRead(buffer, position) }
     }
 }

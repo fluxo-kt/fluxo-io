@@ -70,42 +70,26 @@ Workflow / release / verification-metadata traps live in
   direct/mmap `ByteBuffer`. Regression:
   `AbstractRandomAccessDataTest.doubleClosingSubsectionKeepsSharedResourceForParent`
   runs across every impl, so a new RAD that drops the guard can't pass CI.
-- **Read-after-(last-)close is guarded at the resource-owner layer, not
-  `AccessorAwareRad`.** Once the shared resource is freed (`isOpen` false),
-  a read must fail with a clean `IOException`, never touch freed state.
-  The guard CANNOT live in `AccessorAwareRad.read`/`readFrom`: per-impl
-  perf overrides (`readByteAt0`, `read(ByteBuffer,position)`, `transferTo`)
-  bypass it and hit `access`/`access.api` directly. It lives in
-  `SharedDataAccessor.checkOpen()` (`internal` extension in `commonJvmMain`
-  — the common `expect class IOException` has no message ctor, and the
-  hazard is JVM-only). Only **ByteBuffer** (mmap/direct → native
-  use-after-free **SIGABRT** after unmap) and **StreamFactory** (re-pool
-  into an already-drained pool → silent stream **leak**) need it; the 4
-  file/channel impls self-throw `ClosedChannelException`/`IOException` on a
-  closed handle. **ByteArray is deliberately exempt** — no releasable
-  resource, `close()` is a no-op, guarding the fastest impl's hot path
-  buys no safety (`RandomAccessDataArrayTest` overrides the test to assert
-  reads stay valid). **Concurrent close-during-read is safe by
-  construction, not by a flaky timing test:** `isOpen` flips `false` in
-  `SharedCloseable.releaseRetain()` *before* `onSharedClose()` runs
-  (verified `SharedCloseable.kt` `releaseRetain`→`onSharedClose`; locked
-  by `SharedCloseableTest.resourceReleaseObservesClosedState`), and reads
-  share the resource monitor with the release — ByteBuffer's unmap is
-  `synchronized(api)` (this made `readByteAt0` go `synchronized` — a
-  deliberate hot-path cost for memory safety) and StreamFactory rechecks
-  `isOpen` **under the pool lock** (also where the drain runs). So no
-  interleaving lets a read touch freed state — and it's not just argued:
-  `RadConcurrentCloseTest` latch-freezes a real in-flight read mid-close
-  (no sleeps), RED without each guard (`unmapWaitsForInFlightRead` →
-  close finishes mid-read; `streamRePooled…` → leaked stream). Regression:
-  `AbstractRandomAccessDataTest.readingClosedHolderThrowsNotCrashes` runs
-  across every impl and exercises **all four** resource-touching entry
-  points (`readByteAt`, `readFrom`, `read(ByteBuffer)`, `transferTo`) —
-  RED-bisected, so dropping the guard from any one override reds it
-  (covering fewer paths would let a UAF leak through the rest). NB: this
-  rejects reads after the *shared* resource is freed, NOT per-holder —
-  reading a closed subsection whose parent is still open succeeds
-  (by design).
+- **Every access to a releasable resource runs inside
+  `SharedCloseable.withLease { … }`**, the only read-after-close guard.
+  A lease is one atomic add, granted only while an owner exists; once the
+  last owner closes, new reads fail with `IOException` and in-flight ones
+  finish. The release (unmap, pool drain, handle close) runs when the last
+  owner AND the last lease are gone, so it can never free state under a
+  read (mmap/direct `ByteBuffer` → native **SIGABRT**; StreamFactory →
+  leaked stream), and `close()` never waits for readers. So no monitor is
+  needed for safety: ByteBuffer reads use absolute `get`/`duplicate()` and
+  run in parallel. Keep the lease inside the accessor (`api` is `private`
+  there), never in `AccessorAwareRad`: per-impl perf overrides
+  (`readByteAt0`, `read(ByteBuffer, position)`, `transferTo`) bypass the
+  base `read`. **ByteArray is deliberately exempt**: nothing to release,
+  `close()` is a no-op (`RandomAccessDataArrayTest` asserts reads stay
+  valid). Regressions: `AbstractRandomAccessDataTest.readingClosedHolderThrowsNotCrashes`
+  hits all four entry points on every impl; `RadConcurrentCloseTest`
+  latch-freezes a real in-flight read across `close()` (no sleeps) and is
+  RED when the lease is removed. NB: this rejects reads after the
+  *shared* resource is released, NOT per holder: reading a closed
+  subsection whose parent is still open succeeds (by design).
 - `SharedDataAccessor` owns the JVM resource and the only
   `read(bytes, position, offset, length)` primitive.
   `onSharedClose()` is `final`; release the API in
@@ -160,13 +144,13 @@ Workflow / release / verification-metadata traps live in
    `size: Long` + `read(bytes, position, offset, length)`.
    `getSubsection0` returns `FooRad(access, globalPosition, length)` —
    same `access`, parent retains.
-2. Optional perf overrides: `read(ByteBuffer, position)` and
-   `transferTo(WritableByteChannel, …)` (see `FileChannelRad`). **Any
-   override that touches `access`/`access.api` for a releasable resource
-   must call `checkOpen()` first** (read-after-close UAF/leak), unless the
-   handle itself self-throws once closed (channels/`RandomAccessFile`).
-   The cross-impl `readingClosedHolderThrowsNotCrashes` exercises these
-   four entry points, so a missing guard reds CI.
+2. Keep `api` `private` in `FooAccess`; every `FooAccess` method that
+   touches it runs inside `withLease { … }` (read-after-close UAF/leak).
+   Optional perf overrides (`read(ByteBuffer, position)`,
+   `transferTo(WritableByteChannel, …)`, see `FileChannelRad`) call such
+   leased `FooAccess` methods, never the resource directly. The cross-impl
+   `readingClosedHolderThrowsNotCrashes` exercises these four entry points,
+   so a missing lease reds CI.
 3. Public factory in `FooRadAccessor.kt` with
    `@file:JvmName("Rad") @file:JvmMultifileClass` and `@JvmName("forFoo")`
    per overload. Mark `@Blocking` if the constructor opens resources.

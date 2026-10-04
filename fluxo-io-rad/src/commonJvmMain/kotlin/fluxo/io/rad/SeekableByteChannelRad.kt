@@ -84,21 +84,17 @@ private constructor(access: SeekableChannelAccess, offset: Long, size: Long) :
 
         override val size: Long get() = api.size()
 
+        // The monitor serialises seek+read on the shared channel position; the lease keeps the
+        // channel open until the read ends.
         @Throws(IOException::class)
-        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int {
-            val api = api
-            synchronized(monitor) {
-                api.position(position)
-                return api.read(ByteBuffer.wrap(bytes, offset, length))
-            }
-        }
+        override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+            read(ByteBuffer.wrap(bytes, offset, length), position)
 
         @Throws(IOException::class)
-        internal fun read(buffer: ByteBuffer, position: Long): Int {
-            val api = api
+        internal fun read(buffer: ByteBuffer, position: Long): Int = withLease {
             synchronized(monitor) {
                 api.position(position)
-                return api.read(buffer)
+                api.read(buffer)
             }
         }
     }

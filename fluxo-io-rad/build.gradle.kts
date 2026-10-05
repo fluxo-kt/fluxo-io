@@ -73,6 +73,10 @@ fkcSetupMultiplatform(
                 binaries.executable()
             }
         }
+        // Declared here, not via allDefaultTargets: fkc adds wasmWasi only together with its
+        // own wasmJs, which this build declares itself.
+        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+        wasmWasi { target { nodejs() } }
         allDefaultTargets(js = false, wasm = false, wasmWasi = false)
         androidNative()
     },
@@ -161,6 +165,30 @@ mavenPublishing {
 // property, vanniktech keeps signing required for every non-SNAPSHOT publication (releases).
 if (providers.gradleProperty("fluxo.unsignedLocalPublish").orNull == "true") {
     extensions.configure<org.gradle.plugins.signing.SigningExtension> { isRequired = false }
+}
+
+// Kotlin's WASI test driver preopens no directory (KT-65179), so a WASI test can reach no file.
+// Map the guest's /tmp to this task's temp dir by patching the generated driver just before the
+// run. Only a Provider and a File are captured, which keeps the configuration cache valid.
+tasks.named("wasmWasiNodeTest") {
+    val driver = layout.buildDirectory.file(
+        "compileSync/wasmWasi/test/testDevelopmentExecutable/kotlin/fluxo-io-fluxo-io-rad-test.mjs",
+    )
+    val tmpDir = temporaryDir
+    doFirst {
+        val file = driver.get().asFile
+        val original = "new WASI({ version: 'preview1', args: argv, env, })"
+        val hostDir = tmpDir.absolutePath.replace("\\", "\\\\").replace("'", "\\'")
+        val text = file.readText()
+        if (original !in text) {
+            // Already patched when the sync task left its output in place.
+            check("preopens: { '/tmp'" in text) { "The KGP WASI test driver changed; update this patch: $file" }
+            return@doFirst
+        }
+        file.writeText(
+            text.replace(original, "new WASI({ version: 'preview1', args: argv, env, preopens: { '/tmp': '$hostDir' } })"),
+        )
+    }
 }
 
 kotlin {

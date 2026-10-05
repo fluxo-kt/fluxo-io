@@ -20,6 +20,10 @@ fkcSetupMultiplatform(
         js { target { nodejs() } }
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmJs { target { nodejs() } }
+        // Declared here, not via allDefaultTargets: fkc adds wasmWasi only together with its
+        // own wasmJs, which this build declares itself.
+        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+        wasmWasi { target { nodejs() } }
         allDefaultTargets(android = false, js = false, wasm = false, wasmWasi = false)
         androidNative()
     },

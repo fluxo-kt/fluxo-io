@@ -45,9 +45,13 @@ Workflow / release / verification-metadata traps live in
   - `commonJvmMain` — JVM+Android impl set (`ByteBuffer`, mmap,
     `FileChannel`, `RandomAccessFile`, `SeekableByteChannel`, stream
     factories, async).
-  - `nonJvmMain` — JS / Native / Wasm-JS, `ByteArray`-only.
-    Wasm-WASI is **explicitly disabled**
-    (`allDefaultTargets(wasmWasi = false)`).
+  - `nonJvmMain` — JS / Native / Wasm-JS / Wasm-WASI. File impls per family:
+    `nixMain` (pread), `mingwMain` (ReadFile), `webMain` (Node fs; JS and
+    Wasm-JS differ only in the byte copy), `wasmWasiMain` (fd_pread). Each
+    exposes `openPlatformFile(path)`.
+  - Wasm-WASI is declared explicitly (`wasmWasi { … }`): fkc adds it only
+    together with its own wasmJs. Its test task patches KGP's driver to
+    preopen `/tmp` (KT-65179); a WASI module reaches no file otherwise.
 - `:conformance-test` — unpublished; `RadContract` for every module's tests.
   No Android target: no Android test consumes it, and fkc 0.15.1's Android
   Detekt task fails on a KMP-Android project dependency. The `-test` name

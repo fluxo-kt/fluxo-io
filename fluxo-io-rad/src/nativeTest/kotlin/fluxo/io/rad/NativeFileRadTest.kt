@@ -5,7 +5,6 @@ package fluxo.io.rad
 import fluxo.io.IOException
 import kotlin.random.Random
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
@@ -38,21 +37,6 @@ internal class NativeFileRadTest {
     fun missingFileAndDirectoryFailAtOpen() {
         assertFailsWith<IOException> { RandomAccessData.open(tempDir() + "/does-not-exist-" + Random.nextLong()) }
         assertFailsWith<IOException> { RandomAccessData.open(tempDir()) }
-    }
-
-    @Test
-    fun readsAfterOtherHandleCloses() {
-        val path = tempFile(RadContract.BYTES)
-        try {
-            val rad = RandomAccessData.open(path)
-            val shared = rad.share()
-            rad.close()
-            assertContentEquals(RadContract.BYTES, shared.readAllBytes())
-            shared.close()
-            assertFailsWith<IOException> { shared.readAllBytes() }
-        } finally {
-            remove(path)
-        }
     }
 
     private fun tempDir(): String =

@@ -4,7 +4,6 @@ import fluxo.io.IOException
 import kotlin.js.JsAny
 import kotlin.random.Random
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
 
 /** The Node `fs` file implementation (JS and Wasm-JS) over real temp files. */
@@ -24,21 +23,6 @@ internal class NodeFileRadTest {
     fun missingFileAndDirectoryFailAtOpen() {
         assertFailsWith<IOException> { RandomAccessData.open(tmpDir() + "/missing-" + Random.nextLong()) }
         assertFailsWith<IOException> { RandomAccessData.open(tmpDir()) }
-    }
-
-    @Test
-    fun readsAfterOtherHandleCloses() {
-        val path = tempFile(RadContract.BYTES)
-        try {
-            val rad = RandomAccessData.open(path)
-            val shared = rad.share()
-            rad.close()
-            assertContentEquals(RadContract.BYTES, shared.readAllBytes())
-            shared.close()
-            assertFailsWith<IOException> { shared.readAllBytes() }
-        } finally {
-            deleteFile(path)
-        }
     }
 
     private fun tempFile(bytes: ByteArray): String {

@@ -154,7 +154,12 @@ Workflow / release / verification-metadata traps live in
   for one release; never call them from library code (ERROR level breaks
   our own compile) — use the `…0` hooks.
 - `@Blocking` is `expect annotation @OptionalExpectation`; JVM
-  typealiases `org.jetbrains.annotations.Blocking`.
+  typealiases `org.jetbrains.annotations.Blocking`. Put `@Blocking`,
+  `@ThreadSafe` and `@CallSuper` only on `commonMain` and JVM/Android
+  sources: with no `actual`, a source set built for native targets alone
+  rejects them ("can only be used in common module sources"), and the native
+  CI shards build `nonJvmMain` exactly that way. The `expect` declarations
+  already carry them for every platform.
 - Logging: single global hook
   `setFluxoIoLogger((String, Throwable?) -> Unit)`. No SLF4J. Don't add
   one.

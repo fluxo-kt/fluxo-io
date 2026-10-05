@@ -104,6 +104,11 @@ kover.reports {
     }
 }
 
+// Wasm tests need no npm packages, so KGP's wasm yarn lock is an empty header that nothing
+// tracks. On Windows yarn writes no lock at all for such a workspace, and the store task then
+// fails input validation ("build/wasm/yarn.lock doesn't exist"). The JS lock stays stored.
+tasks.matching { it.name == "kotlinWasmStoreYarnLock" }.configureEach { enabled = false }
+
 val dokkaSourceLinkRef = providers.environmentVariable("SCM_TAG").orElse("dev")
 
 allprojects {

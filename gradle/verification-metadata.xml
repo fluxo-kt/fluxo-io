@@ -134,7 +134,10 @@
             <trusting group="^org[.]jetbrains[.]kotlinx($|([.].*))" regex="true"/>
          </trusted-key>
          <trusted-key id="E9CC3CD1AE59E851E4DB3FA350FFD7487D34B5B9" group="io.reactivex.rxjava3" name="rxjava" version="3.1.11"/>
-         <trusted-key id="EAD41E9EB6D49D461E29925ADFB26DDA74AC00C9" group="com.osacky.doctor" name="doctor-plugin" version="0.12.0"/>
+         <trusted-key id="EAD41E9EB6D49D461E29925ADFB26DDA74AC00C9">
+            <trusting group="com.osacky.doctor"/>
+            <trusting group="com.osacky.doctor" name="doctor-plugin" version="0.12.0"/>
+         </trusted-key>
          <trusted-key id="EE0CA873074092F806F59B65D364ABAA39A47320" group="com.google.errorprone"/>
          <trusted-key id="F254B35617DC255D9344BCFA873A8E86B4372146" group="org.apache" name="apache" version="13"/>
          <trusted-key id="F3184BCD55F4D016E30D4C9BF42E87F9665015C9" group="org.jsoup" name="jsoup" version="1.16.1"/>

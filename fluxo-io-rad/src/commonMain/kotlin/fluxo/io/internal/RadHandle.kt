@@ -34,9 +34,7 @@ internal abstract class RadHandle(owner: RadHandle?) : RandomAccessData {
     @Throws(IOException::class)
     protected fun ensureOpen() {
         if (owner.closed.value) {
-            throw IOException(
-                "RandomAccessData is closed. Use share() to keep an independent handle open.",
-            )
+            throw IOException(CLOSED_HANDLE_MESSAGE)
         }
     }
 
@@ -81,3 +79,7 @@ internal abstract class RadHandle(owner: RadHandle?) : RandomAccessData {
     /** Gives back the ownership this handle holds. Called at most once per handle. */
     protected abstract fun releaseShared()
 }
+
+/** Shared by every handle type, so a read on a closed handle reports the same fix. */
+internal const val CLOSED_HANDLE_MESSAGE: String =
+    "RandomAccessData is closed. Use share() to keep an independent handle open."

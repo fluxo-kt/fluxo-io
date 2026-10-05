@@ -112,7 +112,7 @@ internal fun RandomAccessData.readFullyImpl(
 }
 
 @Suppress("LongParameterList")
-private inline fun readFully0(
+internal inline fun readFully0(
     size: Long,
     buffer: ByteArray,
     position: Long,

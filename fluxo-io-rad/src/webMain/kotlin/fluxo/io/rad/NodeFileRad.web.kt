@@ -21,7 +21,10 @@ internal fun openNodeRad(path: String): RandomAccessData =
  */
 internal inline fun <T> openNodeFile(path: String, wrap: (NodeFs, fd: Int, size: Long) -> T): T {
     val fs = nodeFs()
-        ?: throw IOException("No file system in this JS runtime; use AsyncRandomAccessData.open(blob)")
+        ?: throw IOException(
+            "No file system in this JS runtime; in a browser, read a Blob " +
+                "(Kotlin/JS: AsyncRandomAccessData.open(blob))",
+        )
     val fd = try {
         fs.openSync(path, "r")
     } catch (e: Throwable) {

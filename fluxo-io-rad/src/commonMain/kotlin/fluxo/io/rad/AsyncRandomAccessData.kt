@@ -76,7 +76,7 @@ public interface AsyncRandomAccessData : AutoCloseable {
 
     /**
      * Home of the `AsyncRandomAccessData.open(…)` factories for natively non-blocking sources
-     * (browser `Blob`, Node `fs.promises`, JVM `AsynchronousFileChannel`), added per platform
+     * (JS: browser `Blob`; JS and Wasm-JS: Node's async `fs`), added per platform
      * as extensions on this companion.
      */
     public companion object

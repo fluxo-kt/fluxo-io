@@ -220,7 +220,9 @@ public abstract class SharedCloseable : Closeable {
      *
      * Implementations should release any resources held by the instance.
      *
-     * Can throw an exception, it will be properly propagated to the caller.
+     * May throw: the exception reaches the caller of the `close()` that released it, but
+     * when the release waits for the last in-flight access, it runs there and is only
+     * logged.
      */
     @Throws(IOException::class)
     protected abstract fun onSharedClose()

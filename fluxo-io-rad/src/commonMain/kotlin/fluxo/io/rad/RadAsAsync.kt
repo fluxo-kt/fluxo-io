@@ -15,6 +15,9 @@ import kotlin.jvm.JvmName
 /**
  * Adapts this blocking data to [AsyncRandomAccessData] by running each read on
  * [blockingContext], e.g. `rad.asAsync(Dispatchers.IO)`, so the caller's thread never blocks.
+ * That holds only for a dispatcher that really moves work to other threads: one that runs
+ * inline (`Dispatchers.Unconfined`, `Main.immediate`) blocks the caller anyway, and the check
+ * below cannot tell them apart without kotlinx-coroutines.
  *
  * The result takes over this handle: closing it closes this data. To keep using this one
  * as well, adapt a separate handle: `rad.share().asAsync(Dispatchers.IO)`.

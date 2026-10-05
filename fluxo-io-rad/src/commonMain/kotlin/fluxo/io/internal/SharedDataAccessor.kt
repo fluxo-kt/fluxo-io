@@ -20,8 +20,8 @@ protected constructor(
 }
 
 /**
- * [SharedDataAccessor] for natively non-blocking sources (JVM `AsynchronousFileChannel`,
- * browser `Blob`, Node `fs.promises`): the read suspends instead of blocking a thread.
+ * [SharedDataAccessor] for natively non-blocking sources (browser `Blob`, Node's async `fs`):
+ * the read suspends instead of blocking a thread.
  * A read holds its lease across the suspension (`withLease` is inline), so a close while the
  * read is pending defers the release until the read completes.
  */

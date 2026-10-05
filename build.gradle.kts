@@ -154,6 +154,17 @@ subprojects {
         }
     }
 
+    // fluxo-kmp-conf links and runs every native test suite a second time on a worker thread
+    // (`-trw`). That run finds only code bound to the main thread or to thread-local state, and
+    // this library has neither, while it doubles native link and test time, the slowest CI work.
+    // `onlyIf`, not `enabled = false`: the Kotlin plugin sets `enabled` on these tasks after this
+    // action runs, which would silently turn them back on.
+    tasks.matching {
+        it.name.startsWith("linkBackgroundDebugTest") || it.name.endsWith("BackgroundTest")
+    }.configureEach {
+        onlyIf("the worker-thread native test run is disabled in the root build script") { false }
+    }
+
     // `-Pfluxo.testJdk=<N>` runs JVM tests on JDK N while the build itself stays on its own JDK.
     // `-Xjdk-release` already limits the API to the bytecode floor (17); only running the tests
     // there shows runtime differences (buffer methods, cleaners, Unsafe) on the oldest and the

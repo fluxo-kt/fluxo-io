@@ -150,6 +150,20 @@ subprojects {
             extensions.configure<org.gradle.plugins.signing.SigningExtension> { isRequired = false }
         }
     }
+
+    // `-Pfluxo.testJdk=<N>` runs JVM tests on JDK N while the build itself stays on its own JDK.
+    // `-Xjdk-release` already limits the API to the bytecode floor (17); only running the tests
+    // there shows runtime differences (buffer methods, cleaners, Unsafe) on the oldest and the
+    // newest JDK that consumers use. Each CI lane passes the JDK it installed.
+    val testJdk = providers.gradleProperty("fluxo.testJdk").map { JavaLanguageVersion.of(it) }
+    if (testJdk.isPresent) {
+        tasks.withType<Test>().configureEach {
+            javaLauncher.set(
+                project.extensions.getByType<JavaToolchainService>()
+                    .launcherFor { languageVersion.set(testJdk) },
+            )
+        }
+    }
 }
 
 // Wasm tests need no npm packages, so KGP's wasm yarn lock is an empty header that nothing

@@ -123,14 +123,15 @@ public fun radOf(
     read: (bytes: ByteArray, position: Long, offset: Int, length: Int) -> Int,
 ): RandomAccessData = AccessorRad(LambdaAccess(size, close, read))
 
+/** Not named `close`: inside the class that name is SharedCloseable.close(), not the lambda. */
 private class LambdaAccess(
     override val size: Long,
-    private val close: () -> Unit,
+    private val release: () -> Unit,
     private val reader: (ByteArray, Long, Int, Int) -> Int,
 ) : SharedDataAccessor(EMPTY_AUTO_CLOSEABLE_ARRAY) {
 
     override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
         withLease { reader(bytes, position, offset, length) }
 
-    override fun releaseApi() = close()
+    override fun releaseApi() = release()
 }

@@ -31,8 +31,7 @@ internal class RandomAccessDataFileChannelTest(
         ).asList()
     }
 
-
-    /** `java.io` reports FileNotFoundException, NIO `NoSuchFileException`; both are IOExceptions. */
+    /** `java.io` throws FileNotFoundException, NIO `NoSuchFileException`: both IOExceptions. */
     @Test
     fun fileExists() {
         assertFailsWith<IOException> {

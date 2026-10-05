@@ -104,6 +104,54 @@ kover.reports {
     }
 }
 
+// Every published module: Central settings, signing, POM and coordinates (artifactId = module
+// name). Modules set only their POM description.
+val publishVersion = libs.versions.version.get()
+val unsignedLocalPublish = providers.gradleProperty("fluxo.unsignedLocalPublish").orNull == "true"
+subprojects {
+    plugins.withId("com.vanniktech.maven.publish") {
+        extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+            publishToMavenCentral(
+                automaticRelease = false,
+                validateDeployment = com.vanniktech.maven.publish.DeploymentValidation.VALIDATED,
+            )
+            signAllPublications()
+            coordinates("io.github.fluxo-kt", name, publishVersion)
+            pom {
+                name.set(this@subprojects.name)
+                inceptionYear.set("2024")
+                url.set("https://github.com/fluxo-kt/fluxo-io")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("amal")
+                        name.set("Art Shendrik")
+                        email.set("artyom.shendrik@gmail.com")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/fluxo-kt/fluxo-io")
+                    connection.set("scm:git:git://github.com/fluxo-kt/fluxo-io.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/fluxo-kt/fluxo-io.git")
+                }
+            }
+        }
+        // Opt-in for local mavenLocal publishes on machines and CI jobs that hold no signing key
+        // (scripts/consumer-check.sh, updateBaseline); never for a real release. Gradle's Sign
+        // tasks then skip without a key; otherwise vanniktech requires signing for every
+        // non-SNAPSHOT publication.
+        if (unsignedLocalPublish) {
+            extensions.configure<org.gradle.plugins.signing.SigningExtension> { isRequired = false }
+        }
+    }
+}
+
 // Wasm tests need no npm packages, so KGP's wasm yarn lock is an empty header that nothing
 // tracks. On Windows yarn writes no lock at all for such a workspace, and the store task then
 // fails input validation ("build/wasm/yarn.lock doesn't exist"). The JS lock stays stored.

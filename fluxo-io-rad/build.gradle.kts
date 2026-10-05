@@ -1,7 +1,5 @@
 @file:OptIn(kotlinx.validation.ExperimentalBCVApi::class)
 
-import com.vanniktech.maven.publish.DeploymentValidation
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.lib)
@@ -124,47 +122,12 @@ apiValidation {
     }
 }
 
+// Coordinates, POM, signing and Central settings are shared by every published module in the
+// root build script; only the description is per module.
 mavenPublishing {
-    publishToMavenCentral(
-        automaticRelease = false,
-        validateDeployment = DeploymentValidation.VALIDATED,
-    )
-    signAllPublications()
-    coordinates("io.github.fluxo-kt", "fluxo-io-rad", libs.versions.version.get())
     pom {
-        name.set("fluxo-io-rad")
-        description.set(
-            "Read-only random-access I/O for Kotlin Multiplatform.",
-        )
-        inceptionYear.set("2024")
-        url.set("https://github.com/fluxo-kt/fluxo-io")
-        licenses {
-            license {
-                name.set("The Apache License, Version 2.0")
-                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                distribution.set("repo")
-            }
-        }
-        developers {
-            developer {
-                id.set("amal")
-                name.set("Art Shendrik")
-                email.set("artyom.shendrik@gmail.com")
-            }
-        }
-        scm {
-            url.set("https://github.com/fluxo-kt/fluxo-io")
-            connection.set("scm:git:git://github.com/fluxo-kt/fluxo-io.git")
-            developerConnection.set("scm:git:ssh://git@github.com/fluxo-kt/fluxo-io.git")
-        }
+        description.set("Read-only random-access I/O for Kotlin Multiplatform.")
     }
-}
-
-// Opt-in for local mavenLocal publishes on machines and CI jobs that hold no signing key
-// (scripts/consumer-check.sh, updateBaseline). Never set it for a real release. Gradle's Sign tasks then skip when no key is configured. Without the
-// property, vanniktech keeps signing required for every non-SNAPSHOT publication (releases).
-if (providers.gradleProperty("fluxo.unsignedLocalPublish").orNull == "true") {
-    extensions.configure<org.gradle.plugins.signing.SigningExtension> { isRequired = false }
 }
 
 // Kotlin's WASI test driver preopens no directory (KT-65179), so a WASI test can reach no file.

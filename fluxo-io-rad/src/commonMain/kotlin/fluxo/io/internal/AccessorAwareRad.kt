@@ -83,3 +83,27 @@ internal constructor(
         return access.read(buffer, pos, offset, len)
     }
 }
+
+/**
+ * [AccessorAwareRad] for sources whose accessor is all there is (file descriptors, OS handles,
+ * adapters): no per-implementation fast paths, so one class serves them all instead of an
+ * empty subclass per platform.
+ */
+@ThreadSafe
+internal class AccessorRad private constructor(
+    access: SharedDataAccessor,
+    offset: Long,
+    size: Long,
+    owner: RadHandle?,
+) : AccessorAwareRad<SharedDataAccessor>(access, offset, size, owner) {
+
+    /** A handle over all of [access]; it takes over the caller's ownership of [access]. */
+    constructor(access: SharedDataAccessor) : this(access, 0L, access.size, owner = null)
+
+    override fun view0(
+        access: SharedDataAccessor,
+        globalPosition: Long,
+        length: Long,
+        owner: RadHandle?,
+    ): RandomAccessData = AccessorRad(access, globalPosition, length, owner)
+}

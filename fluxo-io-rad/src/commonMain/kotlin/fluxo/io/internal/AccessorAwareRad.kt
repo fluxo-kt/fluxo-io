@@ -3,6 +3,7 @@ package fluxo.io.internal
 import fluxo.io.EOFException
 import fluxo.io.IOException
 import fluxo.io.rad.RandomAccessData
+import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
 import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.calcLength
 import fluxo.io.util.checkOffsetAndCount
@@ -106,4 +107,30 @@ internal class AccessorRad private constructor(
         length: Long,
         owner: RadHandle?,
     ): RandomAccessData = AccessorRad(access, globalPosition, length, owner)
+}
+
+/**
+ * A [RandomAccessData] over any positional reader, with every rule of the core (lifetime,
+ * slices, bounds, leases), for fluxo-io's own adapter modules, which cannot extend the internal
+ * classes above from another module. [read] runs only inside a lease and is called only for
+ * ranges inside [size]; it returns the bytes read (> 0) or -1 at the end. [close] runs once,
+ * after the last handle closed and the last read returned.
+ */
+@InternalFluxoIoApi
+public fun radOf(
+    size: Long,
+    close: () -> Unit,
+    read: (bytes: ByteArray, position: Long, offset: Int, length: Int) -> Int,
+): RandomAccessData = AccessorRad(LambdaAccess(size, close, read))
+
+private class LambdaAccess(
+    override val size: Long,
+    private val close: () -> Unit,
+    private val reader: (ByteArray, Long, Int, Int) -> Int,
+) : SharedDataAccessor(EMPTY_AUTO_CLOSEABLE_ARRAY) {
+
+    override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+        withLease { reader(bytes, position, offset, length) }
+
+    override fun releaseApi() = close()
 }

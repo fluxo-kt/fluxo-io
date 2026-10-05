@@ -7,6 +7,8 @@ import fluxo.io.nio.limitCompat
 import fluxo.io.rad.FileChannelRad.FileChannelAccess
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.channels.ClosedByInterruptException
+import java.nio.channels.ClosedChannelException
 import java.nio.channels.FileChannel
 import java.nio.channels.WritableByteChannel
 import javax.annotation.concurrent.ThreadSafe
@@ -103,14 +105,34 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long, owner: 
 
         @Throws(IOException::class)
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
-            withLease { api.read(ByteBuffer.wrap(bytes, offset, length), position) }
+            leased { it.read(ByteBuffer.wrap(bytes, offset, length), position) }
 
         @Throws(IOException::class)
-        fun read(buffer: ByteBuffer, position: Long): Int =
-            withLease { api.read(buffer, position) }
+        fun read(buffer: ByteBuffer, position: Long): Int = leased { it.read(buffer, position) }
 
         @Throws(IOException::class)
         fun transferTo(position: Long, count: Long, target: WritableByteChannel): Long =
-            withLease { api.transferTo(position, count, target) }
+            leased { it.transferTo(position, count, target) }
+
+        /**
+         * Under a lease only an interrupt can have closed the channel: a FileChannel closes
+         * itself when any thread reading it is interrupted, for every handle sharing it. The
+         * interrupted reader gets [ClosedByInterruptException]; everyone else gets this
+         * explanation instead of a bare ClosedChannelException.
+         */
+        private inline fun <T> leased(block: (FileChannel) -> T): T = withLease {
+            try {
+                block(api)
+            } catch (e: ClosedByInterruptException) {
+                throw e
+            } catch (e: ClosedChannelException) {
+                throw IOException(
+                    "FileChannel was closed because a thread reading it was interrupted; " +
+                        "open the data again, or use Rad.forRandomAccessFile where reader " +
+                        "threads get interrupted",
+                    e,
+                )
+            }
+        }
     }
 }

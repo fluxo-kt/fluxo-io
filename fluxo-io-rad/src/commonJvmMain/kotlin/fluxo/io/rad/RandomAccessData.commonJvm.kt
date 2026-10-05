@@ -254,6 +254,11 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
          * fails reads with an `InternalError` instead of an [IOException]. Use
          * `Rad.forByteBuffer(file)` to choose mmap explicitly.
          *
+         * A `FileChannel` closes itself when a thread reading it is interrupted, which ends
+         * the data for every handle sharing it. Where reader threads get interrupted
+         * (`Future.cancel(true)`, `shutdownNow()`), use `Rad.forRandomAccessFile(file)`: its
+         * reads are uninterruptible but run one at a time.
+         *
          * @throws IOException if the file cannot be opened
          */
         @Blocking

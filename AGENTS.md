@@ -137,8 +137,13 @@ Workflow / release / verification-metadata traps live in
   common impl: `readByteAt`, `transferTo`, `read(ByteBuffer, position)`,
   suspend wrappers, `Java8BufferCompat`-based buffer handling.
 - **`Thread.interrupt()` cooperation**: `BasicRad.readFully` and
-  `readByteAt` check `Thread.interrupted()` and throw
-  `IOException("Thread interrupted")`. Bare `read()` does not.
+  `readByteAt` check `Thread.currentThread().isInterrupted` (the flag stays
+  set) and throw `IOException("Thread interrupted")`. Bare `read()` does not.
+  A `FileChannel` (the `open(File|Path)` default, Android descriptors) closes
+  itself when a reader thread is interrupted mid-read, for every handle that
+  shares it; later reads throw `IOException` saying so. Use
+  `Rad.forRandomAccessFile` (serialised, uninterruptible reads) where threads
+  get interrupted (`Future.cancel(true)`, `shutdownNow()`).
 - **No suspend function may block its caller.** Async reads go through
   `AsyncRandomAccessData`; `rad.asAsync(dispatcher)` runs each blocking
   call as ONE dispatch on that dispatcher using only stdlib intrinsics

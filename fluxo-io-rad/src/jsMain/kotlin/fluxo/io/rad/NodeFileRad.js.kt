@@ -1,9 +1,12 @@
+// The read functions mirror Node's fs.read(fd, buffer, offset, length, position, cb).
+@file:Suppress("LongParameterList")
+
 package fluxo.io.rad
 
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.Uint8Array
 
-/** A Kotlin/JS `ByteArray` is an `Int8Array`: Node reads straight into a `Uint8Array` view of it. */
+/** A Kotlin/JS `ByteArray` is an `Int8Array`: Node reads into a `Uint8Array` view of it. */
 internal actual fun readSync(
     fs: NodeFs,
     fd: Int,

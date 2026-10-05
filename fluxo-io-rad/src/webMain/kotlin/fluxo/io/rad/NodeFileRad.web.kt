@@ -19,27 +19,29 @@ internal fun openNodeRad(path: String): RandomAccessData =
  * Opens [path] read-only and passes the descriptor and size to [wrap], which takes it over;
  * the descriptor is closed here only if anything fails first.
  */
+// The common IOException takes no cause; the JS error's message is carried over instead.
+@Suppress("SwallowedException")
 internal inline fun <T> openNodeFile(path: String, wrap: (NodeFs, fd: Int, size: Long) -> T): T {
-    val fs = nodeFs()
-        ?: throw IOException(
-            "No file system in this JS runtime; in a browser, read a Blob " +
-                "(Kotlin/JS: AsyncRandomAccessData.open(blob))",
-        )
+    val fs = requireNodeFs()
     val fd = try {
         fs.openSync(path, "r")
     } catch (e: Throwable) {
         throw IOException("Cannot open $path: ${e.message}")
     }
     return try {
-        val stats = fs.fstatSync(fd)
-        if (stats.isDirectory()) {
-            throw IOException("Cannot open $path: is a directory")
-        }
-        wrap(fs, fd, stats.size.toLong())
+        wrap(fs, fd, fileSize(fs.fstatSync(fd), path))
     } catch (e: Throwable) {
         fs.closeSync(fd)
         throw e
     }
+}
+
+/** `openSync` succeeds on a directory; reading it would fail later with EISDIR. */
+internal fun fileSize(stats: NodeStats, path: String): Long {
+    if (stats.isDirectory()) {
+        throw IOException("Cannot open $path: is a directory")
+    }
+    return stats.size.toLong()
 }
 
 /** The fd is used only inside a lease: a closed fd number is reused by later opens. */
@@ -50,6 +52,8 @@ private class NodeFdAccess(
     override val size: Long,
 ) : SharedDataAccessor(EMPTY_AUTO_CLOSEABLE_ARRAY) {
 
+    // The common IOException takes no cause; the JS error's message is carried over instead.
+    @Suppress("SwallowedException")
     override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
         withLease {
             val n = try {
@@ -65,9 +69,9 @@ private class NodeFdAccess(
 }
 
 /**
- * Node's `fs`, typed so only a `Uint8Array` can be passed as a buffer: Deno's FileHandle
- * ignores an `Int8Array` (what a Kotlin/JS `ByteArray` is), so the platform `readSync` below
- * hands Node a `Uint8Array`. Positions are `Number`s (exact up to 2^53).
+ * Node's `fs`, without read methods on purpose: Deno ignores an `Int8Array` buffer (what a
+ * Kotlin/JS `ByteArray` is), so every read goes through the platform `readSync`/`readAsync`,
+ * which always pass a `Uint8Array`. Positions are `Number`s (exact up to 2^53).
  */
 internal external interface NodeFs : JsAny {
     fun openSync(path: String, flags: String): Int
@@ -81,6 +85,7 @@ internal external interface NodeStats : JsAny {
 }
 
 /** `fs.readSync(fd, uint8array, 0, length, position)` into [bytes] at [offset]. */
+@Suppress("LongParameterList") // mirrors Node's readSync arguments
 internal expect fun readSync(
     fs: NodeFs,
     fd: Int,
@@ -90,7 +95,13 @@ internal expect fun readSync(
     position: Double,
 ): Int
 
+internal fun requireNodeFs(): NodeFs = nodeFs() ?: throw IOException(
+    "No file system in this JS runtime; in a browser, read a Blob " +
+        "(Kotlin/JS: AsyncRandomAccessData.open(blob))",
+)
+
 // Kotlin's js() parser predates `?.` and `??`.
-internal fun nodeFs(): NodeFs? = js(
-    "(typeof process !== 'undefined' && process.getBuiltinModule) ? process.getBuiltinModule('node:fs') : null",
+private fun nodeFs(): NodeFs? = js(
+    "(typeof process !== 'undefined' && process.getBuiltinModule) " +
+        "? process.getBuiltinModule('node:fs') : null",
 )

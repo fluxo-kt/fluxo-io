@@ -22,7 +22,9 @@ import org.w3c.files.Blob
 public fun AsyncRandomAccessData.Companion.open(blob: Blob): AsyncRandomAccessData =
     AsyncAccessorRad(BlobAccess(blob))
 
-private class BlobAccess(private val blob: Blob) : SharedAsyncDataAccessor(EMPTY_AUTO_CLOSEABLE_ARRAY) {
+private class BlobAccess(
+    private val blob: Blob,
+) : SharedAsyncDataAccessor(EMPTY_AUTO_CLOSEABLE_ARRAY) {
 
     override val size: Long = blob.size.toLong()
 
@@ -34,7 +36,10 @@ private class BlobAccess(private val blob: Blob) : SharedAsyncDataAccessor(EMPTY
             val buffer = suspendCoroutine { cont ->
                 chunk.then(
                     { b: ArrayBuffer -> cont.resume(b) },
-                    { e: dynamic -> cont.resumeWithException(IOException("Cannot read Blob at $position: ${e?.message}")) },
+                    { e: dynamic ->
+                        val error = IOException("Cannot read Blob at $position: ${e?.message}")
+                        cont.resumeWithException(error)
+                    },
                 )
             }
             val n = buffer.byteLength

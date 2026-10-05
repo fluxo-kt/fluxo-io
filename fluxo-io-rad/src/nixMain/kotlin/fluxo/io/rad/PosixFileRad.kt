@@ -100,6 +100,6 @@ private class FdAccess(
     }
 }
 
-private val OFF_T_IS_32_BIT: Boolean = sizeOf<off_tVar>() == 4L
+private val OFF_T_IS_32_BIT: Boolean = sizeOf<off_tVar>() == Int.SIZE_BYTES.toLong()
 
 private fun lastError(): String = strerror(errno)?.toKString() ?: "errno ${errno}"

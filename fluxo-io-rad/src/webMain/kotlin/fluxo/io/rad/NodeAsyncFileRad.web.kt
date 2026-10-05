@@ -36,7 +36,8 @@ private class NodeAsyncFdAccess(
     override suspend fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
         withLease {
             val n = suspendCoroutine { cont ->
-                readAsync(fs, fd, bytes, offset, length, position.toDouble(), ReadCallback(cont, path, position))
+                val callback = ReadCallback(cont, path, position)
+                readAsync(fs, fd, bytes, offset, length, position.toDouble(), callback)
             }
             // 0 inside `size` means the file shrank after open: report end of data.
             if (n > 0) n else -1
@@ -61,6 +62,7 @@ internal class ReadCallback(
 }
 
 /** `fs.read(fd, uint8array, 0, length, position, callback)` into [bytes] at [offset]. */
+@Suppress("LongParameterList") // mirrors Node's fs.read arguments
 internal expect fun readAsync(
     fs: NodeFs,
     fd: Int,

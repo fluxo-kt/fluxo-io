@@ -1,3 +1,7 @@
+// The js() helpers below use their parameters inside the JS string, where detekt cannot see
+// them; the read functions mirror Node's fs.read(fd, buffer, offset, length, position, cb).
+@file:Suppress("UnusedParameter", "LongParameterList")
+
 package fluxo.io.rad
 
 import kotlin.js.JsAny
@@ -61,7 +65,8 @@ private fun nodeRead(
     position: Double,
     done: (String?, Int) -> Unit,
 ): Unit = js(
-    "fs.read(fd, buffer, 0, length, position, function (e, n) { done(e ? String(e.message) : null, e ? 0 : n); })",
+    "fs.read(fd, buffer, 0, length, position, " +
+        "function (e, n) { done(e ? String(e.message) : null, e ? 0 : n); })",
 )
 
 /** webMain does not see the nonJvmMain expect, so each web target forwards to it. */

@@ -163,7 +163,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
 
         String text = workflowText.toString();
         if (!containsLiveLiteral(text, SETUP_GRADLE_PINNED_REF)) {
-            failures.add(".github/workflows:1: setup-gradle must use the pinned v6.1.0 commit SHA.");
+            failures.add(".github/workflows:1: setup-gradle must use the pinned v6.4.0 commit SHA.");
         }
         if (!containsLiveGradleCommand(text, "publishToMavenCentral")) {
             failures.add(".github/workflows:1: Central Portal publish workflows must call publishToMavenCentral.");
@@ -205,7 +205,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
                     file,
                     rootDir,
                     lineNumber,
-                    "setup-gradle must use the pinned v6.1.0 commit SHA."
+                    "setup-gradle must use the pinned v6.4.0 commit SHA."
             );
         }
         if (usesRef.startsWith("docker://")) {
@@ -421,7 +421,7 @@ public abstract class VerifyBuildPolicyTask extends DefaultTask {
     }
 
     private static final String SETUP_GRADLE_PINNED_REF =
-            "gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0";
+            "gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0";
 
     private static final List<ForbiddenLiteral> FORBIDDEN_LITERALS = List.of(
             new ForbiddenLiteral("Sonatype" + "Host", "Central Portal publishing must not regress to OSSRH host APIs."),

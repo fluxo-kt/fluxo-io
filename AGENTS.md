@@ -121,7 +121,7 @@ Workflow / release / verification-metadata traps live in
   `protected open fun releaseApi()` — the template always closes the
   `resources` array even if release throws. Direct `onSharedClose`
   overrides are compile-blocked (see `SharedDataAccessorReleaseApiTest`).
-  `AccessorAwareRad<A>` wraps it with offset/size + bounds checks
+  `AccessorAwareRad<A>` (common, every platform) wraps it with offset/size + bounds checks
   (`fluxo.io.util.IoUtil`). `BasicRad` (expect/actual) carries the JVM
   common impl: `readByteAt`, `transferTo`, `read(ByteBuffer, position)`,
   suspend wrappers, `Java8BufferCompat`-based buffer handling.
@@ -172,7 +172,7 @@ Workflow / release / verification-metadata traps live in
 
 ## Adding a new RAD impl (canonical recipe)
 
-1. JVM: `internal class FooRad(access, offset, size) :
+1. Any platform: `internal class FooRad(access, offset, size) :
    AccessorAwareRad<FooAccess>(access, offset, size)`. Inner
    `FooAccess(api, resources) : SharedDataAccessor(resources)` exposes
    `size: Long` + `read(bytes, position, offset, length)`.

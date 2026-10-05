@@ -7,6 +7,7 @@ import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.calcLength
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPositionAndMaxLength
+import kotlin.jvm.JvmField
 import kotlin.math.min
 
 @ThreadSafe
@@ -47,7 +48,6 @@ internal constructor(
     final override fun releaseShared() = access.close()
 
 
-    @Throws(IOException::class)
     override fun readFrom0(position: Long, maxLength: Int): ByteArray {
         val srcLen = size
         checkPositionAndMaxLength(size = srcLen, position = position, maxLength = maxLength)
@@ -74,7 +74,6 @@ internal constructor(
         }
     }
 
-    @Throws(IOException::class)
     override fun read0(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
         val len = calcLength(size, buffer, position, offset, maxLength)
         if (len <= 0) {

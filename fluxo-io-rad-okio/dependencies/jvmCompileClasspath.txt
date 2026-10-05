@@ -1,0 +1,5 @@
+:fluxo-io-rad
+com.squareup.okio:okio-jvm:3.18.2
+com.squareup.okio:okio:3.18.2
+org.jetbrains.kotlin:kotlin-stdlib:2.2.21
+org.jetbrains:annotations:13.0

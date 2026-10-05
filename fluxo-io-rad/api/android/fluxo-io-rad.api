@@ -158,10 +158,18 @@ public final class fluxo/io/rad/Rad {
 	public static synthetic fun forStreamFactory$default (Ljava/io/File;JJIILjava/lang/Object;)Lfluxo/io/rad/RandomAccessData;
 }
 
+public final class fluxo/io/rad/RadAndroid {
+	public static final fun open (Lfluxo/io/rad/RandomAccessData$Companion;Landroid/content/res/AssetFileDescriptor;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun open (Lfluxo/io/rad/RandomAccessData$Companion;Landroid/os/ParcelFileDescriptor;)Lfluxo/io/rad/RandomAccessData;
+}
+
 public abstract interface class fluxo/io/rad/RandomAccessData : java/io/Closeable, java/lang/AutoCloseable {
 	public static final field Companion Lfluxo/io/rad/RandomAccessData$Companion;
 	public abstract fun asInputStream ()Ljava/io/InputStream;
 	public abstract fun getSize ()J
+	public static fun open (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public static fun open (Ljava/lang/String;)Lfluxo/io/rad/RandomAccessData;
+	public static fun open (Ljava/nio/file/Path;)Lfluxo/io/rad/RandomAccessData;
 	public abstract fun read (Ljava/nio/ByteBuffer;J)I
 	public abstract fun read ([BJII)I
 	public static synthetic fun read$default (Lfluxo/io/rad/RandomAccessData;[BJIIILjava/lang/Object;)I
@@ -188,6 +196,9 @@ public abstract interface class fluxo/io/rad/RandomAccessData : java/io/Closeabl
 }
 
 public final class fluxo/io/rad/RandomAccessData$Companion {
+	public final fun open (Ljava/io/File;)Lfluxo/io/rad/RandomAccessData;
+	public final fun open (Ljava/lang/String;)Lfluxo/io/rad/RandomAccessData;
+	public final fun open (Ljava/nio/file/Path;)Lfluxo/io/rad/RandomAccessData;
 }
 
 public final class fluxo/io/util/IoUtil {

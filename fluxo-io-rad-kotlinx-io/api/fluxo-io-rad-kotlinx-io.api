@@ -1,0 +1,5 @@
+public final class fluxo/io/rad/kotlinx/io/RadKotlinxIo {
+	public static final fun asRawSource (Lfluxo/io/rad/RandomAccessData;J)Lkotlinx/io/RawSource;
+	public static synthetic fun asRawSource$default (Lfluxo/io/rad/RandomAccessData;JILjava/lang/Object;)Lkotlinx/io/RawSource;
+}
+

@@ -1,0 +1,11 @@
+:fluxo-io-rad
+org.jetbrains.kotlin:kotlin-dom-api-compat:2.3.0
+org.jetbrains.kotlin:kotlin-stdlib-js:2.4.20
+org.jetbrains.kotlin:kotlin-stdlib:2.4.20
+org.jetbrains.kotlin:kotlinx-atomicfu-runtime:2.4.20
+org.jetbrains.kotlinx:atomicfu-js:0.33.0
+org.jetbrains.kotlinx:atomicfu:0.33.0
+org.jetbrains.kotlinx:kotlinx-io-bytestring-js:0.9.1
+org.jetbrains.kotlinx:kotlinx-io-bytestring:0.9.1
+org.jetbrains.kotlinx:kotlinx-io-core-js:0.9.1
+org.jetbrains.kotlinx:kotlinx-io-core:0.9.1

@@ -23,7 +23,10 @@ VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinJs"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinWasmJs"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:transformCommonMainDependenciesMetadata"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:transformNativeMainCInteropDependenciesMetadata"
-VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:jvmTest :fluxo-io-rad:apiCheck"
+VERIFY_TASKS="${VERIFY_TASKS} jvmTest"
+# Resolves every resolvable configuration of every module (test classpaths of all targets
+# included), so a module or target added later is covered without listing its tasks here.
+VERIFY_TASKS="${VERIFY_TASKS} resolveDependencies"
 VERIFY_TASKS="${VERIFY_TASKS} ${VERIFICATION_BASELINE_TASKS} koverLog publishToMavenLocal"
 export GRADLE_OPTS="${GRADLE_OPTS} -Dorg.gradle.logging.stacktrace=all"
 export GRADLE_OPTS="${GRADLE_OPTS} -Dorg.gradle.caching=false -Dkotlin.incremental=false"

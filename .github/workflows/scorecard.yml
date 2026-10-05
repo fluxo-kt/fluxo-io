@@ -8,15 +8,19 @@ on:
   schedule:
     - cron: '37 4 * * 1'
 
-permissions:
-  contents: read
-  security-events: write
-  id-token: write
+# The Scorecard webapp rejects results (HTTP 400 "workflow verification failed") when any
+# write permission is granted at workflow level, so the top level stays read-only and the
+# job asks for the two writes it needs: SARIF upload and the OIDC token for publishing.
+permissions: read-all
 
 jobs:
   scorecard:
     if: github.repository == 'fluxo-kt/fluxo-io'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4

@@ -48,7 +48,8 @@ Workflow / release / verification-metadata traps live in
   - `nonJvmMain` — JS / Native / Wasm-JS / Wasm-WASI. File impls per family:
     `nixMain` (pread), `mingwMain` (ReadFile), `webMain` (Node fs; JS and
     Wasm-JS differ only in the byte copy), `wasmWasiMain` (fd_pread). Each
-    exposes `openPlatformFile(path)`.
+    exposes `openPlatformFile(path)`. Node externals take `Uint8Array` only:
+    Deno's `fs` silently ignores an `Int8Array` (Kotlin/JS `ByteArray`).
   - Wasm-WASI is declared explicitly (`wasmWasi { … }`): fkc adds it only
     together with its own wasmJs. Its test task patches KGP's driver to
     preopen `/tmp` (KT-65179); a WASI module reaches no file otherwise.
@@ -56,6 +57,12 @@ Workflow / release / verification-metadata traps live in
   No Android target: no Android test consumes it, and fkc 0.15.1's Android
   Detekt task fails on a KMP-Android project dependency. The `-test` name
   makes fkc skip Dependency Guard (it bans kotlin-test on main classpaths).
+- `:fluxo-io-rad-okio`, `:fluxo-io-rad-kotlinx-io` — published adapters, so the
+  core stays dependency-free. They build sources with `fluxo.io.internal.radOf`
+  (public, but `@InternalFluxoIoApi` at ERROR level and absent from API dumps:
+  the adapters ship in lockstep with the core, consumers must not call it).
+  Inside any `SharedCloseable` subclass, a name `close` resolves to the member
+  function, never to a function-typed property: name such properties otherwise.
 - Root `build.gradle.kts` — umbrella via `fkcSetupRaw {…}`, Kover
   aggregation. `commonJvmMain` compiles against the Android SDK jar taken
   from AGP's `sdkComponents.bootClasspath` (`fluxo-io-rad/build.gradle.kts`);
@@ -234,11 +241,15 @@ Workflow / release / verification-metadata traps live in
 - Build floors are deliberate: `javaLangTarget=17`, `androidMinSdk=21`,
   `kotlinLangVersion=2.2` (maintainer ruling: the library follows the newest
   compiler that still accepts this language version). Native/JS/Wasm consumers
-  need a compiler >= the language version; JVM consumers one version older.
+  need at least the library compiler's minor version (a klib built by 2.4.20
+  fails on 2.3.21, works on 2.4.0; `scripts/consumer-check.sh` proves it). JVM
+  consumers need only one minor below the language version (2.1.21 compiles and
+  runs against language 2.2).
   Detekt supports at most Kotlin language 2.1, so fluxo-kmp-conf clamps
   Detekt's `--language-version` and logs it; that log is expected.
-- `kotlinx-io`, Okio, and JMH are catalogue-reserved; don't wire them
-  without an actual feature need.
+- Okio and kotlinx-io are used only by their adapter modules
+  (`:fluxo-io-rad-okio`, `:fluxo-io-rad-kotlinx-io`); the core never depends
+  on them. JMH is catalogue-reserved; don't wire it without a feature need.
 - JSR305 stays at `3.0.2`; upstream has no newer release.
 - `kotlin.concurrent.atomics` is still experimental; keep AtomicFU.
 - Keep the explicit `apiValidation { klib { enabled = true } }` in

@@ -18,7 +18,11 @@ single job per OS took 8–17 min. A Kotlin/Native target compiles and runs
 tests only on its own host OS, so Apple families get two macOS jobs.
 
 - `jvm` (COMMON_JVM): `build koverLog` — JVM/Android tests, kover, Android
-  lint, CodeQL, verifyBuildPolicy, dependencyGuard.
+  lint, CodeQL, verifyBuildPolicy, dependencyGuard. Runs with
+  `--no-build-cache`: CodeQL extracts Kotlin only from compiles it sees, so a
+  commit that leaves Kotlin sources unchanged (compile FROM-CACHE) fails it.
+  AGP 9's Android-KMP plugin creates no Lint analysis task here, so the Lint
+  SARIF upload runs only if `build/lint-merged.sarif` exists.
 - `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
   checks klib ABI and lints every source set.
 - `web`, `linux`, `mingw`, `macos-ios`, `tvos-watchos`: `allTests assemble

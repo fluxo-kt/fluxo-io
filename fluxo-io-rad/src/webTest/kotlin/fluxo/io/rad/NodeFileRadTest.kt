@@ -14,7 +14,7 @@ internal class NodeFileRadTest {
     fun contract() {
         val paths = ArrayList<String>()
         try {
-            RadContract.verify { bytes -> openPlatformFile(tempFile(bytes).also(paths::add)) }
+            RadContract.verify { bytes -> RandomAccessData.open(tempFile(bytes).also(paths::add)) }
         } finally {
             paths.forEach(::deleteFile)
         }
@@ -22,15 +22,15 @@ internal class NodeFileRadTest {
 
     @Test
     fun missingFileAndDirectoryFailAtOpen() {
-        assertFailsWith<IOException> { openPlatformFile(tmpDir() + "/missing-" + Random.nextLong()) }
-        assertFailsWith<IOException> { openPlatformFile(tmpDir()) }
+        assertFailsWith<IOException> { RandomAccessData.open(tmpDir() + "/missing-" + Random.nextLong()) }
+        assertFailsWith<IOException> { RandomAccessData.open(tmpDir()) }
     }
 
     @Test
     fun readsAfterOtherHandleCloses() {
         val path = tempFile(RadContract.BYTES)
         try {
-            val rad = openPlatformFile(path)
+            val rad = RandomAccessData.open(path)
             val shared = rad.share()
             rad.close()
             assertContentEquals(RadContract.BYTES, shared.readAllBytes())

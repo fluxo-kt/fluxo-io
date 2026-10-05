@@ -240,6 +240,12 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     public actual companion object {
         private const val DEFAULT_BUFFER_SIZE = 128 * 1024
 
+        /** Same as `open(File(path))`. */
+        @Blocking
+        @JvmStatic
+        @Throws(IOException::class)
+        public actual fun open(path: String): RandomAccessData = open(File(path))
+
         /**
          * Opens [file] for random-access reads. Returns a handle: close it once when finished.
          *

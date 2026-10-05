@@ -19,7 +19,7 @@ import kotlin.wasm.unsafe.withScopedMemoryAllocator
  * against the first preopen (the convention kotlinx-io follows too). Reads are `fd_pread`,
  * one positional call per read.
  */
-internal fun openPlatformFile(path: String): RandomAccessData {
+internal actual fun openPlatformFile(path: String): RandomAccessData {
     val (dirFd, relative) = resolvePreopen(path)
     val fd = withScopedMemoryAllocator { alloc ->
         val bytes = relative.encodeToByteArray()

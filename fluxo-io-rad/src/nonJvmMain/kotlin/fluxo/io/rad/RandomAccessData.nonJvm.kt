@@ -79,5 +79,12 @@ public actual interface RandomAccessData : AutoCloseable {
     ): Int
 
     /** Home of the `RandomAccessData.open(…)` factories (see the common declaration). */
-    public actual companion object
+    public actual companion object {
+        @Blocking
+        @Throws(IOException::class)
+        public actual fun open(path: String): RandomAccessData = openPlatformFile(path)
+    }
 }
+
+/** The file opener of each non-JVM platform family (POSIX, Windows, Node, WASI). */
+internal expect fun openPlatformFile(path: String): RandomAccessData

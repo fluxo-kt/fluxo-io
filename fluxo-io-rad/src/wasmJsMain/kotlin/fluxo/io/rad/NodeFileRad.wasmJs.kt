@@ -63,3 +63,6 @@ private fun nodeRead(
 ): Unit = js(
     "fs.read(fd, buffer, 0, length, position, function (e, n) { done(e ? String(e.message) : null, e ? 0 : n); })",
 )
+
+/** webMain does not see the nonJvmMain expect, so each web target forwards to it. */
+internal actual fun openPlatformFile(path: String): RandomAccessData = openNodeRad(path)

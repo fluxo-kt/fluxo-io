@@ -12,7 +12,7 @@ import kotlin.js.JsAny
  * `readSync` with a position is a positional read (`pread`), one call per read.
  * A runtime without it (a browser) has no file system: files there come as `Blob`s.
  */
-internal fun openPlatformFile(path: String): RandomAccessData =
+internal fun openNodeRad(path: String): RandomAccessData =
     openNodeFile(path) { fs, fd, size -> AccessorRad(NodeFdAccess(fs, fd, path, size)) }
 
 /**

@@ -20,21 +20,21 @@ import kotlin.wasm.unsafe.withScopedMemoryAllocator
 internal class WasiFileRadTest {
 
     @Test
-    fun contract() = RadContract.verify { bytes -> openPlatformFile(tempFile(bytes)) }
+    fun contract() = RadContract.verify { bytes -> RandomAccessData.open(tempFile(bytes)) }
 
     @Test
     fun relativePathResolvesAgainstTheFirstPreopen() {
         val path = tempFile(RadContract.BYTES)
-        openPlatformFile(path.removePrefix("/tmp/")).use {
+        RandomAccessData.open(path.removePrefix("/tmp/")).use {
             assertContentEquals(RadContract.BYTES, it.readAllBytes())
         }
     }
 
     @Test
     fun outsidePreopensMissingAndDirectoryFailAtOpen() {
-        assertFailsWith<IOException> { openPlatformFile("/etc/hosts") }
-        assertFailsWith<IOException> { openPlatformFile("/tmp/missing-" + Random.nextLong()) }
-        assertFailsWith<IOException> { openPlatformFile("/tmp") }
+        assertFailsWith<IOException> { RandomAccessData.open("/etc/hosts") }
+        assertFailsWith<IOException> { RandomAccessData.open("/tmp/missing-" + Random.nextLong()) }
+        assertFailsWith<IOException> { RandomAccessData.open("/tmp") }
     }
 
     /** Creates `/tmp/<random>` holding [bytes] via path_open(CREAT|TRUNC) + fd_write. */

@@ -38,7 +38,7 @@ import platform.windows.ReadFile
  * Sharing READ | WRITE | DELETE matches POSIX: holding the file open does not stop others
  * from writing, renaming or deleting it.
  */
-internal fun openPlatformFile(path: String): RandomAccessData {
+internal actual fun openPlatformFile(path: String): RandomAccessData {
     val handle = CreateFileW(
         longPath(path),
         GENERIC_READ,

@@ -35,7 +35,7 @@ import platform.posix.strerror
  * takes its own offset, so concurrent reads on one descriptor need no lock and no seek.
  * `O_CLOEXEC` keeps the descriptor out of child processes.
  */
-internal fun openPlatformFile(path: String): RandomAccessData {
+internal actual fun openPlatformFile(path: String): RandomAccessData {
     val fd = open(path, O_RDONLY or O_CLOEXEC)
     if (fd < 0) {
         throw IOException("Cannot open $path: ${lastError()}")

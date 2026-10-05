@@ -245,5 +245,21 @@ public expect interface RandomAccessData : AutoCloseable {
      * spell the obvious entry point the same way. Platform-only overloads are added as
      * members of a platform's `actual` companion or as extensions on it.
      */
-    public companion object
+    public companion object {
+        /**
+         * Opens the file at [path] for random-access reads, on every target. Returns a handle:
+         * close it once when finished; reads are thread-safe.
+         *
+         * Each platform uses its positional read: JVM/Android `FileChannel`, POSIX `pread`,
+         * Windows `ReadFile` at an offset, Node/Bun/Deno `fs.readSync`, WASI `fd_pread` (the path
+         * must lie under a directory the host preopened). In a browser there is no file
+         * system: read a `Blob` with `AsyncRandomAccessData.open(blob)`.
+         *
+         * @throws IOException if the file cannot be opened, is a directory, or this runtime
+         *  has no file system
+         */
+        @Blocking
+        @Throws(IOException::class)
+        public fun open(path: String): RandomAccessData
+    }
 }

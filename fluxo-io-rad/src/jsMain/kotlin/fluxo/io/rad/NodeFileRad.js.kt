@@ -34,3 +34,6 @@ internal actual fun readAsync(
     }
     fs.asDynamic().read(fd, view, 0, length, position, onRead)
 }
+
+/** webMain does not see the nonJvmMain expect, so each web target forwards to it. */
+internal actual fun openPlatformFile(path: String): RandomAccessData = openNodeRad(path)

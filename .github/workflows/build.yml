@@ -38,7 +38,7 @@ jobs:
       matrix:
         include:
           - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog' }
-          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif' }
+          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif', konan: true }
           - { shard: web, os: ubuntu-24.04, targets: 'JVM,COMMON_JS', tasks: 'allTests assemble -x jvmTest' }
           - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest', konan: true }
           - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest', konan: true }

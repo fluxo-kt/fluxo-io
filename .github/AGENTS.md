@@ -32,7 +32,10 @@ tests only on its own host OS, so Apple families get two macOS jobs.
   filtered klib dump always differs).
 - Build-script lookups of a source set or task must tolerate a filter that
   removes it (`matching { … }.configureEach`, never `named`).
-- `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
+- Every job that compiles Kotlin/Native code sets `konan: true`, including
+  `api` (it compiles every klib for the ABI check); the cache key is per OS,
+  and toolchain parts a job finds missing are downloaded on demand.
+  `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
   `if: always()`: an actions/cache step saves only on success, so cold native
   jobs that time out would never warm it. Step and job timeouts only bound
   hangs; the budget is judged from measured job times.

@@ -3,11 +3,8 @@
 package fluxo.io.rad
 
 import fluxo.io.IOException
-import fluxo.io.internal.Blocking
 import fluxo.io.internal.InternalFluxoIoApi
-import fluxo.io.internal.ThreadSafe
 
-@ThreadSafe
 @SubclassOptInRequired(InternalFluxoIoApi::class)
 public actual interface RandomAccessData : AutoCloseable {
 
@@ -26,16 +23,13 @@ public actual interface RandomAccessData : AutoCloseable {
     public actual fun subsection(position: Long, length: Long): RandomAccessData
 
 
-    @Blocking
     @Throws(IOException::class)
     public actual fun readAllBytes(): ByteArray
 
-    @Blocking
     @Throws(IOException::class)
     public actual fun readFrom(position: Long, maxLength: Int): ByteArray
 
 
-    @Blocking
     @Throws(IOException::class)
     public actual fun read(
         buffer: ByteArray,
@@ -44,7 +38,6 @@ public actual interface RandomAccessData : AutoCloseable {
         maxLength: Int,
     ): Int
 
-    @Blocking
     @Throws(IOException::class)
     public actual fun readFully(
         buffer: ByteArray,
@@ -80,7 +73,6 @@ public actual interface RandomAccessData : AutoCloseable {
 
     /** Home of the `RandomAccessData.open(…)` factories (see the common declaration). */
     public actual companion object {
-        @Blocking
         @Throws(IOException::class)
         public actual fun open(path: String): RandomAccessData = openPlatformFile(path)
     }

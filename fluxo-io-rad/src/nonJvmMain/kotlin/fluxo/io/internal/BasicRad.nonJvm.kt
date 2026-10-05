@@ -9,12 +9,10 @@ import fluxo.io.util.readFullyImpl
 /**
  * Common logic for [RandomAccessData] implementations
  */
-@ThreadSafe
 @InternalFluxoIoApi
 internal actual abstract class BasicRad
 internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
-    @Blocking
     actual final override fun readAllBytes(): ByteArray {
         ensureOpen()
         return readAllBytes0()
@@ -22,7 +20,6 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
     protected actual open fun readAllBytes0(): ByteArray = readAllBytesImpl()
 
-    @Blocking
     actual final override fun readFrom(position: Long, maxLength: Int): ByteArray {
         ensureOpen()
         return readFrom0(position, maxLength)
@@ -30,7 +27,6 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
     protected actual abstract fun readFrom0(position: Long, maxLength: Int): ByteArray
 
-    @Blocking
     actual final override fun read(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int {
@@ -42,7 +38,6 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
     ): Int
 
-    @Blocking
     actual final override fun readFully(
         buffer: ByteArray,
         position: Long,
@@ -55,7 +50,6 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
     }
 
 
-    @Blocking
     @Deprecated(
         "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
             "e.g. rad.asAsync(Dispatchers.IO).read(…).",

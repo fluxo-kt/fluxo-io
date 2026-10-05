@@ -2,8 +2,6 @@ package fluxo.io.rad
 
 import fluxo.io.internal.BasicRad
 import fluxo.io.internal.RadHandle
-import fluxo.io.internal.Blocking
-import fluxo.io.internal.ThreadSafe
 import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPosOffsetAndMaxLength
@@ -21,7 +19,6 @@ internal actual fun byteArrayRad(array: ByteArray, offset: Int, length: Int): Ra
  * @param offset the offset of the section
  * @param length the length of the section
  */
-@ThreadSafe
 internal class ByteArrayRad
 private constructor(
     private val array: ByteArray,
@@ -49,11 +46,9 @@ private constructor(
     override fun releaseShared() {}
 
 
-    @Blocking
     override fun readAllBytes0(): ByteArray =
         array.copyOfRange(offset, offset + length)
 
-    @Blocking
     override fun readFrom0(position: Long, maxLength: Int): ByteArray {
         checkPositionAndMaxLength(size = size, position = position, maxLength = maxLength)
         val positionInt = position.toInt()
@@ -65,7 +60,6 @@ private constructor(
         return array.copyOfRange(pos, pos + len)
     }
 
-    @Blocking
     override fun read0(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {
         checkPosOffsetAndMaxLength(size, buffer, position, offset, maxLength)
         val srcLen = length

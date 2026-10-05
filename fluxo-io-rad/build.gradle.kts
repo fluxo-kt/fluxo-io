@@ -165,12 +165,13 @@ kotlin {
         }
     }
 
-    sourceSets.named("androidMain") {
-        dependsOn(sourceSets.named("commonJvmMain").get())
+    // `matching`, not `named`: a KMP_TARGETS filter can leave either source set out.
+    sourceSets.matching { it.name == "androidMain" }.configureEach {
+        dependsOn(sourceSets.getByName("commonJvmMain"))
     }
     // Node's async fs and Blob reads complete on the event loop, so their tests must suspend;
     // runTest returns the Promise the JS test runners wait for.
-    sourceSets.named("webTest") {
+    sourceSets.matching { it.name == "webTest" }.configureEach {
         dependencies { implementation(libs.coroutines.test) }
     }
 }

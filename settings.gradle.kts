@@ -52,5 +52,7 @@ rootProject.name = "fluxo-io"
 // On module update, don't forget to update '.github/workflows/build.yml'!
 
 include(":fluxo-io-rad")
+include(":fluxo-io-rad-okio")
+include(":fluxo-io-rad-kotlinx-io")
 // Unpublished test support; see conformance-test/build.gradle.kts.
 include(":conformance-test")

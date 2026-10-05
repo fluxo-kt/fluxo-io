@@ -133,7 +133,8 @@ mavenPublishing {
 // Kotlin's WASI test driver preopens no directory (KT-65179), so a WASI test can reach no file.
 // Map the guest's /tmp to this task's temp dir by patching the generated driver just before the
 // run. Only a Provider and a File are captured, which keeps the configuration cache valid.
-tasks.named("wasmWasiNodeTest") {
+// `matching`, not `named`: a KMP_TARGETS filter can leave the task out.
+tasks.matching { it.name == "wasmWasiNodeTest" }.configureEach {
     val driver = layout.buildDirectory.file(
         "compileSync/wasmWasi/test/testDevelopmentExecutable/kotlin/fluxo-io-fluxo-io-rad-test.mjs",
     )

@@ -1,7 +1,7 @@
 package fluxo.io.rad
 
 import java.io.File
-import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.RandomAccessFile
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 /**
- * Tests for [RadFileChannelAccessor].
+ * Tests for [RadFileChannelAccessor] and the default `RandomAccessData.open` it backs.
  */
 @RunWith(Parameterized::class)
 internal class RandomAccessDataFileChannelTest(
@@ -26,13 +26,16 @@ internal class RandomAccessDataFileChannelTest(
             { RadFileChannelAccessor(it.inputStream().fd) },
             { RadFileChannelAccessor(RandomAccessFile(it, "r").channel) },
             { RadFileChannelAccessor(RandomAccessFile(it, "r").fd) },
+            { RandomAccessData.open(it) },
+            { RandomAccessData.open(it.toPath()) },
         ).asList()
     }
 
 
+    /** `java.io` reports FileNotFoundException, NIO `NoSuchFileException`; both are IOExceptions. */
     @Test
     fun fileExists() {
-        assertFailsWith<FileNotFoundException> {
+        assertFailsWith<IOException> {
             factory(File("/does/not/exist"))
         }
     }

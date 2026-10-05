@@ -2,15 +2,21 @@
 
 package fluxo.io.rad
 
+import androidx.annotation.RequiresApi
 import fluxo.io.IOException
 import fluxo.io.internal.Blocking
 import fluxo.io.internal.InternalFluxoIoApi
 import fluxo.io.internal.ThreadSafe
 import java.io.Closeable
+import java.io.File
+import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.channels.WritableByteChannel
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 @ThreadSafe
 @SubclassOptInRequired(InternalFluxoIoApi::class)
@@ -233,5 +239,43 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
     /** Home of the `RandomAccessData.open(…)` factories (see the common declaration). */
     public actual companion object {
         private const val DEFAULT_BUFFER_SIZE = 128 * 1024
+
+        /**
+         * Opens [file] for random-access reads. Returns a handle: close it once when finished.
+         *
+         * Reads are positional `FileChannel` reads, safe to run from many threads at once.
+         * Memory mapping is not the default: a mapped file truncated by another process
+         * fails reads with an `InternalError` instead of an [IOException]. Use
+         * `Rad.forByteBuffer(file)` to choose mmap explicitly.
+         *
+         * @throws IOException if the file cannot be opened
+         */
+        @Blocking
+        @JvmStatic
+        @Throws(IOException::class)
+        public fun open(file: File): RandomAccessData = openChannel(FileInputStream(file).channel)
+
+        /**
+         * Opens the file at [path] for random-access reads; same as `open(path.toFile())`
+         * for the default file system, and works for any NIO file system provider (zip, jimfs).
+         * Returns a handle: close it once when finished.
+         *
+         * @throws IOException if the file cannot be opened
+         */
+        @Blocking
+        @JvmStatic
+        @RequiresApi(26)
+        @Throws(IOException::class)
+        public fun open(path: Path): RandomAccessData {
+            return openChannel(FileChannel.open(path, StandardOpenOption.READ))
+        }
+
+        /** Takes over [channel]: closed here if setup fails, else by the last handle. */
+        private fun openChannel(channel: FileChannel): RandomAccessData = try {
+            RadFileChannelAccessor(channel)
+        } catch (e: Throwable) {
+            channel.close()
+            throw e
+        }
     }
 }

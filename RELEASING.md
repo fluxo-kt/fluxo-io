@@ -64,8 +64,12 @@ repositories {
 
 Before publishing a release deployment, verify:
 
-- Root metadata coordinate is `io.github.fluxo-kt:fluxo-io-rad:<version>`.
-- Target artifacts keep the `fluxo-io-rad-*` prefix.
+- `scripts/consumer-check.sh` passes: a consumer on the oldest supported Kotlin
+  resolves, compiles, links and runs the locally published build, and no
+  published metadata names a Beta/RC dependency. CI does not run it.
+- Root metadata coordinates are `io.github.fluxo-kt:fluxo-io-rad:<version>`,
+  `fluxo-io-rad-okio:<version>` and `fluxo-io-rad-kotlinx-io:<version>`.
+- Target artifacts keep their module-name prefix.
 - Each publication has a POM, Gradle module metadata, sources jar, and javadoc
   jar.
 - POM metadata includes name, description, URL, inception year, Apache-2.0

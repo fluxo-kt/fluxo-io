@@ -46,7 +46,11 @@ internal class WasiFileRadTest {
             nameBytes.forEachIndexed { i, b -> (namePtr + i).storeByte(b) }
             val fdOut = alloc.allocate(4)
             val rights = (1L shl 6) // fd_write
-            assertEquals(0, pathOpen(3, 0, namePtr.address.toInt(), nameBytes.size, 1 or 8, rights, 0L, 0, fdOut.address.toInt()))
+            // oflags CREAT (1) | TRUNC (8), under the first preopen (fd 3).
+            val namePtrInt = namePtr.address.toInt()
+            val outPtr = fdOut.address.toInt()
+            val err = pathOpen(3, 0, namePtrInt, nameBytes.size, 1 or 8, rights, 0L, 0, outPtr)
+            assertEquals(0, err)
             val fd = fdOut.loadInt()
             val data = alloc.allocate(bytes.size.coerceAtLeast(1))
             bytes.forEachIndexed { i, b -> (data + i).storeByte(b) }

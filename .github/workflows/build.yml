@@ -40,16 +40,16 @@ jobs:
           - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog' }
           - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif' }
           - { shard: web, os: ubuntu-24.04, targets: 'JVM,COMMON_JS', tasks: 'allTests assemble -x jvmTest' }
-          - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest' }
-          - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest' }
-          - { shard: macos-ios, os: macos-15, targets: 'JVM,MACOS,IOS', tasks: 'allTests assemble -x jvmTest' }
-          - { shard: tvos-watchos, os: macos-15, targets: 'JVM,TVOS,WATCHOS', tasks: 'allTests assemble -x jvmTest' }
+          - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: macos-ios, os: macos-15, targets: 'JVM,MACOS,IOS', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: tvos-watchos, os: macos-15, targets: 'JVM,TVOS,WATCHOS', tasks: 'allTests assemble -x jvmTest', konan: true }
           # JVM tests on the bytecode floor and on the newest LTS; the build itself stays on 21.
           - { shard: jdk17, os: ubuntu-24.04, targets: JVM, tasks: 'jvmTest', jdk: '17' }
           - { shard: jdk25, os: ubuntu-24.04, targets: JVM, tasks: 'jvmTest', jdk: '25' }
 
     name: 'Check ${{ matrix.shard }} (${{ matrix.os }})'
-    timeout-minutes: 12
+    timeout-minutes: 40
     runs-on: ${{ matrix.os }}
     env:
       GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: false
@@ -83,10 +83,13 @@ jobs:
           java-version: '21'
 
       # Kotlin/Native toolchains (~1 GB per host) live in ~/.konan, which setup-gradle does not
-      # cache; downloading them costs minutes per native job.
-      - name: Cache Kotlin/Native toolchains
-        if: matrix.shard != 'jvm' && matrix.shard != 'api'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # cache; downloading them costs minutes per native job. Restore and save are separate
+      # steps so a failed or timed-out job still saves them: a cache saved only on success is
+      # never saved while cold jobs keep timing out.
+      - name: Restore Kotlin/Native toolchains
+        id: konan
+        if: matrix.konan
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.konan
           key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
@@ -127,9 +130,10 @@ jobs:
           # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
           # queries: security-extended, security-and-quality.
 
+      # Bounds a hang only; the 5-minute budget is judged from measured job times.
       - name: 'Build and check'
         id: check
-        timeout-minutes: 10
+        timeout-minutes: 30
         shell: bash
         env:
           TASKS: ${{ matrix.tasks }}
@@ -142,6 +146,13 @@ jobs:
             args+=("-Pfluxo.testJdk=$TEST_JDK" "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_${TEST_JDK}_X64")
           fi
           ./gradlew "${args[@]}" --continue --stacktrace --scan
+
+      - name: Save Kotlin/Native toolchains
+        if: always() && matrix.konan && steps.konan.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.konan
+          key: ${{ steps.konan.outputs.cache-primary-key }}
 
       - name: Upload sarif report (Detekt)
         if: always() && matrix.shard == 'api'

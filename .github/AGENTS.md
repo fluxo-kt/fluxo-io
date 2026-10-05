@@ -32,6 +32,10 @@ tests only on its own host OS, so Apple families get two macOS jobs.
   filtered klib dump always differs).
 - Build-script lookups of a source set or task must tolerate a filter that
   removes it (`matching { … }.configureEach`, never `named`).
+- `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
+  `if: always()`: an actions/cache step saves only on success, so cold native
+  jobs that time out would never warm it. Step and job timeouts only bound
+  hangs; the budget is judged from measured job times.
 - Modules need no workflow edit: every job runs root tasks.
 
 ## `/ff` recursion-guard (load-bearing)

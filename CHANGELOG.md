@@ -17,6 +17,20 @@ Central; its changes ship here.
 - `AsyncRandomAccessData` and `RandomAccessData.asAsync(blockingContext)`: reads
   that suspend without blocking the caller, e.g. `rad.asAsync(Dispatchers.IO)`.
   Needs only the Kotlin stdlib; closing the adapter closes the wrapped handle.
+- `RandomAccessData.open(path)` on every target, reading real files with
+  positional reads: `FileChannel` on JVM/Android (also `open(File)` and
+  `open(Path)`, callable from Java), `pread` on Apple/Linux/Android Native,
+  `ReadFile` on Windows, Node's `fs` on JS and Wasm-JS (Node, Bun, Deno), and
+  `fd_pread` on Wasm-WASI. A browser has no file system: `open(path)` throws.
+- Android: `RandomAccessData.open(ParcelFileDescriptor)` and
+  `open(AssetFileDescriptor)`; a pipe or socket is read into memory once.
+- `AsyncRandomAccessData.open(path)` on JS and Wasm-JS (Node's async `fs`, the
+  event loop never blocks) and `AsyncRandomAccessData.open(Blob)` on JS (browser
+  `Blob`/`File`).
+- Wasm-WASI target.
+- New modules: `fluxo-io-rad-okio` (`RandomAccessData.open(FileHandle)`,
+  `RandomAccessData.source()`) and `fluxo-io-rad-kotlinx-io`
+  (`RandomAccessData.asRawSource()`). The core gains no dependency.
 
 ### Changed
 
@@ -32,7 +46,9 @@ Central; its changes ship here.
 - **Artifact coordinate renamed** to `io.github.fluxo-kt:fluxo-io-rad` (was
   `fluxo-io` / `fluxo-io-jvm` / platform klibs in 0.1.0). Migrate the
   dependency coord; the old artifacts are no longer published.
-- Toolchain: Kotlin 2.2 (language 2.1), AGP 9, JVM target 17, Android minSdk 21.
+- Toolchain: built with Kotlin 2.4.20 at language 2.2, AGP 9, JVM target 17,
+  Android minSdk 21. Consumers need Kotlin 2.1+ on the JVM and Kotlin 2.4+ on
+  Native/JS/Wasm (a klib is readable only by its compiler's minor or newer).
 - Publishing via Maven Central Portal (vanniktech); Sonatype S01/OSSRH retired.
 
 ### Fixed

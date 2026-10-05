@@ -28,17 +28,30 @@ jobs:
   buildAndCheck:
     strategy:
       fail-fast: false
+      # One job per target family, so each fits the 5-minute budget for a routine lane.
+      # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
+      # host per family keeps the slow Apple toolchains in parallel jobs.
+      # `JVM` stays in every filter: fluxo-bcv-js 1.1.0 fails configuration without it.
+      # Filtered builds skip `mergeDetektSarif` (fluxo-kmp-conf 0.15.1 fails to build its task
+      # graph under KMP_TARGETS) and `klibApiCheck` (a filtered klib dump lacks the other targets,
+      # so it always differs); the unfiltered `api` job checks every ABI and merges SARIF.
       matrix:
-        os: [ 'ubuntu-24.04', 'macos-15', 'windows-2025' ]
-        # CodeQL supports ['c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift']
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support.
-        language: [ 'java-kotlin' ]
+        include:
+          - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog' }
+          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif' }
+          - { shard: web, os: ubuntu-24.04, targets: 'JVM,COMMON_JS', tasks: 'allTests assemble -x jvmTest' }
+          - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest' }
+          - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest' }
+          - { shard: macos-ios, os: macos-15, targets: 'JVM,MACOS,IOS', tasks: 'allTests assemble -x jvmTest' }
+          - { shard: tvos-watchos, os: macos-15, targets: 'JVM,TVOS,WATCHOS', tasks: 'allTests assemble -x jvmTest' }
 
-    name: 'Check ${{ matrix.os }}, JDK 21'
-    timeout-minutes: 30
+    name: 'Check ${{ matrix.shard }} (${{ matrix.os }})'
+    timeout-minutes: 12
     runs-on: ${{ matrix.os }}
     env:
       GRADLE_BUILD_ACTION_CACHE_DEBUG_ENABLED: false
+      KMP_TARGETS: ${{ matrix.targets }}
+      CODEQL_LANGUAGE: java-kotlin
 
     steps:
       - name: Harden Runner
@@ -58,11 +71,20 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # Kotlin/Native toolchains (~1 GB per host) live in ~/.konan, which setup-gradle does not
+      # cache; downloading them costs minutes per native job.
+      - name: Cache Kotlin/Native toolchains
+        if: matrix.shard != 'jvm' && matrix.shard != 'api'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
       - name: Setup Gradle with encrypted cache
         if: env.GRADLE_ENCRYPTION_KEY != ''
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
         with:
-          cache-disabled: ${{ matrix.os == 'windows-2025' }} # super slow on Windows.
+          cache-disabled: ${{ runner.os == 'Windows' }} # super slow on Windows.
           cache-encryption-key: ${{ env.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
           add-job-summary-as-pr-comment: never
@@ -73,7 +95,7 @@ jobs:
         if: env.GRADLE_ENCRYPTION_KEY == ''
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
         with:
-          cache-disabled: ${{ matrix.os == 'windows-2025' }} # super slow on Windows.
+          cache-disabled: ${{ runner.os == 'Windows' }} # super slow on Windows.
           cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
           add-job-summary-as-pr-comment: never
           artifact-retention-days: 1
@@ -83,10 +105,10 @@ jobs:
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results
 
       - name: Initialize CodeQL
-        if: matrix.os == 'ubuntu-24.04'
+        if: matrix.shard == 'jvm'
         uses: github/codeql-action/init@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         with:
-          languages: ${{ matrix.language }}
+          languages: ${{ env.CODEQL_LANGUAGE }}
           # If you wish to specify custom queries, you can do so here or in a config file.
           # By default, queries listed here will override any specified in a config file.
           # Prefix the list with "+" to use these queries, and those in the config file.
@@ -96,11 +118,17 @@ jobs:
 
       - name: 'Build and check'
         id: check
-        timeout-minutes: 18
-        run: ./gradlew build assemble check koverLog --continue --stacktrace --scan
+        timeout-minutes: 10
+        shell: bash
+        env:
+          TASKS: ${{ matrix.tasks }}
+        run: |
+          read -r -a args <<< "$TASKS"
+          if [ -n "$KMP_TARGETS" ]; then args+=(-x mergeDetektSarif -x klibApiCheck); fi
+          ./gradlew "${args[@]}" --continue --stacktrace --scan
 
       - name: Upload sarif report (Detekt)
-        if: always() && matrix.os == 'macos-15'
+        if: always() && matrix.shard == 'api'
           && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH == 'true')
         uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         continue-on-error: true
@@ -109,7 +137,7 @@ jobs:
           category: detekt
 
       - name: Upload sarif report (Lint)
-        if: always() && matrix.os == 'macos-15'
+        if: always() && matrix.shard == 'jvm'
           && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH == 'true')
         uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         continue-on-error: true
@@ -122,30 +150,30 @@ jobs:
         if: (success() && !cancelled())
         uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1
         env:
-          OS: ${{ matrix.os }}
+          OS: ${{ matrix.shard }}
           JAVA_VERSION: 21
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: '**/build/test-results/*/TEST-*.xml'
           env_vars: OS,JAVA_VERSION
-          flags: '${{ matrix.os }}'
-          name: 'codecov-${{ matrix.os }}-21'
+          flags: '${{ matrix.shard }}'
+          name: 'codecov-${{ matrix.shard }}-21'
           fail_ci_if_error: false
           verbose: true
 
       - name: Upload code coverage to Codecov
         continue-on-error: true
-        if: success() || failure()
+        if: matrix.shard == 'jvm' && (success() || failure())
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         env:
-          OS: ${{ matrix.os }}
+          OS: ${{ matrix.shard }}
           JAVA_VERSION: 21
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./build/reports/kover-merged-report.xml
           env_vars: OS,JAVA_VERSION
-          flags: '${{ matrix.os }}'
-          name: 'codecov-${{ matrix.os }}-21'
+          flags: '${{ matrix.shard }}'
+          name: 'codecov-${{ matrix.shard }}-21'
           fail_ci_if_error: false
           verbose: true
 
@@ -153,7 +181,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: '${{ matrix.os }}-JDK21-build-report'
+          name: '${{ matrix.shard }}-build-report'
           path: |
             **/build/logs/
             **/build/reports/
@@ -163,13 +191,13 @@ jobs:
           compression-level: 9
 
       - name: Perform CodeQL Analysis
-        if: matrix.os == 'ubuntu-24.04'
+        if: matrix.shard == 'jvm'
         timeout-minutes: 6
         uses: github/codeql-action/analyze@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
         env:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
         with:
-          category: "/language:${{matrix.language}}"
+          category: "/language:${{ env.CODEQL_LANGUAGE }}"
 
   publishSnapshot:
     needs: buildAndCheck

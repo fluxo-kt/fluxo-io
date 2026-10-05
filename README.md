@@ -40,31 +40,60 @@ available.
 
 
 Library provides cross-platform [`RandomAccessData`][RandomAccessData]
-abstraction for effective read-only random access to binary data.
-Both suspend and blocking APIs are provided.
-Different platform-specific implementations are provided.
+abstraction for effective read-only random access to binary data: positional
+reads, no-copy `slice`s, and shared handles that free the resource when the
+last one closes.
+
+```kotlin
+RandomAccessData.open("data.bin").use { rad ->
+  val header = ByteArray(16)
+  rad.readFully(header, position = 0)
+  val body = rad.slice(16) // a view to the end: no copy, nothing to close
+}
+```
+
+Reads block the calling thread. To suspend instead, wrap any instance:
+`rad.asAsync(Dispatchers.IO)`. Sources that are async by nature
+(`AsyncRandomAccessData.open(path)` on Node, `open(blob)` in a browser) never
+block at all.
+
+| Platform           | `RandomAccessData.open(path)` reads with  | Also                                                  |
+|:-------------------|:------------------------------------------|:------------------------------------------------------|
+| JVM                | `FileChannel` positional reads            | `open(File)`, `open(Path)` (also from Java)           |
+| Android            | `FileChannel` positional reads            | `open(ParcelFileDescriptor)`, `open(AssetFileDescriptor)` |
+| Apple, Linux, Android Native | `pread`                         |                                                       |
+| Windows (mingw)    | `ReadFile` at an offset                   |                                                       |
+| JS, Wasm-JS        | Node `fs` (Node, Bun, Deno)               | `AsyncRandomAccessData.open(path)`; JS: `open(blob)`  |
+| Wasm-WASI          | `fd_pread` under a preopened directory    |                                                       |
+| All                | —                                         | `RadByteArrayAccessor(bytes)`                         |
+
+A browser has no file system, so `open(path)` throws there.
+
+Which one when (JVM/Android):
+
+|                                        API | Use when                                                         |
+|-------------------------------------------:|:-----------------------------------------------------------------|
+|                 `RandomAccessData.open(…)` | Default for files: safe if the file shrinks, any size            |
+| [ByteBufferMmap]<br>_(memory-mapped file)_ | Hot random reads of a file < 2 GiB that nobody truncates         |
+|                               [ByteBuffer] | Data already in a `ByteBuffer`                                   |
+|                                [ByteArray] | Data already in memory                                           |
+|                              [FileChannel] | An open channel or descriptor you hand over                      |
+|                         [RandomAccessFile] | An open `RandomAccessFile` you hand over                         |
+|                      [SeekableByteChannel] | Any other seekable channel (e.g. zip file systems)               |
+|                [() -> InputStream] Factory | Only streams exist; each read may reopen and skip                |
+|                  [() -> DataInput] Factory | Same, for `DataInput`                                            |
+|        [() -> ReadableByteChannel] Factory | Same, for channels                                               |
 
 > [!TIP]
-> For JVM and Android, compatibility with `ByteBuffer` reads and writes is provided.<br>
-> An `InputStream` view is also provided for compatibility with existing APIs.
+> On JVM and Android, `ByteBuffer` reads, `transferTo(channel)` and an
+> `InputStream` view are provided for existing APIs.
 
+Adapter modules (same version; the core has no dependencies):
 
-|                                        API | Platform     | Supported for |
-|-------------------------------------------:|:-------------|:--------------|
-|                                [ByteArray] | All          | All           |
-|                               [ByteBuffer] | JVM, Android | JVM, Android  |
-| [ByteBufferMmap]<br>_(memory-mapped file)_ | JVM, Android | JVM, Android  |
-|                              [FileChannel] | JVM, Android | JVM, Android  |
-|                         [RandomAccessFile] | JVM, Android | JVM, Android  |
-|                      [SeekableByteChannel] | JVM, Android | JVM, Android  |
-|                [() -> InputStream] Factory | JVM, Android | JVM, Android  |
-|                  [() -> DataInput] Factory | JVM, Android | JVM, Android  |
-|        [() -> ReadableByteChannel] Factory | JVM, Android | JVM, Android  |
-|                  [AsynchronousFileChannel] | JVM, Android | JVM, Android  |
-
-
-> [!IMPORTANT]
-> For using [AsynchronousFileChannel], you need to add Kotlin Coroutines dependency to your project.
+- `io.github.fluxo-kt:fluxo-io-rad-okio`: `RandomAccessData.open(FileHandle)`
+  and `RandomAccessData.source(position)`.
+- `io.github.fluxo-kt:fluxo-io-rad-kotlinx-io`:
+  `RandomAccessData.asRawSource(position)`.
 
 [RandomAccessData]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RandomAccessData.common.kt#L29
 
@@ -77,7 +106,6 @@ Different platform-specific implementations are provided.
 [() -> InputStream]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L62
 [() -> DataInput]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L92
 [() -> ReadableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L122
-[AsynchronousFileChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/AsyncFileChannelRadAccessor.kt#L32
 
 <details>
   <summary>History notes</summary>
@@ -110,7 +138,7 @@ This project is licensed under the Apache License, Version 2.0 — see the
 [license](LICENSE) file for details.
 
 
-[badge-kotlin]: http://img.shields.io/badge/Kotlin-2.2.21-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
+[badge-kotlin]: http://img.shields.io/badge/Kotlin-2.4.20-7F52FF?logo=kotlin&logoWidth=10&logoColor=7F52FF&labelColor=2B2B2B
 [badge-kotlin-link]: https://github.com/JetBrains/kotlin/releases
 
 [badge-kmp]: http://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=7F52FF&labelColor=2B2B2B

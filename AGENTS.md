@@ -15,7 +15,8 @@ Workflow / release / verification-metadata traps live in
   don't add deps or major new functionality. `kotlinx-coroutines` and
   `androidx-annotation` are `compileOnly` — consumers opt in.
 - **Tests use real temp files, not mocks.** Behaviour every impl must
-  share lives in ONE table, `commonTest/.../RadContract.kt`, run on every
+  share lives in ONE table, `RadContract` (main code of the unpublished
+  `:conformance-test` module, so adapter modules can run it too), run on every
   target (`ByteArrayRadContractTest`) and against every JVM impl over a
   temp file (`AbstractRandomAccessDataTest.contract`). A new common rule
   goes into that table, never into a per-platform copy; platform-only API
@@ -47,6 +48,10 @@ Workflow / release / verification-metadata traps live in
   - `nonJvmMain` — JS / Native / Wasm-JS, `ByteArray`-only.
     Wasm-WASI is **explicitly disabled**
     (`allDefaultTargets(wasmWasi = false)`).
+- `:conformance-test` — unpublished; `RadContract` for every module's tests.
+  No Android target: no Android test consumes it, and fkc 0.15.1's Android
+  Detekt task fails on a KMP-Android project dependency. The `-test` name
+  makes fkc skip Dependency Guard (it bans kotlin-test on main classpaths).
 - Root `build.gradle.kts` — umbrella via `fkcSetupRaw {…}`, Kover
   aggregation. `commonJvmMain` compiles against the Android SDK jar taken
   from AGP's `sdkComponents.bootClasspath` (`fluxo-io-rad/build.gradle.kts`);

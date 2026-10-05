@@ -14,14 +14,18 @@ import kotlin.test.fail
  * by the JVM, JS and Native test runners, while a plain list runs the same everywhere, and can
  * also be run by a non-test harness. Platform-only API (streams, `ByteBuffer`, `transferTo`,
  * `readByteAt`) is tested in the platform's own test source set.
+ *
+ * Main code of the unpublished `:conformance-test` module, not a test source set: a module's tests
+ * cannot see another module's tests, and every module that ships an implementation (the core
+ * and the adapter modules) must run this same table.
  */
-internal object RadContract {
+public object RadContract {
 
     /**
      * Fixture data, generated, never stored. `(i * 31 + 7)` makes no byte equal to its index and
      * none at index 0 equal to 0, so a shifted read or an untouched zeroed buffer cannot pass.
      */
-    val BYTES: ByteArray = ByteArray(256) { (it * 31 + 7).toByte() }
+    public val BYTES: ByteArray = ByteArray(256) { (it * 31 + 7).toByte() }
 
     private const val LONG_GIVES_INT_MINUS_2: Long = Int.MAX_VALUE.toLong() + Int.MAX_VALUE
     private const val LONG_GIVES_INT_0: Long = LONG_GIVES_INT_MINUS_2 + 2
@@ -34,7 +38,7 @@ internal object RadContract {
      * Runs every case against data opened by [open] and fails once, naming every failed case.
      * Each case opens its own handles, so a case that closes one cannot affect the next.
      */
-    fun verify(open: (ByteArray) -> RandomAccessData) {
+    public fun verify(open: (ByteArray) -> RandomAccessData) {
         val failures = CASES.mapNotNull { (name, case) ->
             runCatching { case(open) }.exceptionOrNull()?.let { name to it }
         }
@@ -244,7 +248,9 @@ internal object RadContract {
             assertEquals(-1, rad.r(EMPTY, pastEnd), "$d at $pastEnd")
             assertEquals(-1, rad.r(ba8, pastEnd), "$d at $pastEnd")
         }
-        for (negative in longArrayOf(-1, Int.MIN_VALUE.toLong(), LONG_NEG_GIVES_INT_2, Long.MIN_VALUE)) {
+        val negatives =
+            longArrayOf(-1, Int.MIN_VALUE.toLong(), LONG_NEG_GIVES_INT_2, Long.MIN_VALUE)
+        for (negative in negatives) {
             assertIOB(d) { rad.r(EMPTY, negative) }
             assertIOB(d) { rad.r(ba8, negative) }
         }

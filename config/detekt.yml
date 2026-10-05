@@ -54,7 +54,9 @@ style:
   LoopWithTooManyJumpStatements:
     maxJumpCount: 2
   MagicNumber:
-    excludes: [ '**/*Test/**' ]
+    # Test data is made of literal positions and sizes; `conformance-test` is test data shipped as
+    # main code so other modules' tests can run it.
+    excludes: [ '**/*Test/**', '**/conformance-test/src/**' ]
     ignoreAnnotation: true
   MaxLineLength:
     maxLineLength: 100

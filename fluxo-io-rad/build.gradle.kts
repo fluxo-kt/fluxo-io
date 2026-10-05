@@ -82,6 +82,7 @@ fkcSetupMultiplatform(
     }
     common.test.dependencies {
         implementation(libs.kotlin.test)
+        implementation(projects.conformanceTest)
     }
 
     val commonJvm = commonJvm

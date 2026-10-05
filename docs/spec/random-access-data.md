@@ -1,7 +1,7 @@
 # Random-access data: behaviour contract
 
 Every implementation of fluxo-io's random-access data, in Kotlin and in any future port (native TS/JS, Rust incl. WASM/WASI), must behave as stated here.
-The executable form is `fluxo-io-rad/src/commonTest/kotlin/fluxo/io/rad/RadContract.kt`; a rule changes in both places together.
+The executable form is `conformance-test/src/commonMain/kotlin/fluxo/io/rad/RadContract.kt`; a rule changes in both places together.
 
 ## Model
 

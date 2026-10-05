@@ -1,3 +1,4 @@
+@file:JvmName("RadKotlinxIo")
 @file:OptIn(UnsafeIoApi::class)
 
 package fluxo.io.rad.kotlinx.io
@@ -7,6 +8,7 @@ import kotlinx.io.Buffer
 import kotlinx.io.RawSource
 import kotlinx.io.UnsafeIoApi
 import kotlinx.io.unsafe.UnsafeBufferOperations
+import kotlin.jvm.JvmName
 import kotlin.math.min
 
 /**
@@ -16,9 +18,13 @@ import kotlin.math.min
  *
  * kotlinx-io has no random-access file API, so there is no reverse adapter.
  */
-public fun RandomAccessData.asRawSource(position: Long = 0L): RawSource = RadRawSource(this, position)
+public fun RandomAccessData.asRawSource(position: Long = 0L): RawSource =
+    RadRawSource(this, position)
 
-private class RadRawSource(private val rad: RandomAccessData, private var position: Long) : RawSource {
+private class RadRawSource(
+    private val rad: RandomAccessData,
+    private var position: Long,
+) : RawSource {
 
     override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
         require(byteCount >= 0L) { "byteCount < 0: $byteCount" }

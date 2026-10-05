@@ -1,3 +1,4 @@
+@file:JvmName("RadOkio")
 @file:OptIn(InternalFluxoIoApi::class)
 
 package fluxo.io.rad.okio
@@ -5,6 +6,7 @@ package fluxo.io.rad.okio
 import fluxo.io.internal.InternalFluxoIoApi
 import fluxo.io.internal.radOf
 import fluxo.io.rad.RandomAccessData
+import kotlin.jvm.JvmName
 import kotlin.math.min
 import okio.Buffer
 import okio.FileHandle

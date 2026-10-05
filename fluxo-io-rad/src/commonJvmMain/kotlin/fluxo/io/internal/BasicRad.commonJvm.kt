@@ -76,7 +76,9 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         offset: Int,
         maxLength: Int,
     ): Int {
-        if (Thread.interrupted()) {
+        ensureOpen()
+        // isInterrupted, not interrupted(): the flag stays set for the caller to see.
+        if (Thread.currentThread().isInterrupted) {
             throw IOException("Thread interrupted")
         }
         return readFullyImpl(buffer, position, offset, maxLength)
@@ -90,7 +92,7 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         return when {
             position >= srcLen -> -1
             position < 0L -> throw IndexOutOfBoundsException("srcPos=$position, srcLen=$srcLen")
-            Thread.interrupted() -> throw IOException("Thread interrupted")
+            Thread.currentThread().isInterrupted -> throw IOException("Thread interrupted")
             else -> readByteAt0(position)
         }
     }
@@ -158,7 +160,8 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
 
         // Use an existing array for HeapByteBuffer
         if (buffer.hasArray()) {
-            val read = read(buffer.array(), position, pos, destLen)
+            // A heap buffer may be a slice of a larger array: index past its arrayOffset.
+            val read = read(buffer.array(), position, buffer.arrayOffset() + pos, destLen)
             if (read > 0) {
                 buffer.positionCompat(pos + read)
             }
@@ -278,6 +281,10 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
                 throw EOFException(
                     "Unexpected end of data at $position, expected $srcLen bytes",
                 )
+            } else {
+                // Same rule as readFully0: a read inside the data that returns nothing would
+                // return nothing again, so retrying spins forever.
+                throw IOException("Read made no progress at $position of $srcLen")
             }
             position += read
             if (position == srcLen) {

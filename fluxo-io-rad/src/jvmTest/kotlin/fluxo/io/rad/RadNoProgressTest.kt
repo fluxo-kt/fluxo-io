@@ -1,6 +1,7 @@
 package fluxo.io.rad
 
 import fluxo.io.IOException
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.channels.WritableByteChannel
@@ -21,15 +22,24 @@ internal class RadNoProgressTest {
     }
 
     @Test(timeout = HANG_BOUND_MS)
-    fun readFullyFailsOnSourceThatReturnsNothing() {
+    fun everyReadLoopFailsOnSourceThatReturnsNothing() {
         val rad = StreamFactoryRadAccessor(DATA.size.toLong()) {
             object : InputStream() {
                 override fun read(): Int = 0
                 override fun read(b: ByteArray, off: Int, len: Int): Int = 0
             }
         }
-        val e = assertFailsWith<IOException> { rad.readFully(ByteArray(4)) }
-        assertContains(e.message.orEmpty(), "no progress")
+        val loops = listOf<() -> Any>(
+            { rad.readFully(ByteArray(4)) },
+            { rad.readFrom(0, 4) },
+            { rad.readByteAt(0) },
+            { rad.readAllBytes() },
+            { rad.transferTo(ByteArrayOutputStream()) },
+        )
+        for (loop in loops) {
+            val e = assertFailsWith<IOException> { loop() }
+            assertContains(e.message.orEmpty(), "no progress")
+        }
         rad.close()
     }
 

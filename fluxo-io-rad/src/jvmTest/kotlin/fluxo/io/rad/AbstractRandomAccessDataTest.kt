@@ -443,6 +443,8 @@ internal abstract class AbstractRandomAccessDataTest(
 
         for (buffer in arrayOf(
             ByteBuffer.wrap(ByteArray(3)),
+            // A heap slice: its view starts at arrayOffset 5 of the backing array.
+            ByteBuffer.wrap(ByteArray(8), 5, 3).slice(),
             ByteBuffer.allocateDirect(3),
         )) {
             try {

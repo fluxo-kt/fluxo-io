@@ -48,7 +48,11 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
         position: Long,
         offset: Int,
         maxLength: Int,
-    ): Int = readFullyImpl(buffer, position, offset, maxLength)
+    ): Int {
+        // readFullyImpl skips the read (and its check) for an empty range: check here.
+        ensureOpen()
+        return readFullyImpl(buffer, position, offset, maxLength)
+    }
 
 
     @Blocking

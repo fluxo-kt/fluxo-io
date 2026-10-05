@@ -1,6 +1,5 @@
 package fluxo.io.internal
 
-import fluxo.io.EOFException
 import fluxo.io.IOException
 import fluxo.io.rad.RandomAccessData
 import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
@@ -8,6 +7,7 @@ import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.calcLength
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.checkPositionAndMaxLength
+import fluxo.io.util.readFully0
 import kotlin.jvm.JvmField
 import kotlin.math.min
 
@@ -56,23 +56,13 @@ internal constructor(
         if (len <= 0L) {
             return EMPTY_BYTE_ARRAY
         }
-        val destLen = len.toInt()
-        var pos = this.offset + position
-        var offset = 0
-        val bytes = ByteArray(destLen)
-        while (true) {
-            val read = access.read(bytes, pos, offset, destLen - offset)
-            if (read < 0) {
-                throw EOFException(
-                    "Unexpected end of data at $pos, expected $srcLen bytes",
-                )
-            }
-            offset += read
-            if (offset == destLen) {
-                return bytes
-            }
-            pos += read
+        val bytes = ByteArray(len.toInt())
+        val base = offset
+        // readFully0's loop: EOF inside the data and a read that returns nothing both fail.
+        readFully0(srcLen, bytes, position, 0, bytes.size) { pos, at, length ->
+            access.read(bytes, base + pos, at, length)
         }
+        return bytes
     }
 
     override fun read0(buffer: ByteArray, position: Long, offset: Int, maxLength: Int): Int {

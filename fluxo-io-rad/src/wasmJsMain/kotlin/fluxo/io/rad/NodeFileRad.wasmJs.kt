@@ -28,3 +28,38 @@ private fun nodeReadSync(fs: NodeFs, fd: Int, buffer: JsAny, length: Int, positi
     js("fs.readSync(fd, buffer, 0, length, position)")
 
 private fun byteAt(buffer: JsAny, i: Int): Byte = js("buffer[i]")
+
+/**
+ * Node fills a JS `Uint8Array`; the copy into the ByteArray happens in the callback, after the
+ * read finished, so the ByteArray is never touched while the read is pending.
+ */
+internal actual fun readAsync(
+    fs: NodeFs,
+    fd: Int,
+    bytes: ByteArray,
+    offset: Int,
+    length: Int,
+    position: Double,
+    callback: ReadCallback,
+) {
+    val buffer = newUint8Array(length)
+    nodeRead(fs, fd, buffer, length, position) { error, n ->
+        if (error == null) {
+            for (i in 0 until n) {
+                bytes[offset + i] = byteAt(buffer, i)
+            }
+        }
+        callback.done(error, n)
+    }
+}
+
+private fun nodeRead(
+    fs: NodeFs,
+    fd: Int,
+    buffer: JsAny,
+    length: Int,
+    position: Double,
+    done: (String?, Int) -> Unit,
+): Unit = js(
+    "fs.read(fd, buffer, 0, length, position, function (e, n) { done(e ? String(e.message) : null, e ? 0 : n); })",
+)

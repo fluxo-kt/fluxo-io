@@ -176,4 +176,9 @@ kotlin {
     sourceSets.named("androidMain") {
         dependsOn(sourceSets.named("commonJvmMain").get())
     }
+    // Node's async fs and Blob reads complete on the event loop, so their tests must suspend;
+    // runTest returns the Promise the JS test runners wait for.
+    sourceSets.named("webTest") {
+        dependencies { implementation(libs.coroutines.test) }
+    }
 }

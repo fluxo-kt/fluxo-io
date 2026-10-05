@@ -50,13 +50,13 @@ internal class NodeFileRadTest {
     }
 }
 
-private fun tmpDir(): String = js("process.getBuiltinModule('node:os').tmpdir()")
+internal fun tmpDir(): String = js("process.getBuiltinModule('node:os').tmpdir()")
 
-private fun newUint8Array(length: Int): JsAny = js("new Uint8Array(length)")
+internal fun newUint8Array(length: Int): JsAny = js("new Uint8Array(length)")
 
-private fun setByte(array: JsAny, i: Int, value: Int): Unit = js("array[i] = value")
+internal fun setByte(array: JsAny, i: Int, value: Int): Unit = js("array[i] = value")
 
-private fun writeFile(path: String, data: JsAny): Unit =
+internal fun writeFile(path: String, data: JsAny): Unit =
     js("process.getBuiltinModule('node:fs').writeFileSync(path, data)")
 
-private fun deleteFile(path: String): Unit = js("process.getBuiltinModule('node:fs').rmSync(path, { force: true })")
+internal fun deleteFile(path: String): Unit = js("process.getBuiltinModule('node:fs').rmSync(path, { force: true })")

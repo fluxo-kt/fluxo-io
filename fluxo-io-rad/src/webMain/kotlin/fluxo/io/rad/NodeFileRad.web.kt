@@ -12,7 +12,14 @@ import kotlin.js.JsAny
  * `readSync` with a position is a positional read (`pread`), one call per read.
  * A runtime without it (a browser) has no file system: files there come as `Blob`s.
  */
-internal fun openPlatformFile(path: String): RandomAccessData {
+internal fun openPlatformFile(path: String): RandomAccessData =
+    openNodeFile(path) { fs, fd, size -> AccessorRad(NodeFdAccess(fs, fd, path, size)) }
+
+/**
+ * Opens [path] read-only and passes the descriptor and size to [wrap], which takes it over;
+ * the descriptor is closed here only if anything fails first.
+ */
+internal inline fun <T> openNodeFile(path: String, wrap: (NodeFs, fd: Int, size: Long) -> T): T {
     val fs = nodeFs()
         ?: throw IOException("No file system in this JS runtime; use AsyncRandomAccessData.open(blob)")
     val fd = try {
@@ -25,7 +32,7 @@ internal fun openPlatformFile(path: String): RandomAccessData {
         if (stats.isDirectory()) {
             throw IOException("Cannot open $path: is a directory")
         }
-        AccessorRad(NodeFdAccess(fs, fd, path, stats.size.toLong()))
+        wrap(fs, fd, stats.size.toLong())
     } catch (e: Throwable) {
         fs.closeSync(fd)
         throw e
@@ -81,6 +88,6 @@ internal expect fun readSync(
 ): Int
 
 // Kotlin's js() parser predates `?.` and `??`.
-private fun nodeFs(): NodeFs? = js(
+internal fun nodeFs(): NodeFs? = js(
     "(typeof process !== 'undefined' && process.getBuiltinModule) ? process.getBuiltinModule('node:fs') : null",
 )

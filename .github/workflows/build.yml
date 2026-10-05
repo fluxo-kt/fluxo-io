@@ -159,6 +159,7 @@ jobs:
             **/build/reports/
             **/build/output/
             build/*-merged.*
+            hs_err_pid*.log
           compression-level: 9
 
       - name: Perform CodeQL Analysis

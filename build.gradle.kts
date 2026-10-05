@@ -38,6 +38,9 @@ fkcSetupRaw {
     enableGradleDoctor = true
     experimentalLatestCompilation = true
     latestSettingsForTests = true
+    // Without this, latestSettingsForTests also compiles tests for the newest JDK the build
+    // finds, and the JDK 17 test lane cannot load them (class file 65 on a 17 runtime).
+    javaTestsLangTarget = libs.versions.javaLangTarget.get()
     allWarningsAsErrors = false
     optInInternal = true
     optIns = listOf(

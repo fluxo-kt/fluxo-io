@@ -205,8 +205,8 @@ Workflow / release / verification-metadata traps live in
    factory must open the bytes it is given.
 5. Run `./updateBaseline`. Inspect `api/jvm/fluxo-io-rad.api` diff
    before committing.
-6. **Adding a new submodule** → also update
-   `.github/workflows/build.yml` (called out in `settings.gradle.kts`).
+6. **Adding a new submodule** needs no workflow edit: CI runs root tasks
+   (`build`, `allTests`, `apiCheck`) that cover every module.
 
 ## Conventions and traps (library / build)
 

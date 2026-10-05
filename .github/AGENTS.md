@@ -10,8 +10,26 @@ language traps live in the **root `AGENTS.md`** — read that first.
 - Keep history flat (`--ff-only`). FF merges are triggered by an exact `/ff`
   or `/fast-forward` PR comment; `pr-fast-forward.yml` first verifies the
   commenter has write/maintain/admin permission.
-- **Adding a new submodule** → also update `.github/workflows/build.yml`
-  (also called out in `settings.gradle.kts`).
+
+## Build shards (`build.yml`)
+
+One job per target family keeps every job inside the 5-minute budget; the
+single job per OS took 8–17 min. A Kotlin/Native target compiles and runs
+tests only on its own host OS, so Apple families get two macOS jobs.
+
+- `jvm` (COMMON_JVM): `build koverLog` — JVM/Android tests, kover, Android
+  lint, CodeQL, verifyBuildPolicy, dependencyGuard.
+- `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
+  checks klib ABI and lints every source set.
+- `web`, `linux`, `mingw`, `macos-ios`, `tvos-watchos`: `allTests assemble
+  -x jvmTest` for their family. `JVM` stays in every filter (fluxo-bcv-js
+  1.1.0 fails configuration without it).
+- Every filtered job adds `-x mergeDetektSarif` (fluxo-kmp-conf 0.15.1 cannot
+  build that task's graph under `KMP_TARGETS`) and `-x klibApiCheck` (a
+  filtered klib dump always differs).
+- Build-script lookups of a source set or task must tolerate a filter that
+  removes it (`matching { … }.configureEach`, never `named`).
+- Modules need no workflow edit: every job runs root tasks.
 
 ## `/ff` recursion-guard (load-bearing)
 
@@ -207,10 +225,11 @@ pushing.
 ### A key must never be both ignored and trusted
 
 `artifact was signed but all keys were ignored` + `checksum is missing`
-right after a version bump, for a key whose full fingerprint has a
-`<trusted-key>` entry, means a stale `<ignored-key>` (written once when
-a keyserver was down). The writer then trusts the key and records no
-checksum, the reader applies the ignore first and fails. Fix: delete the
+for a key whose full fingerprint has a `<trusted-key>` entry means an
+`<ignored-key>` for the same key. `./updateBaseline`'s writer can add both in
+one run (a keyserver lookup of the short id fails while the keyring holds the
+key); it then records no checksum, and the reader applies the ignore first
+and fails. Fix: delete the
 `<ignored-key>` whose id is the suffix of a trusted fingerprint present in
 `gradle/verification-keyring.keys`, then rerun `./updateBaseline`; never
 add a checksum by hand to paper over it.

@@ -49,8 +49,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "fluxo-io"
 
-// On module update, don't forget to update '.github/workflows/build.yml'!
-
 include(":fluxo-io-rad")
 include(":fluxo-io-rad-okio")
 include(":fluxo-io-rad-kotlinx-io")

@@ -1,10 +1,12 @@
 package fluxo.io.rad.okio
 
+import fluxo.io.IOException
 import fluxo.io.rad.RadByteArrayAccessor
 import fluxo.io.rad.RadContract.BYTES
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import okio.Buffer
 import okio.buffer
 
@@ -30,6 +32,14 @@ internal class RadSourceTest {
         assertContentEquals(BYTES.copyOfRange(1, 4), sink.readByteArray())
         val exhausted = RadByteArrayAccessor(BYTES).source(256)
         assertEquals(-1L, exhausted.read(sink, 8))
-        assertEquals(0L, sink.size, "a failed or empty read must not leave a partial segment")
+        assertEquals(0L, sink.size, "an empty read must not leave a partial segment")
+    }
+
+    @Test
+    fun failedReadLeavesTheSinkAsItWas() {
+        val closed = RadByteArrayAccessor(BYTES).also { it.close() }
+        val sink = Buffer().writeUtf8("head")
+        assertFailsWith<IOException> { closed.source().read(sink, 8) }
+        assertEquals("head", sink.readUtf8())
     }
 }

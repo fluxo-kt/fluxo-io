@@ -22,10 +22,17 @@ import okio.Timeout
  *
  * @throws IOException if the size cannot be read
  */
-public fun RandomAccessData.Companion.open(handle: FileHandle): RandomAccessData =
-    radOf(handle.size(), handle::close) { bytes, position, offset, length ->
+public fun RandomAccessData.Companion.open(handle: FileHandle): RandomAccessData {
+    val size = try {
+        handle.size()
+    } catch (e: Throwable) {
+        handle.close()
+        throw e
+    }
+    return radOf(size, handle::close) { bytes, position, offset, length ->
         handle.read(position, bytes, offset, length)
     }
+}
 
 /**
  * A [Source] reading this data from [position] to its end. The source does not own the data:
@@ -41,22 +48,24 @@ private class RadSource(private val rad: RandomAccessData, private var position:
         if (byteCount == 0L) {
             return 0L
         }
-        // The same write-into-segment pattern Okio's own FileHandle.source uses.
+        // expandBuffer grows sink.size up front, so the size is set back to what was really
+        // read even when the read throws: otherwise the sink keeps a segment of stale bytes.
         val cursor = sink.readAndWriteUnsafe()
+        val oldSize = sink.size
+        var n = -1
         try {
-            val oldSize = sink.size
             cursor.expandBuffer(1)
             val length = min(byteCount, (cursor.end - cursor.start).toLong()).toInt()
-            val n = rad.read(cursor.data!!, position, cursor.start, length)
-            cursor.resizeBuffer(oldSize + n.coerceAtLeast(0))
-            if (n < 0) {
-                return -1L
-            }
-            position += n
-            return n.toLong()
+            n = rad.read(checkNotNull(cursor.data), position, cursor.start, length)
         } finally {
+            cursor.resizeBuffer(oldSize + n.coerceAtLeast(0))
             cursor.close()
         }
+        if (n < 0) {
+            return -1L
+        }
+        position += n
+        return n.toLong()
     }
 
     override fun timeout(): Timeout = Timeout.NONE

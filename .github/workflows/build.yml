@@ -58,26 +58,26 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           disable-sudo: true
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       # Installed before 21 so that 21 stays the default JAVA_HOME for Gradle itself.
       - name: Set up test JDK ${{ matrix.jdk }}
         if: matrix.jdk
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: ${{ matrix.jdk }}
 
       - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '21'
@@ -93,7 +93,7 @@ jobs:
 
       - name: Setup Gradle with encrypted cache
         if: env.GRADLE_ENCRYPTION_KEY != ''
-        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-disabled: ${{ runner.os == 'Windows' }} # super slow on Windows.
           cache-encryption-key: ${{ env.GRADLE_ENCRYPTION_KEY }}
@@ -104,7 +104,7 @@ jobs:
 
       - name: Setup Gradle without encrypted cache
         if: env.GRADLE_ENCRYPTION_KEY == ''
-        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-disabled: ${{ runner.os == 'Windows' }} # super slow on Windows.
           cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
@@ -117,7 +117,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: matrix.shard == 'jvm'
-        uses: github/codeql-action/init@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: ${{ env.CODEQL_LANGUAGE }}
           # If you wish to specify custom queries, you can do so here or in a config file.
@@ -146,7 +146,7 @@ jobs:
       - name: Upload sarif report (Detekt)
         if: always() && matrix.shard == 'api'
           && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH == 'true')
-        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         continue-on-error: true
         with:
           sarif_file: build/detekt-merged.sarif
@@ -155,7 +155,7 @@ jobs:
       - name: Upload sarif report (Lint)
         if: always() && matrix.shard == 'jvm'
           && (github.event_name == 'pull_request' || env.IS_DEFAULT_BRANCH == 'true')
-        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         continue-on-error: true
         with:
           sarif_file: build/lint-merged.sarif
@@ -180,7 +180,7 @@ jobs:
       - name: Upload code coverage to Codecov
         continue-on-error: true
         if: matrix.shard == 'jvm' && (success() || failure())
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         env:
           OS: ${{ matrix.shard }}
           JAVA_VERSION: 21
@@ -209,7 +209,7 @@ jobs:
       - name: Perform CodeQL Analysis
         if: matrix.shard == 'jvm'
         timeout-minutes: 6
-        uses: github/codeql-action/analyze@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         env:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
         with:
@@ -231,24 +231,24 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           disable-sudo: true
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: true
           artifact-retention-days: 1
@@ -279,7 +279,7 @@ jobs:
 
       - name: Attest SNAPSHOT artifacts
         if: steps.project_version.outputs.is_snapshot == 'true'
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-checksums: ${{ steps.snapshot_attestation_subjects.outputs.checksums }}
 

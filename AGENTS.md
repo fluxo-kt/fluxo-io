@@ -63,10 +63,10 @@ Workflow / release / verification-metadata traps live in
   core stays dependency-free. They build sources with `fluxo.io.internal.radOf`
   (public, but `@InternalFluxoIoApi` at ERROR level and absent from API dumps:
   the adapters ship in lockstep with the core, consumers must not call it).
-  `:fluxo-io-bom` (`java-platform`) constrains all three to one version, and every
-  published module depends on it as a platform: that makes Gradle align a stale
-  adapter to a newer core by itself. A new published module goes into its
-  constraints and depends on it.
+  `:fluxo-io-bom` pins all published modules to one version; each module depends
+  on it as a `platform`, so Gradle auto-upgrades a stale adapter to match the
+  core (a strict version would block single upgrades). New published module ⇒
+  add it to the BOM constraints AND depend on the BOM.
   Inside any `SharedCloseable` subclass, a name `close` resolves to the member
   function, never to a function-typed property: name such properties otherwise.
 - Root `build.gradle.kts` — umbrella via `fkcSetupRaw {…}`, Kover
@@ -201,13 +201,13 @@ Workflow / release / verification-metadata traps live in
   combine mutation plus later observation (for example `close(); isOpen`)
   in one operation; expose the observation as a separate operation or
   deterministic regression test.
-  Never assert an invariant by throwing inside an operation: Lincheck compares
-  results with a sequential run of the same code, where the throw is a legal
-  result, so the test cannot fail. Record the violation and check it in a
-  `@Validate` method; prove it with a planted defect.
-- A fix for code that only CI runs (mingw, Linux native, x64 Apple) is done
-  only when that CI job is green on the fix's commit (`gh run list --commit
-  <full sha>`). A local compile proves it builds, not that it works.
+  NEVER throw an invariant failure inside an operation: Lincheck compares with a
+  sequential run of the same code, where the throw is a legal result, so the
+  test cannot fail. Record it; fail in a `@Validate` method. Prove red with a
+  planted defect.
+- Code whose tests run only in CI (mingw, Linux native): a fix is DONE only when
+  that job is green on the fix commit (`gh run list --commit <full sha>`). A
+  local compile proves nothing about behaviour.
 - CI runs across macOS/Windows/Ubuntu; Gradle runs on JDK 21, JVM tests also on 17 and 25.
 - For workflow / release / verification-metadata traps see
   [`.github/AGENTS.md`](.github/AGENTS.md).

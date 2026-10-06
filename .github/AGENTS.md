@@ -6,10 +6,9 @@ language traps live in the **root `AGENTS.md`** — read that first.
 
 ## Commit & PR
 
-- **Before committing any workflow or build-script edit, run
-  `./gradlew verifyBuildPolicy`** (seconds). It checks workflow invariants (for
-  example: no `branches-ignore` on the Build triggers); `build` runs it,
-  `detektAll` does not.
+- **Workflow or build-script edit ⇒ run `./gradlew verifyBuildPolicy` before
+  commit** (seconds). It enforces workflow invariants (e.g. no `branches-ignore`
+  on Build); `build` runs it, `detektAll` does NOT.
 - **Conventional commits required** (strict type set: see `CONTRIBUTING.md`).
 - Keep history flat (`--ff-only`). FF merges are triggered by an exact `/ff`
   or `/fast-forward` PR comment; `pr-fast-forward.yml` first verifies the

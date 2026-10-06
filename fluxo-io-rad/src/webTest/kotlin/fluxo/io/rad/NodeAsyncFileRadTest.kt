@@ -38,12 +38,26 @@ internal class NodeAsyncFileRadTest {
         }
     }
 
+    /** Wasm-JS caps one read below this size: readFully must loop the chunks. */
+    @Test
+    fun readsAcrossTheReadChunkIntoABufferOffset() = runTest {
+        val data = ByteArray(200_000) { (it * 31 + it / 251).toByte() }
+        withTempFile(data) { path ->
+            val rad = AsyncRandomAccessData.open(path)
+            val buf = ByteArray(150_000)
+            assertEquals(buf.size - 7, rad.readFully(buf, position = 30_000, offset = 7))
+            val expected = data.copyOfRange(30_000, 30_000 + buf.size - 7)
+            assertContentEquals(expected, buf.copyOfRange(7, buf.size))
+            rad.close()
+        }
+    }
+
     @Test
     fun missingFileFailsAtOpen() {
         assertFailsWith<IOException> { AsyncRandomAccessData.open(tmpDir() + "/missing-" + Random.nextLong()) }
     }
 
-    private inline fun withTempFile(block: (String) -> Unit) {
+    private inline fun withTempFile(bytes: ByteArray = this.bytes, block: (String) -> Unit) {
         val path = tmpDir() + "/fluxo-arad-" + Random.nextLong().toULong() + ".bin"
         val data = newUint8Array(bytes.size)
         for (i in bytes.indices) setByte(data, i, bytes[i].toInt())

@@ -31,7 +31,7 @@ internal inline fun <T> openNodeFile(path: String, wrap: (NodeFs, fd: Int, size:
     return try {
         wrap(fs, fd, fileSize(fs.fstatSync(fd), path))
     } catch (e: Throwable) {
-        fs.closeSync(fd)
+        runCatching { fs.closeSync(fd) }.exceptionOrNull()?.let(e::addSuppressed)
         throw e
     }
 }
@@ -96,9 +96,17 @@ internal expect fun readSync(
 ): Int
 
 internal fun requireNodeFs(): NodeFs = nodeFs() ?: throw IOException(
-    "No file system in this JS runtime; in a browser, read a Blob " +
-        "(Kotlin/JS: AsyncRandomAccessData.open(blob))",
+    if (hasProcess()) {
+        // Node before 20.16 / 22.3 has a file system but no process.getBuiltinModule.
+        "This JS runtime has no process.getBuiltinModule (Node 20.16+, 22.3+, Bun, Deno): " +
+            "upgrade it to read files"
+    } else {
+        "No file system in this JS runtime; in a browser, read a Blob " +
+            "(Kotlin/JS: AsyncRandomAccessData.open(blob))"
+    },
 )
+
+private fun hasProcess(): Boolean = js("typeof process !== 'undefined'")
 
 // Kotlin's js() parser predates `?.` and `??`.
 private fun nodeFs(): NodeFs? = js(

@@ -2,7 +2,6 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import fluxo.io.internal.AsyncAccessorRad
-import fluxo.io.internal.Blocking
 import fluxo.io.internal.SharedAsyncDataAccessor
 import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
 import kotlin.coroutines.Continuation
@@ -13,7 +12,8 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Opens [path] for reads that never block the JS event loop: each read is Node's callback
  * `fs.read` with a position, run on libuv's thread pool (Node, Bun and Deno). Returns a handle:
- * close it once when finished; a close during a pending read waits for that read to end.
+ * close it once when finished. A close during a pending read returns at once; the descriptor
+ * is closed when that read ends.
  *
  * Opening is a quick synchronous `openSync` + `fstatSync`, so the factory needs no `suspend`,
  * and the descriptor can be closed synchronously when the last handle closes.
@@ -21,7 +21,6 @@ import kotlin.coroutines.suspendCoroutine
  * @throws IOException if there is no Node-compatible file system (in a browser, read a `Blob`)
  *  or the file cannot be opened
  */
-@Blocking
 @Throws(IOException::class)
 public fun AsyncRandomAccessData.Companion.open(path: String): AsyncRandomAccessData =
     openNodeFile(path) { fs, fd, size -> AsyncAccessorRad(NodeAsyncFdAccess(fs, fd, path, size)) }

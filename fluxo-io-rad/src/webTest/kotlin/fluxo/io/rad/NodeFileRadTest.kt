@@ -4,6 +4,8 @@ import fluxo.io.IOException
 import kotlin.js.JsAny
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /** The Node `fs` file implementation (JS and Wasm-JS) over real temp files. */
@@ -16,6 +18,24 @@ internal class NodeFileRadTest {
             RadContract.verify { bytes -> RandomAccessData.open(tempFile(bytes).also(paths::add)) }
         } finally {
             paths.forEach(::deleteFile)
+        }
+    }
+
+    /** Wasm-JS caps one read below this size: [RandomAccessData.readFully] must loop the chunks. */
+    @Test
+    fun readsAcrossTheReadChunkIntoABufferOffset() {
+        val data = ByteArray(200_000) { (it * 31 + it / 251).toByte() }
+        val path = tempFile(data)
+        try {
+            RandomAccessData.open(path).use { rad ->
+                val buf = ByteArray(150_000)
+                assertEquals(buf.size - 7, rad.readFully(buf, position = 30_000, offset = 7))
+                val expected = data.copyOfRange(30_000, 30_000 + buf.size - 7)
+                assertContentEquals(expected, buf.copyOfRange(7, buf.size))
+                assertContentEquals(data, rad.readAllBytes())
+            }
+        } finally {
+            deleteFile(path)
         }
     }
 

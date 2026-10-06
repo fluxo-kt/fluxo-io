@@ -27,7 +27,6 @@ jobs:
           # transitive (mocha/kotlin-web-helpers) in .kotlin-js-store/yarn.lock, never shipped in
           # the published artifact. GitHub mis-scopes every yarn.lock dep as `runtime` (so
           # fail-on-scopes can't help), and diff is semver-major-pinned (^7.0.0) below the 8.0.3
-          # fix, so it can't be bumped out. Pre-existing on dev (diff@5.2.0 carries the same GHSA);
-          # this branch shuffles one vulnerable version to another, adding no consumer-facing risk.
+          # fix, so it can't be bumped out.
           # Strictness is preserved for shipped (JVM/actions) ecosystems — only this GHSA is waived.
           allow-ghsas: GHSA-73rr-hh4g-fpgx

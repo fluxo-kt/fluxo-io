@@ -3,6 +3,8 @@ name: Build
 on:
   pull_request:
   push:
+    # Dependabot branches always have a PR, whose run covers them; a push run would double it.
+    branches-ignore: [ "dependabot/**" ]
 
 permissions:
   contents: read
@@ -28,7 +30,8 @@ jobs:
   buildAndCheck:
     strategy:
       fail-fast: false
-      # One job per target family, so each fits the 5-minute budget for a routine lane.
+      # One job per target family, so each aims for the 5-minute routine-lane budget (met warm;
+      # a cold toolchain download can exceed it).
       # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
       # host per family keeps the slow Apple toolchains in parallel jobs.
       # `JVM` stays in every filter: fluxo-bcv-js 1.1.0 fails configuration without it.

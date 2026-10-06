@@ -24,7 +24,8 @@ internal class RadSourceTest {
         val rad = RadByteArrayAccessor(RadContract.bytes())
         assertContentEquals(BYTES, rad.source().buffer().readByteArray())
         assertContentEquals(BYTES.copyOfRange(100, 256), rad.source(100).buffer().readByteArray())
-        assertContentEquals(BYTES.copyOfRange(10, 30), rad.slice(10, 20).source().buffer().readByteArray())
+        val slice = rad.slice(10, 20)
+        assertContentEquals(BYTES.copyOfRange(10, 30), slice.source().buffer().readByteArray())
         assertEquals(0, rad.source(256).buffer().readByteArray().size)
         assertEquals(0, rad.slice(5, 0).source().buffer().readByteArray().size)
     }

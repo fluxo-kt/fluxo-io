@@ -184,6 +184,10 @@ Workflow / release / verification-metadata traps live in
 ./updateBaseline                   # CANONICAL regen: verification metadata+yarnLock+apiDump+depGuardBaseline (CI=true RELEASE=true, no build/config cache, isolated .gradle/update-baseline home unless GRADLE_USER_HOME is set)
 ```
 
+- Detekt never reads shared test source sets (`commonTest`, `nativeTest`,
+  `nixTest`, `webTest`; fluxo-kmp-conf 0.15.1 makes per-target test tasks and
+  main-only metadata tasks), so a green `detektAll` says nothing about them:
+  keep their lines within 100 columns by hand.
 - Configuration cache is on with `problems=fail` and `max-problems=0`.
   Don't capture `Project` or build-script instances in task actions.
 - Tests use `runTest(timeout = 9.seconds)`. Concurrency is exercised by

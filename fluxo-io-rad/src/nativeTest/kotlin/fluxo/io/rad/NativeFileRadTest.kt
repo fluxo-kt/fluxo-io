@@ -36,7 +36,8 @@ internal class NativeFileRadTest {
 
     @Test
     fun missingFileAndDirectoryFailAtOpen() {
-        assertFailsWith<IOException> { RandomAccessData.open(tempDir() + "/does-not-exist-" + Random.nextLong()) }
+        val missing = tempDir() + "/does-not-exist-" + Random.nextLong()
+        assertFailsWith<IOException> { RandomAccessData.open(missing) }
         assertFailsWith<IOException> { RandomAccessData.open(tempDir()) }
     }
 
@@ -62,14 +63,17 @@ internal class NativeFileRadTest {
     }
 
     private fun tempDir(): String =
-        (getenv("TMPDIR") ?: getenv("TEMP") ?: getenv("TMP"))?.toKString()?.trimEnd('/', '\\') ?: "/tmp"
+        (getenv("TMPDIR") ?: getenv("TEMP") ?: getenv("TMP"))
+            ?.toKString()?.trimEnd('/', '\\') ?: "/tmp"
 
     private fun tempFile(bytes: ByteArray): String {
         val path = tempDir() + "/fluxo-rad-" + Random.nextLong().toULong() + ".bin"
         val file = checkNotNull(fopen(path, "wb")) { "cannot create $path" }
         try {
             if (bytes.isNotEmpty()) {
-                val written = bytes.usePinned { fwrite(it.addressOf(0), 1u, bytes.size.convert(), file) }
+                val written = bytes.usePinned {
+                    fwrite(it.addressOf(0), 1u, bytes.size.convert(), file)
+                }
                 check(written.toInt() == bytes.size) { "short write to $path" }
             }
         } finally {

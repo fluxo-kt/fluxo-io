@@ -41,7 +41,8 @@ internal class NodeFileRadTest {
 
     @Test
     fun missingFileAndDirectoryFailAtOpen() {
-        assertFailsWith<IOException> { RandomAccessData.open(tmpDir() + "/missing-" + Random.nextLong()) }
+        val missing = tmpDir() + "/missing-" + Random.nextLong()
+        assertFailsWith<IOException> { RandomAccessData.open(missing) }
         assertFailsWith<IOException> { RandomAccessData.open(tmpDir()) }
     }
 
@@ -63,4 +64,5 @@ internal fun setByte(array: JsAny, i: Int, value: Int): Unit = js("array[i] = va
 internal fun writeFile(path: String, data: JsAny): Unit =
     js("process.getBuiltinModule('node:fs').writeFileSync(path, data)")
 
-internal fun deleteFile(path: String): Unit = js("process.getBuiltinModule('node:fs').rmSync(path, { force: true })")
+internal fun deleteFile(path: String): Unit =
+    js("process.getBuiltinModule('node:fs').rmSync(path, { force: true })")

@@ -26,8 +26,10 @@ internal class RadRawSourceTest {
     fun readsEveryRangeToItsEnd() {
         val rad = RadByteArrayAccessor(RadContract.bytes())
         assertContentEquals(BYTES, rad.asRawSource().buffered().readByteArray())
-        assertContentEquals(BYTES.copyOfRange(100, 256), rad.asRawSource(100).buffered().readByteArray())
-        assertContentEquals(BYTES.copyOfRange(10, 30), rad.slice(10, 20).asRawSource().buffered().readByteArray())
+        val tail = rad.asRawSource(100).buffered()
+        assertContentEquals(BYTES.copyOfRange(100, 256), tail.readByteArray())
+        val slice = rad.slice(10, 20).asRawSource().buffered()
+        assertContentEquals(BYTES.copyOfRange(10, 30), slice.readByteArray())
         assertEquals(0, rad.asRawSource(256).buffered().readByteArray().size)
     }
 
@@ -39,7 +41,8 @@ internal class RadRawSourceTest {
         assertEquals(0L, source.readAtMostTo(sink, 0))
         assertEquals("head", sink.readString(4))
         assertContentEquals(BYTES.copyOfRange(1, 4), sink.readByteArray())
-        assertEquals(-1L, RadByteArrayAccessor(RadContract.bytes()).asRawSource(256).readAtMostTo(sink, 8))
+        val atEnd = RadByteArrayAccessor(RadContract.bytes()).asRawSource(256)
+        assertEquals(-1L, atEnd.readAtMostTo(sink, 8))
         assertEquals(0L, sink.size)
     }
 

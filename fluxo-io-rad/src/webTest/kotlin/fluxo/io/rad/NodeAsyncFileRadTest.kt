@@ -54,7 +54,8 @@ internal class NodeAsyncFileRadTest {
 
     @Test
     fun missingFileFailsAtOpen() {
-        assertFailsWith<IOException> { AsyncRandomAccessData.open(tmpDir() + "/missing-" + Random.nextLong()) }
+        val missing = tmpDir() + "/missing-" + Random.nextLong()
+        assertFailsWith<IOException> { AsyncRandomAccessData.open(missing) }
     }
 
     private inline fun withTempFile(bytes: ByteArray = this.bytes, block: (String) -> Unit) {

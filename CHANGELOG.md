@@ -50,6 +50,12 @@ Central; its changes ship here.
   Android minSdk 21. Consumers need Kotlin 2.1+ on the JVM and Kotlin 2.4+ on
   Native/JS/Wasm (a klib is readable only by its compiler's minor or newer).
 - Publishing via Maven Central Portal (vanniktech); Sonatype S01/OSSRH retired.
+- `Rad.forByteBuffer(buffer)` no longer frees the caller's buffer on close (using
+  it afterwards could crash the JVM); pass `{ buffer.releaseCompat() }` in
+  `resources` to keep that. Its data ends at the buffer's limit, not capacity.
+- Implementing `RandomAccessData` outside this library now needs
+  `@OptIn(InternalFluxoIoApi::class)` (an error; it was a warning that could not
+  be silenced), and implementations must provide `slice` and `share`.
 
 ### Fixed
 
@@ -66,6 +72,14 @@ Central; its changes ship here.
   longer frees the shared resource still used by other handles.
 - `StreamFactoryRad` ghost-read race + DoS-on-close: a slow user factory no
   longer blocks `close()`, and no stream leaks past the pool drain.
+- Stream, `DataInput` and byte-channel factory sources with a non-zero offset
+  failed every read past `size - offset`.
+- `Rad.forX(File)` factories leaked the opened file when the offset or size was
+  invalid.
+- `read(ByteBuffer, position)` left the caller's buffer limit lowered when the
+  read threw.
+- Slicing on an interrupted thread closed a `FileChannel` for every handle (each
+  slice queried the file size); the size is now read once at open.
 - `SharedDataAccessor.onSharedClose` is `final`; release goes in an overridable
   `releaseApi()` slot. A release-throw never skips closing the `resources`
   array (compile-blocked re-introduction of the bug class).

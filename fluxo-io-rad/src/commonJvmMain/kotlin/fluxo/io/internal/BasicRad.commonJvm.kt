@@ -26,7 +26,8 @@ import kotlin.math.min
  * Every public read method is `final` and delegates to a protected `…0` hook that
  * implementations override. The public layer is the single place where per-call rules
  * ([ensureOpen]) apply to every path, so an implementation's fast-path override can never
- * bypass them. Methods that only call other public reads (`readFully`) are covered by those.
+ * bypass them. Each public method checks itself, even when it reads through another public
+ * method: an empty `readFully` range never reaches a read, yet must fail on a closed handle.
  */
 @ThreadSafe
 @InternalFluxoIoApi

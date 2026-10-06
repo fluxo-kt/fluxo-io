@@ -107,6 +107,9 @@ public abstract class SharedCloseable : Closeable {
             if (current < ONE_OWNER) {
                 return false
             }
+            // One more owner would carry into the sign bit and read as "released": the data
+            // would silently close and never be freed. Only billions of unclosed retains get here.
+            check(current < MAX_OWNERS) { "Too many owners: retained without close? $this" }
             if (state.compareAndSet(current, current + ONE_OWNER)) {
                 return true
             }
@@ -229,5 +232,6 @@ public abstract class SharedCloseable : Closeable {
 
     private companion object {
         private const val ONE_OWNER = 1L shl 32
+        private const val MAX_OWNERS = Int.MAX_VALUE.toLong() shl 32
     }
 }

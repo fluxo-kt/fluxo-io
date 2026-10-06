@@ -22,7 +22,10 @@ import java.nio.channels.FileChannel.MapMode
  * **WARNING: Remember to close the [RandomAccessData] when finished
  * to properly release resources!*
  *
- * @param data the underlying [ByteBuffer]
+ * Closing never frees [data]: it stays the caller's, usable after close. To free a direct buffer
+ * on close, pass `{ data.releaseCompat() }` in [resources].
+ *
+ * @param data the underlying [ByteBuffer]; its data ends at its limit
  * @param offset the offset of the section
  * @param size the length of the section
  * @param resources the optional resources to close when finished
@@ -62,7 +65,8 @@ private fun byteBufferMmapRad0(
     val size0 = if (size == -1) (dataLength - offset).toIntChecked() else size
     checkOffsetAndCount(dataLength, offset, size0.toLong())
     val byteBuffer = channel.map(MapMode.READ_ONLY, offset, size0.toLong())
-    return ByteBufferRad(byteBuffer, offset = 0, size = size0, resources = resources)
+    // Mapped here, so closing unmaps it; a caller's buffer is never freed (see ByteBufferAccess).
+    return ByteBufferRad(byteBuffer, 0, size0, resources = resources, ownsBuffer = true)
 }
 
 /**

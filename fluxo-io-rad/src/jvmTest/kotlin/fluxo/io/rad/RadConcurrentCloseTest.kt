@@ -138,10 +138,10 @@ internal class RadConcurrentCloseTest {
         }
         try {
             // Close only drops the last owner; the drain runs when the in-flight read ends, so
-            // `closeDone` flips well within `quickJoinMs`. A close that waited for the factory
-            // would stay alive past the deadline: RED with a clear assertion, no hang.
-            val quickJoinMs = TIMEOUT_S * 1000 / 4
-            closer.join(quickJoinMs)
+            // the closer finishes while the factory is still parked. A close that waited for the
+            // factory never finishes before `proceedFactory`: the bound only stops that hang, it
+            // is not a speed budget, so a slow machine cannot fail a correct close.
+            closer.join(TIMEOUT_S * 1000)
             assertTrue(closeDone.get(), "close parked on factory (DoS-on-close band-aid)")
         } finally {
             proceedFactory.countDown()

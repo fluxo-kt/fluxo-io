@@ -39,8 +39,13 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
     constructor(array: ByteArray, offset: Int, size: Int)
         : this(ByteBuffer.wrap(array), offset, size, EMPTY_AUTO_CLOSEABLE_ARRAY)
 
-    constructor(buffer: ByteBuffer, offset: Int, size: Int, resources: Array<out AutoCloseable>)
-        : this(ByteBufferAccess(buffer, resources), offset, size)
+    constructor(
+        buffer: ByteBuffer,
+        offset: Int,
+        size: Int,
+        resources: Array<out AutoCloseable>,
+        ownsBuffer: Boolean = false,
+    ) : this(ByteBufferAccess(buffer, resources, ownsBuffer), offset, size)
 
 
     override fun view0(
@@ -72,12 +77,21 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
     ): Long = access.transferTo(offset.toInt(), size.toInt(), channel)
 
 
+    /**
+     * [ownsBuffer]: the buffer was mapped here, so close unmaps it. A caller's buffer is never
+     * freed: they may still use it, and touching a freed direct buffer kills the JVM. Callers who
+     * want it freed pass `{ buffer.releaseCompat() }` in `resources`.
+     */
     internal class ByteBufferAccess(
-        @JvmField val api: ByteBuffer,
+        private val api: ByteBuffer,
         resources: Array<out AutoCloseable>,
+        private val ownsBuffer: Boolean = false,
     ) : SharedDataAccessor(resources) {
 
-        override val size: Long get() = api.capacity().toLong()
+        // The data ends at the limit: bytes past it are not the caller's data, and absolute
+        // `get` (readByteAt) refuses them, so every read path stops there too.
+        private val limit = api.limit()
+        override val size: Long = limit.toLong()
 
         fun readByteAt(position: Int): Int = withLease {
             api.get(position).toInt() and MAX_BYTE
@@ -87,7 +101,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
             withLease {
                 val buf = api.duplicate()
-                buf.limitCompat(buf.capacity())
+                buf.limitCompat(limit)
                 buf.positionCompat(position.toInt())
                 val len = min(buf.remaining(), length)
                 buf.get(bytes, offset, len)
@@ -98,7 +112,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
         internal fun read(buffer: ByteBuffer, position: Long): Int = withLease {
             val pos = position.toInt()
             val buf = api.duplicate()
-            val len = min(buf.capacity() - pos, buffer.remaining())
+            val len = min(limit - pos, buffer.remaining())
             buf.limitCompat(pos + len)
             buf.positionCompat(pos)
             buffer.put(buf)
@@ -107,7 +121,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
 
         @Throws(IOException::class)
         internal fun transferTo(position: Int, count: Int, channel: WritableByteChannel): Long {
-            val len = min(api.capacity() - position, count)
+            val len = min(limit - position, count)
             if (len == 0) {
                 return 0
             }
@@ -123,7 +137,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
         // Runs only after the last lease ended (see SharedCloseable), so no read can be
         // touching the buffer while it is unmapped.
         override fun releaseApi() {
-            api.releaseCompat()
+            if (ownsBuffer) api.releaseCompat()
         }
     }
 }

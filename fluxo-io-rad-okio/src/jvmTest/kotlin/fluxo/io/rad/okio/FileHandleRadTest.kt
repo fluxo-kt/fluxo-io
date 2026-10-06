@@ -27,7 +27,8 @@ internal class FileHandleRadTest {
 
     @Test
     fun lastHandleClosesTheFileHandle() {
-        val file = File.createTempFile("okio-close", ".bin").apply { writeBytes(RadContract.bytes()) }
+        val file = File.createTempFile("okio-close", ".bin")
+        file.writeBytes(RadContract.bytes())
         try {
             val handle = FileSystem.SYSTEM.openReadOnly(file.toOkioPath())
             val rad = RandomAccessData.open(handle)

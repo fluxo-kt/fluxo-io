@@ -35,7 +35,9 @@ internal class RandomAccessDataStreamFactoryTest(
             // The data behind a prefix: every read goes through a non-zero section offset.
             { file ->
                 val bytes = PREFIX + file.readBytes()
-                StreamFactoryRadAccessor(bytes.size.toLong(), PREFIX.size.toLong()) { bytes.inputStream() }
+                StreamFactoryRadAccessor(bytes.size.toLong(), PREFIX.size.toLong()) {
+                    bytes.inputStream()
+                }
             },
             { file ->
                 val bytes = PREFIX + file.readBytes()

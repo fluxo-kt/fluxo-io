@@ -57,7 +57,8 @@ internal class RadAccessLeaseTest {
                 put("Raf.readByte") { it.readByte(0) }
             }
             AsyncFileChannelRad.AsyncFileChannelAccess(AsynchronousFileChannel.open(file.toPath()))
-                .closed().let { put("AsyncFileChannel.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) } }
+                .closed()
+                .let { put("AsyncFileChannel.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) } }
         }
         val unleased = calls.filter { (_, call) ->
             val e = try {

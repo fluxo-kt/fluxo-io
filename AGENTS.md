@@ -177,7 +177,7 @@ Workflow / release / verification-metadata traps live in
 ./gradlew build                    # full verify (CI runs it split into per-target shards): check (BCV apiCheck, kover, detekt, AGP lint wiring, depGuard, tests) + assemble
                                    # `check` alone never compiles common metadata (compileCommonMainKotlinMetadata), where expect/actual breaks show
 ./gradlew :fluxo-io-rad:jvmTest    # JVM unit tests
-./gradlew :fluxo-io-rad:detektAll  # fast lint verdict (plain `detekt` is NO-SOURCE here: checks zero files, exits 0)
+./gradlew detektAll                # lint verdict for every module, run before each commit (plain `detekt` is NO-SOURCE here: checks zero files, exits 0)
 ./gradlew :fluxo-io-rad:apiDump    # refresh BCV after intentional API change
 ./updateBaseline                   # CANONICAL regen: verification metadata+yarnLock+apiDump+depGuardBaseline (CI=true RELEASE=true, no build/config cache, isolated .gradle/update-baseline home unless GRADLE_USER_HOME is set)
 ```

@@ -55,7 +55,8 @@ internal class WasiFileRadTest {
         RandomAccessData.open(tempFile(data)).use { rad ->
             val buf = ByteArray(150_000)
             assertEquals(buf.size - 7, rad.readFully(buf, position = 30_000, offset = 7))
-            assertContentEquals(data.copyOfRange(30_000, 30_000 + buf.size - 7), buf.copyOfRange(7, buf.size))
+            val expected = data.copyOfRange(30_000, 30_000 + buf.size - 7)
+            assertContentEquals(expected, buf.copyOfRange(7, buf.size))
             assertContentEquals(data, rad.readAllBytes())
         }
     }
@@ -81,7 +82,10 @@ internal class WasiFileRadTest {
         return path
     }
 
-    /** Creates `/tmp/<random>` holding [bytes] via path_open(CREAT|TRUNC) + fd_write; returns its path and its still-open fd. */
+    /**
+     * Creates `/tmp/<random>` holding [bytes] via path_open(CREAT|TRUNC) + fd_write; returns its
+     * path and its still-open fd.
+     */
     private fun createFile(bytes: ByteArray): Pair<String, Int> {
         val name = "fluxo-rad-" + Random.nextLong().toULong() + ".bin"
         created += name

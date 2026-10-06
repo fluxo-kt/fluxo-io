@@ -462,12 +462,14 @@ internal abstract class AbstractRandomAccessDataTest(
                     "channel, heap buffer" to { transferTo(Channels.newChannel(it), 1024, false) },
                     "channel, direct buffer" to { transferTo(Channels.newChannel(it), 1024, true) },
                 )
-                for ((name, transfer) in transfers) {
-                    for ((source, bytes) in listOf(slice to expected, whole.slice(0, 0) to EMPTY_BYTE_ARRAY)) {
-                        val out = ByteArrayOutputStream()
-                        assertEquals(bytes.size.toLong(), source.transfer(out), name)
-                        assertEquals(bytes, out.toByteArray(), name)
-                    }
+                val sources = listOf(slice to expected, whole.slice(0, 0) to EMPTY_BYTE_ARRAY)
+                val cases = transfers.entries.flatMap { t -> sources.map { t to it } }
+                for ((transfer, source) in cases) {
+                    val (name, copy) = transfer
+                    val (src, bytes) = source
+                    val out = ByteArrayOutputStream()
+                    assertEquals(bytes.size.toLong(), src.copy(out), name)
+                    assertEquals(bytes, out.toByteArray(), name)
                 }
             }
         } finally {

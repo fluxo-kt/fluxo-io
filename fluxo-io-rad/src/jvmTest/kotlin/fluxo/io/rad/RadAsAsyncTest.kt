@@ -27,16 +27,19 @@ internal class RadAsAsyncTest {
 
     /** RED if a context without a dispatcher is accepted: reads would block the caller. */
     @Test
-    fun contextWithoutDispatcherIsRejectedWithTheFix() {
+    fun contextWithoutDispatcherIsRejected() {
         val e = assertFailsWith<IllegalArgumentException> {
             RadByteArrayAccessor(DATA).asAsync(EmptyCoroutineContext)
         }
         assertContains(e.message.orEmpty(), "Dispatchers.IO")
     }
 
-    /** RED if the blocking read runs on the caller's thread instead of the given dispatcher. */
+    /**
+     * RED if the blocking read runs on the caller's thread instead of the given dispatcher, or if
+     * the caller resumes on the IO thread (its own code would then run there).
+     */
     @Test
-    fun blockingReadRunsOnTheGivenDispatcher() {
+    fun blockingReadRunsOnTheGivenDispatcherAndTheCallerResumesOnItsOwn() {
         val readThread = AtomicReference<String>()
         val rad = StreamFactoryRadAccessor(DATA.size.toLong()) {
             object : InputStream() {
@@ -52,7 +55,11 @@ internal class RadAsAsyncTest {
         try {
             val async = rad.asAsync(executor.asCoroutineDispatcher())
             val out = ByteArray(4)
-            assertEquals(4, runBlocking { async.readFully(out, position = 3) })
+            runBlocking {
+                val caller = Thread.currentThread()
+                assertEquals(4, async.readFully(out, position = 3))
+                assertEquals(caller, Thread.currentThread())
+            }
             assertEquals(DATA.copyOfRange(3, 7).toList(), out.toList())
             assertEquals(IO_THREAD, readThread.get())
             async.close()
@@ -75,5 +82,19 @@ internal class RadAsAsyncTest {
         kept.share().asAsync(Dispatchers.IO).close()
         assertEquals(1, kept.readByteAt(1))
         kept.close()
+    }
+
+    /** Slices read relative to their start; a share outlives the adapter it came from. */
+    @Test
+    fun adapterSlicesAndSharesFollowTheWrappedHandle() = runBlocking {
+        val async = RadByteArrayAccessor(DATA).asAsync(Dispatchers.IO)
+        val out = ByteArray(3)
+        assertEquals(3, async.slice(5, 8).readFully(out, position = 2))
+        assertEquals(listOf<Byte>(7, 8, 9), out.toList())
+        val shared = async.share()
+        async.close()
+        assertEquals(2, shared.read(out, position = 14))
+        assertFailsWith<IOException> { async.read(out) }
+        shared.close()
     }
 }

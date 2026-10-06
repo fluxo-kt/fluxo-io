@@ -110,15 +110,22 @@ private fun noPreopen(path: String) = IOException(
         "(e.g. Node: new WASI({ preopens: { '/data': '/real/dir' } }))",
 )
 
-/** Preopens start at fd 3 (after stdio) and end at the first fd that is not one (EBADF). */
-private val PREOPENS: List<Pair<String, Int>> by lazy {
+/**
+ * Preopens take consecutive fds from 3 (after stdio) at startup, so they end at the first fd
+ * that is not one: EBADF if it is free, EINVAL if the program already opened a file there
+ * (Node's uvwasi). Probed on first use, so a file opened before that is the normal case.
+ */
+private val PREOPENS: List<Pair<String, Int>> by lazy { discoverPreopens() }
+
+/** Directory name to fd of every preopen; see [PREOPENS]. Internal so tests can call it. */
+internal fun discoverPreopens(): List<Pair<String, Int>> {
     val result = ArrayList<Pair<String, Int>>()
     var fd = FIRST_PREOPEN_FD
     while (true) {
         val name = withScopedMemoryAllocator { alloc ->
             val prestat = alloc.allocate(PRESTAT_SIZE)
             val err = fdPrestatGet(fd, prestat.address.toInt())
-            if (err == ERRNO_BADF) return@withScopedMemoryAllocator null
+            if (err == ERRNO_BADF || err == ERRNO_INVAL) return@withScopedMemoryAllocator null
             check(err, "Cannot inspect preopened fd $fd")
             val len = (prestat + PRESTAT_NAME_LEN).loadInt()
             val buf = alloc.allocate(len)
@@ -128,7 +135,7 @@ private val PREOPENS: List<Pair<String, Int>> by lazy {
         result += name to fd
         fd++
     }
-    result
+    return result
 }
 
 private fun MemoryAllocator.write(bytes: ByteArray): Pointer {
@@ -142,6 +149,7 @@ private fun check(errno: Int, what: String) {
 }
 
 private const val ERRNO_BADF = 8
+private const val ERRNO_INVAL = 28
 private const val FIRST_PREOPEN_FD = 3
 private const val INT_SIZE = 4
 private const val IOVEC_SIZE = 8

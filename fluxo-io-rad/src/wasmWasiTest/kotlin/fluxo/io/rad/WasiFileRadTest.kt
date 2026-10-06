@@ -4,6 +4,7 @@ package fluxo.io.rad
 
 import fluxo.io.IOException
 import kotlin.random.Random
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -37,10 +38,54 @@ internal class WasiFileRadTest {
         assertFailsWith<IOException> { RandomAccessData.open("/tmp") }
     }
 
-    /** Creates `/tmp/<random>` holding [bytes] via path_open(CREAT|TRUNC) + fd_write. */
-    private fun tempFile(bytes: ByteArray): String {
-        val name = "fluxo-rad-" + Random.nextLong().toULong() + ".bin"
+    @Test
+    fun preopenProbeStopsAtAFileTheProgramAlreadyOpened() {
+        // The file takes the first fd after the preopens; Node answers EINVAL for it, not EBADF.
+        val (_, fd) = createFile(RadContract.bytes())
+        try {
+            assertEquals(listOf("/tmp"), discoverPreopens().map { it.first })
+        } finally {
+            assertEquals(0, fdClose(fd))
+        }
+    }
+
+    @Test
+    fun readsAcrossTheHostReadChunkIntoABufferOffset() {
+        val data = ByteArray(200_000) { (it * 31 + it / 251).toByte() }
+        RandomAccessData.open(tempFile(data)).use { rad ->
+            val buf = ByteArray(150_000)
+            assertEquals(buf.size - 7, rad.readFully(buf, position = 30_000, offset = 7))
+            assertContentEquals(data.copyOfRange(30_000, 30_000 + buf.size - 7), buf.copyOfRange(7, buf.size))
+            assertContentEquals(data, rad.readAllBytes())
+        }
+    }
+
+    private val created = ArrayList<String>()
+
+    @AfterTest
+    fun deleteFiles() {
         withScopedMemoryAllocator { alloc ->
+            for (name in created) {
+                val bytes = name.encodeToByteArray()
+                val ptr = alloc.allocate(bytes.size)
+                bytes.forEachIndexed { i, b -> (ptr + i).storeByte(b) }
+                pathUnlinkFile(3, ptr.address.toInt(), bytes.size)
+            }
+        }
+        created.clear()
+    }
+
+    private fun tempFile(bytes: ByteArray): String {
+        val (path, fd) = createFile(bytes)
+        assertEquals(0, fdClose(fd))
+        return path
+    }
+
+    /** Creates `/tmp/<random>` holding [bytes] via path_open(CREAT|TRUNC) + fd_write; returns its path and its still-open fd. */
+    private fun createFile(bytes: ByteArray): Pair<String, Int> {
+        val name = "fluxo-rad-" + Random.nextLong().toULong() + ".bin"
+        created += name
+        return withScopedMemoryAllocator { alloc ->
             val nameBytes = name.encodeToByteArray()
             val namePtr = alloc.allocate(nameBytes.size)
             nameBytes.forEachIndexed { i, b -> (namePtr + i).storeByte(b) }
@@ -60,11 +105,13 @@ internal class WasiFileRadTest {
             val written = alloc.allocate(4)
             assertEquals(0, fdWrite(fd, iovec.address.toInt(), 1, written.address.toInt()))
             assertEquals(bytes.size, written.loadInt())
-            assertEquals(0, fdClose(fd))
+            "/tmp/$name" to fd
         }
-        return "/tmp/$name"
     }
 }
+
+@WasmImport("wasi_snapshot_preview1", "path_unlink_file")
+private external fun pathUnlinkFile(fd: Int, pathPtr: Int, pathLen: Int): Int
 
 @Suppress("LongParameterList")
 @WasmImport("wasi_snapshot_preview1", "path_open")

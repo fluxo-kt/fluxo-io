@@ -124,6 +124,7 @@ internal class AsyncAccessorRadTest {
     ) : SharedAsyncDataAccessor(arrayOf(resource)) {
 
         var gate: Continuation<Unit>? = null
+        private var zeroReads = 0
 
         override val size: Long get() = BYTES.size.toLong()
 
@@ -133,6 +134,8 @@ internal class AsyncAccessorRadTest {
                     suspendCoroutine { gate = it }
                 }
                 check(!resource.closed) { "read after release" }
+                // A zero read must end readFully, so a second one is a spin: fail instead of hanging.
+                check(maxChunk > 0 || ++zeroReads == 1) { "zero-progress read retried" }
                 val n = minOf(length, maxChunk)
                 BYTES.copyInto(bytes, offset, position.toInt(), position.toInt() + n)
                 n

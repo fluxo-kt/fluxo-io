@@ -5,10 +5,12 @@ package fluxo.io.rad.kotlinx.io
 
 import fluxo.io.rad.RandomAccessData
 import kotlinx.io.Buffer
+import kotlinx.io.IOException
 import kotlinx.io.RawSource
 import kotlinx.io.UnsafeIoApi
 import kotlinx.io.unsafe.UnsafeBufferOperations
 import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
 import kotlin.math.min
 
 /**
@@ -18,6 +20,7 @@ import kotlin.math.min
  *
  * kotlinx-io has no random-access file API, so there is no reverse adapter.
  */
+@JvmOverloads
 public fun RandomAccessData.asRawSource(position: Long = 0L): RawSource =
     RadRawSource(this, position)
 
@@ -26,22 +29,35 @@ private class RadRawSource(
     private var position: Long,
 ) : RawSource {
 
+    private var closed = false
+
     override fun readAtMostTo(sink: Buffer, byteCount: Long): Long {
         require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
+        check(!closed) { "Source is closed." }
         if (byteCount == 0L) {
             return 0L
         }
         var n = 0
         UnsafeBufferOperations.writeToTail(sink, 1) { bytes, start, end ->
-            n = rad.read(bytes, position, start, min(byteCount, (end - start).toLong()).toInt())
+            val length = min(byteCount, (end - start).toLong()).toInt()
+            n = try {
+                rad.read(bytes, position, start, length)
+            } catch (e: fluxo.io.IOException) {
+                // One class on the JVM; elsewhere kotlinx.io callers would not catch the core's.
+                throw e as? IOException ?: IOException(e.message, e)
+            }
             n.coerceAtLeast(0)
         }
         if (n < 0) {
             return -1L
         }
+        // Callers loop until -1 (Buffer.transferFrom), so passing 0 on would spin them forever.
+        if (n == 0) throw IOException("Read made no progress at $position")
         position += n
         return n.toLong()
     }
 
-    override fun close() = Unit
+    override fun close() {
+        closed = true
+    }
 }

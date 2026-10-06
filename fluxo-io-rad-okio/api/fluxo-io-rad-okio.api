@@ -1,5 +1,6 @@
 public final class fluxo/io/rad/okio/RadOkio {
 	public static final fun open (Lfluxo/io/rad/RandomAccessData$Companion;Lokio/FileHandle;)Lfluxo/io/rad/RandomAccessData;
+	public static final fun source (Lfluxo/io/rad/RandomAccessData;)Lokio/Source;
 	public static final fun source (Lfluxo/io/rad/RandomAccessData;J)Lokio/Source;
 	public static synthetic fun source$default (Lfluxo/io/rad/RandomAccessData;JILjava/lang/Object;)Lokio/Source;
 }

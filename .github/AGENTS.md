@@ -43,7 +43,8 @@ tests only on its own host OS, so Apple families get two macOS jobs.
   the first job saved, and the other shard redid its own part every run
   (macOS: ~20 s of `commonizeNativeDistribution` per module). No
   `restore-keys`: a prefix fallback would carry old Kotlin toolchains forward.
-  Windows keeps them on D: (`KONAN_DATA_DIR`); extraction to C: was slow.
+  Windows keeps them and the Gradle home on D: (`KONAN_DATA_DIR`,
+  `GRADLE_USER_HOME`); extraction to C: was slow.
   `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
   `if: always()`: an actions/cache step saves only on success, so cold native
   jobs that time out would never warm it. Step and job timeouts only bound

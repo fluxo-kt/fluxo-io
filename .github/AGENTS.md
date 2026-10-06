@@ -27,8 +27,7 @@ macOS jobs.
   `--no-build-cache`: CodeQL extracts Kotlin only from compiles it sees, so a
   commit that leaves Kotlin sources unchanged (compile FROM-CACHE) fails it.
   The Lint SARIF upload runs only if `build/lint-merged.sarif` exists.
-- `api` (unfiltered): `apiCheck detektAll detektCommonTestSourceSet
-  mergeDetektSarif` — the only job that
+- `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
   checks klib ABI and lints every source set.
 - `web`, `linux`, `mingw`, `macos`, `ios`, `tvos`, `watchos`: `allTests assemble
   -x jvmTest` for their family. `JVM` stays in every filter (fluxo-bcv-js

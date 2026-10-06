@@ -16,9 +16,13 @@ case "$kotlin" in
   *) floor="${kotlin%.*}.0" ;;
 esac
 
-./gradlew publishToMavenLocal -Pfluxo.unsignedLocalPublish=true --no-configuration-cache "$@"
+# An unsigned local build must never reach the real ~/.m2: any project on this machine that
+# resolves mavenLocal() would take it instead of the published artifact. Gradle reads
+# maven.repo.local for both publishing and mavenLocal() resolution.
+local_m2="$PWD/build/consumer-check-m2"
+./gradlew publishToMavenLocal -Pfluxo.unsignedLocalPublish=true --no-configuration-cache "-Dmaven.repo.local=$local_m2" "$@"
 
-repo="${HOME}/.m2/repository/io/github/fluxo-kt"
+repo="$local_m2/io/github/fluxo-kt"
 modules=$(find "$repo" -path "*/fluxo-io-rad*/$version/*.module")
 test -n "$modules"
 # A pre-release coordinate in published metadata would force consumers onto a Beta/RC
@@ -29,5 +33,8 @@ if grep -E -n '"(version|requires|strictly|prefers)": *"[^"]*-(Beta|RC|dev|M)[0-
   exit 1
 fi
 
+# The library changes under one version string, and the consumer's Kotlin incremental caches do
+# not survive that (Kotlin/Wasm linking failed with an internal compiler error), so start clean.
+rm -rf compat/consumer/build compat/consumer/.kotlin
 # The yarn lock store is bookkeeping for a committed lock file; this throwaway consumer has none.
-./gradlew -p compat/consumer check -x kotlinStoreYarnLock -PfluxoIoVersion="$version" -PconsumerKotlin="$floor"
+./gradlew -p compat/consumer check -x kotlinStoreYarnLock "-Dmaven.repo.local=$local_m2" -PfluxoIoVersion="$version" -PconsumerKotlin="$floor"

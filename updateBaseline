@@ -15,7 +15,8 @@ VERIFICATION_BASELINE_TASKS="dependencyGuardBaseline"
 COMMON_TASKS="${BASELINE_TASKS} --continue -Dlint.baselines.continue=true"
 # publishToMavenLocal runs only to resolve publication-only dependencies (Dokka, javadoc jars) into
 # the verification metadata; signatures are irrelevant, and a non-SNAPSHOT version demands a key.
-GRADLE_BASE_ARGS="--no-daemon --no-configuration-cache -Pfluxo.unsignedLocalPublish=true"
+# That unsigned build goes to a repo under build/, never the real ~/.m2 that other projects resolve.
+GRADLE_BASE_ARGS="--no-daemon --no-configuration-cache -Pfluxo.unsignedLocalPublish=true -Dmaven.repo.local=${PWD}/build/update-baseline-m2"
 VERIFY_TASKS="help kotlinUpgradeYarnLock"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileKotlinJvm"
 VERIFY_TASKS="${VERIFY_TASKS} :fluxo-io-rad:compileAndroidMain"

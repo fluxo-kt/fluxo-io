@@ -290,7 +290,9 @@ Code JARs stay **checksum-verified**.
 - Passes `-Pfluxo.unsignedLocalPublish=true`: its `publishToMavenLocal`
   only resolves publication dependencies, and a non-SNAPSHOT version
   otherwise fails at `sign*Publication` on any keyless machine or job
-  (`pr-baseline.yml` has no signing secrets).
+  (`pr-baseline.yml` has no signing secrets). That unsigned build goes to
+  `build/update-baseline-m2` (`-Dmaven.repo.local`), never the real `~/.m2`
+  that other projects' `mavenLocal()` resolves.
 
 ## Repository policy enforcement
 

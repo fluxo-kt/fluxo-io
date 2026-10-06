@@ -171,3 +171,21 @@ internal fun Long.normIn(min: Long, max: Long) =
 
 
 internal const val MAX_INT_LONG = Int.MAX_VALUE.toLong()
+
+/**
+ * Runs [block] with a resource a factory has just opened; closes it if [block] throws (e.g. on a
+ * bad offset or size), since no handle exists yet to close it later.
+ */
+internal inline fun <C : AutoCloseable, R> C.closeOnFailure(block: (C) -> R): R {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return try {
+        block(this)
+    } catch (e: Throwable) {
+        try {
+            close()
+        } catch (closeFailure: Throwable) {
+            e.addSuppressed(closeFailure)
+        }
+        throw e
+    }
+}

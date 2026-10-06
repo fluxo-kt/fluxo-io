@@ -6,6 +6,7 @@ package fluxo.io.rad
 
 import androidx.annotation.RequiresApi
 import fluxo.io.internal.Blocking
+import fluxo.io.util.closeOnFailure
 import java.io.File
 import java.nio.channels.AsynchronousFileChannel
 
@@ -58,4 +59,6 @@ public fun RadAsyncFileChannelAccessor(
     data: File,
     offset: Long = 0L,
     size: Long = data.length() - offset,
-): RandomAccessData = AsyncFileChannelRad(data, offset = offset, size = size)
+): RandomAccessData = AsynchronousFileChannel.open(data.toPath()).closeOnFailure {
+    AsyncFileChannelRad(it, offset = offset, size = size)
+}

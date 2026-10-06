@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.closeOnFailure
 import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
@@ -76,7 +77,9 @@ public fun RadFileChannelAccessor(
     data: File,
     offset: Long = 0L,
     size: Long = -1L,
-): RandomAccessData = RadFileChannelAccessor(FileInputStream(data), offset = offset, size = size)
+): RandomAccessData = FileInputStream(data).closeOnFailure {
+    RadFileChannelAccessor(it, offset = offset, size = size)
+}
 
 /**
  * Creates a new [FileChannel]-based [RandomAccessData] instance

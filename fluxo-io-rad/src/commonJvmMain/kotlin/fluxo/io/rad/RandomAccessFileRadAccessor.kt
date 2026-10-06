@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.closeOnFailure
 import fluxo.io.util.checkOffsetAndCount
 import java.io.File
 import java.io.FileNotFoundException
@@ -62,5 +63,6 @@ public fun RandomAccessFileRadAccessor(
     data: File,
     offset: Long = 0L,
     size: Long = -1L,
-): RandomAccessData =
-    RandomAccessFileRadAccessor(RandomAccessFile(data, "r"), offset = offset, size = size)
+): RandomAccessData = RandomAccessFile(data, "r").closeOnFailure {
+    RandomAccessFileRadAccessor(it, offset = offset, size = size)
+}

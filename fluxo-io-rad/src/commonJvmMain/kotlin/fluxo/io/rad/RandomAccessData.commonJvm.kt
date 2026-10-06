@@ -7,6 +7,7 @@ import fluxo.io.IOException
 import fluxo.io.internal.Blocking
 import fluxo.io.internal.InternalFluxoIoApi
 import fluxo.io.internal.ThreadSafe
+import fluxo.io.util.closeOnFailure
 import java.io.Closeable
 import java.io.File
 import java.io.FileInputStream
@@ -282,11 +283,7 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
         }
 
         /** Takes over [channel]: closed here if setup fails, else by the last handle. */
-        private fun openChannel(channel: FileChannel): RandomAccessData = try {
-            RadFileChannelAccessor(channel)
-        } catch (e: Throwable) {
-            channel.close()
-            throw e
-        }
+        private fun openChannel(channel: FileChannel): RandomAccessData =
+            channel.closeOnFailure { RadFileChannelAccessor(it) }
     }
 }

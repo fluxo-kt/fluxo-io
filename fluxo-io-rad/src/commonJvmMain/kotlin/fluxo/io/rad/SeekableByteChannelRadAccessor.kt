@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.closeOnFailure
 import fluxo.io.util.checkOffsetAndCount
 import java.io.File
 import java.io.FileDescriptor
@@ -91,8 +92,9 @@ public fun RadSeekableByteChannelAccessor(
     data: File,
     offset: Long = 0L,
     size: Long = -1L,
-): RandomAccessData =
-    RadSeekableByteChannelAccessor(FileInputStream(data), offset = offset, size = size)
+): RandomAccessData = FileInputStream(data).closeOnFailure {
+    RadSeekableByteChannelAccessor(it, offset = offset, size = size)
+}
 
 /**
  * Creates a new [SeekableByteChannel]-based [RandomAccessData] instance

@@ -10,7 +10,6 @@ import fluxo.io.nio.aRead
 import fluxo.io.nio.limitCompat
 import fluxo.io.rad.AsyncFileChannelRad.AsyncFileChannelAccess
 import fluxo.io.util.checkPosOffsetAndMaxLength
-import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
@@ -52,14 +51,6 @@ private constructor(
         offset: Long,
         size: Long,
     ) : this(AsyncFileChannelAccess(channel), offset, size)
-
-    /**
-     * Create a new [AsyncFileChannelRad]
-     * backed by the channel for specified [file].
-     * @param file the underlying file
-     */
-    constructor(file: File, offset: Long, size: Long) :
-        this(AsynchronousFileChannel.open(file.toPath()), offset, size)
 
 
     override val hasNativeBufferRead: Boolean get() = true

@@ -5,6 +5,7 @@
 package fluxo.io.rad
 
 import fluxo.io.internal.Blocking
+import fluxo.io.util.closeOnFailure
 import fluxo.io.util.checkOffsetAndCount
 import fluxo.io.util.toIntChecked
 import java.io.File
@@ -147,9 +148,10 @@ public fun RadByteBufferAccessor(
     offset: Long = 0L,
     size: Int = -1,
 ): RandomAccessData {
-    val stream = FileInputStream(data)
-    val channel = stream.channel
-    return byteBufferMmapRad0(channel, offset = offset, size = size, channel, stream)
+    return FileInputStream(data).closeOnFailure { stream ->
+        val channel = stream.channel
+        byteBufferMmapRad0(channel, offset = offset, size = size, channel, stream)
+    }
 }
 
 /**

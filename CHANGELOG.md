@@ -86,6 +86,8 @@ Central; its changes ship here.
   slice queried the file size); the size is now read once at open.
 - Closing still closes the `resources` passed to a factory when releasing the
   main resource fails.
+- Android: `Rad.forSeekableByteChannel` is marked `@RequiresApi(24)`; below API 24
+  `SeekableByteChannel` does not exist, so calling it crashed.
 
 
 ## [0.1.0] - 2024-11-26

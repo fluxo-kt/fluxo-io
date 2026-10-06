@@ -4,6 +4,7 @@
 
 package fluxo.io.rad
 
+import androidx.annotation.RequiresApi
 import fluxo.io.internal.Blocking
 import fluxo.io.util.closeOnFailure
 import fluxo.io.util.checkOffsetAndCount
@@ -31,6 +32,7 @@ import java.nio.channels.SeekableByteChannel
  * @see jdk.nio.zipfs.ByteArrayChannel
  */
 @Blocking
+@RequiresApi(24)
 @JvmOverloads
 @JvmName("forSeekableByteChannel")
 public fun RadSeekableByteChannelAccessor(
@@ -60,6 +62,7 @@ public fun RadSeekableByteChannelAccessor(
  * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
+@RequiresApi(24)
 @JvmOverloads
 @JvmName("forSeekableByteChannel")
 public fun RadSeekableByteChannelAccessor(
@@ -86,6 +89,7 @@ public fun RadSeekableByteChannelAccessor(
  * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
+@RequiresApi(24)
 @JvmOverloads
 @JvmName("forSeekableByteChannel")
 public fun RadSeekableByteChannelAccessor(
@@ -111,6 +115,7 @@ public fun RadSeekableByteChannelAccessor(
  * @param size the optional length of the section. -1 means the rest of the file.
  */
 @Blocking
+@RequiresApi(24)
 @JvmOverloads
 @JvmName("forSeekableByteChannel")
 public fun RadSeekableByteChannelAccessor(

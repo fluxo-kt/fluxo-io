@@ -79,6 +79,12 @@ jobs:
               exit 1
               ;;
           esac
+          # The GitHub release job needs this section for its notes; checked here because that
+          # job runs only after the artifacts are already staged on Central.
+          if ! awk -v h="## [$version]" 'index($0, h) == 1 { f = 1 } END { exit !f }' CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$version]' section; finalize it before tagging."
+            exit 1
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Verify release build

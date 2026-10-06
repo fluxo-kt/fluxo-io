@@ -193,6 +193,10 @@ public expect interface RandomAccessData : AutoCloseable {
     @Deprecated(
         "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
             "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        ReplaceWith(
+            "asAsync(Dispatchers.Default).read(buffer, position, offset, maxLength)",
+            "kotlinx.coroutines.Dispatchers",
+        ),
         level = DeprecationLevel.ERROR,
     )
     public suspend fun readAsync(
@@ -231,6 +235,10 @@ public expect interface RandomAccessData : AutoCloseable {
     @Deprecated(
         "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
             "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        ReplaceWith(
+            "asAsync(Dispatchers.Default).readFully(buffer, position, offset, maxLength)",
+            "kotlinx.coroutines.Dispatchers",
+        ),
         level = DeprecationLevel.ERROR,
     )
     public suspend fun readFullyAsync(

@@ -13,8 +13,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * while its handle is open. A closed handle (and every slice of it) throws [IOException].
  *
  * Get one from any [RandomAccessData] with [asAsync]. A read already started cannot be
- * aborted (no OS or runtime offers that for positional file reads); cancellation takes
- * effect when the read returns.
+ * aborted (no OS or runtime offers that for positional file reads): a cancelled caller still
+ * waits for it, then sees the cancellation at its next cancellable suspension point.
  */
 @ThreadSafe
 @SubclassOptInRequired(InternalFluxoIoApi::class)

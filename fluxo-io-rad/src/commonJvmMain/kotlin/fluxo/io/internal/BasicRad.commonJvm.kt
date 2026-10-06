@@ -11,6 +11,7 @@ import fluxo.io.rad.InputStreamFromRad
 import fluxo.io.rad.RandomAccessData
 import fluxo.io.util.MAX_BYTE
 import fluxo.io.util.readAllBytesImpl
+import fluxo.io.util.readFully0
 import fluxo.io.util.readFullyImpl
 import java.io.EOFException
 import java.io.InputStream
@@ -136,7 +137,14 @@ internal actual constructor(owner: RadHandle?) : RadHandle(owner) {
     )
     actual final override suspend fun readFullyAsync(
         buffer: ByteArray, position: Long, offset: Int, maxLength: Int,
-    ): Int = readFully(buffer, position, offset, maxLength)
+    ): Int {
+        ensureOpen()
+        // Loops over readAsync0, not readFully: AsyncFileChannelRad's readAsync0 really suspends,
+        // and binaries compiled against 0.1.0 still call this.
+        return readFully0(size, buffer, position, offset, maxLength) { pos, offs, len ->
+            readAsync0(buffer, pos, offs, len)
+        }
+    }
 
 
     @Blocking

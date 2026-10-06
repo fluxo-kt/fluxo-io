@@ -174,8 +174,14 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.nio.channels.AsynchronousByteChannel.read
      */
     @Deprecated(
-        "Suspends but blocks the calling thread for the whole read. Use asAsync(dispatcher), " +
-            "e.g. rad.asAsync(Dispatchers.IO).read(…).",
+        "Suspends but blocks the calling thread for the whole read. " +
+            "Use withContext(Dispatchers.IO) { read(buffer, position) }.",
+        // AsyncRandomAccessData has no ByteBuffer read: run the blocking one on an IO thread.
+        ReplaceWith(
+            "withContext(Dispatchers.IO) { read(buffer, position) }",
+            "kotlinx.coroutines.Dispatchers",
+            "kotlinx.coroutines.withContext",
+        ),
         level = DeprecationLevel.ERROR,
     )
     @JvmSynthetic

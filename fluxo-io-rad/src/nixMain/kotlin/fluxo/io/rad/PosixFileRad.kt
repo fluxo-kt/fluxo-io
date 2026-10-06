@@ -18,9 +18,10 @@ import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
 import platform.posix.EINTR
 import platform.posix.O_CLOEXEC
+import platform.posix.O_NONBLOCK
 import platform.posix.O_RDONLY
-import platform.posix.S_IFDIR
 import platform.posix.S_IFMT
+import platform.posix.S_IFREG
 import platform.posix.close
 import platform.posix.errno
 import platform.posix.fstat
@@ -33,10 +34,12 @@ import platform.posix.strerror
 /**
  * Opens [path] on Apple, Linux and Android Native with POSIX calls: one `pread` per read, which
  * takes its own offset, so concurrent reads on one descriptor need no lock and no seek.
- * `O_CLOEXEC` keeps the descriptor out of child processes.
+ * `O_CLOEXEC` keeps the descriptor out of child processes. `O_NONBLOCK` only stops the open
+ * of a FIFO from waiting for a writer (it has no effect on regular-file reads), so the
+ * regular-file check can reject it.
  */
 internal actual fun openPlatformFile(path: String): RandomAccessData {
-    val fd = open(path, O_RDONLY or O_CLOEXEC)
+    val fd = open(path, O_RDONLY or O_CLOEXEC or O_NONBLOCK)
     if (fd < 0) {
         throw IOException("Cannot open $path: ${lastError()}")
     }
@@ -53,9 +56,11 @@ private fun fileSize(fd: Int, path: String): Long = memScoped {
     if (fstat(fd, st.ptr) != 0) {
         throw IOException("Cannot stat $path: ${lastError()}")
     }
-    // open(O_RDONLY) succeeds on a directory; reading it would fail later with EISDIR.
-    if ((st.st_mode.toInt() and S_IFMT) == S_IFDIR) {
-        throw IOException("Cannot open $path: is a directory")
+    // Only a regular file has a fixed size to read at positions: open succeeds on a directory
+    // (reads fail with EISDIR), a FIFO or socket cannot pread, and /proc or device files report
+    // size 0, so their data would silently read as empty.
+    if ((st.st_mode.toInt() and S_IFMT) != S_IFREG) {
+        throw IOException("Cannot open $path: not a regular file")
     }
     st.st_size.convert()
 }

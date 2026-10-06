@@ -3,6 +3,7 @@ package fluxo.io
 import kotlin.test.Test
 import org.jetbrains.lincheck.datastructures.ModelCheckingOptions
 import org.jetbrains.lincheck.datastructures.Operation
+import org.jetbrains.lincheck.datastructures.Validate
 
 internal class SharedCloseableLincheckTest {
     private val closeable = LincheckCloseable()
@@ -36,9 +37,6 @@ internal class SharedCloseableLincheckTest {
     }
 
     @Operation
-    fun isOpen(): Boolean = closeable.isOpen
-
-    @Operation
     fun access(): Boolean =
         try {
             closeable.withLease { closeable.touch(); true }
@@ -46,31 +44,63 @@ internal class SharedCloseableLincheckTest {
             false
         }
 
+    @Validate
+    fun noViolation() = check(closeable.violation == null) { closeable.violation!! }
+
     @Test
     fun modelCheckingTest() {
         ModelCheckingOptions()
-            .actorsBefore(0)
-            .actorsPerThread(2)
-            .actorsAfter(0)
-            // 2 threads x 2 operations over 7 operations is a small scenario space; the default
-            // 10k invocations per iteration re-explored the same interleavings for minutes.
-            // At this budget a planted "lease granted after the last close" defect still fails
-            // within seconds; the remaining run time is Lincheck's fixed instrumentation cost.
-            .iterations(10)
+            // Most of the run is Lincheck's fixed instrumentation cost; each random scenario adds
+            // more, so the races the lease exists for are named instead of left to random
+            // generation: a read racing the last close, the last two owners closing at once, a
+            // retain racing the last close, and listeners changing during it.
+            .addCustomScenario {
+                parallel {
+                    thread { actor(::close) }
+                    thread { actor(::access) }
+                }
+            }
+            .addCustomScenario {
+                initial { actor(::retain) }
+                parallel {
+                    thread { actor(::close); actor(::access) }
+                    thread { actor(::close); actor(::access) }
+                }
+            }
+            .addCustomScenario {
+                parallel {
+                    thread { actor(::retain); actor(::access) }
+                    thread { actor(::close) }
+                }
+            }
+            .addCustomScenario {
+                parallel {
+                    thread {
+                        actor(::addOnSharedCloseListener)
+                        actor(::removeOnSharedCloseListener)
+                    }
+                    thread { actor(::close) }
+                }
+            }
+            .iterations(0)
             .invocationsPerIteration(200)
             .check(this::class)
     }
 
     private class LincheckCloseable : SharedCloseable() {
         private var released = false
+        var violation: String? = null
 
         // A second release, or an access that runs after it, is the bug class the lease exists
-        // to make impossible; failing here turns it into a Lincheck counterexample.
+        // to make impossible. It is recorded, not thrown: Lincheck compares results with a
+        // sequential run of this same code, where a thrown violation is an ordinary result.
         override fun onSharedClose() {
-            check(!released) { "released twice" }
+            if (released) violation = "released twice"
             released = true
         }
 
-        fun touch() = check(!released) { "access after release" }
+        fun touch() {
+            if (released) violation = "access after release"
+        }
     }
 }

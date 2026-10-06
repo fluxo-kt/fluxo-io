@@ -1,3 +1,6 @@
+// The js() helpers below use their parameters inside the JS string, where detekt cannot see them.
+@file:Suppress("UnusedParameter")
+
 package fluxo.io.rad
 
 import fluxo.io.IOException

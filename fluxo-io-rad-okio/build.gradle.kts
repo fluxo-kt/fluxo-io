@@ -28,6 +28,8 @@ fkcSetupMultiplatform(
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmWasi { target { nodejs() } }
         allDefaultTargets(android = false, js = false, wasm = false, wasmWasi = false)
+        // The default groups skip deprecated x64 Apple targets; published until the Kotlin 2.5 switch.
+        iosX64(); macosX64(); tvosX64(); watchosX64()
     },
 ) {
     common.main.dependencies {

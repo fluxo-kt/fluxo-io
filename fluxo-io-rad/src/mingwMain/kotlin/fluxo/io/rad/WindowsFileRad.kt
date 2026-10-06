@@ -112,7 +112,7 @@ private class HandleAccess(
             memScoped {
                 val overlapped = alloc<OVERLAPPED>()
                 overlapped.Offset = position.toUInt()
-                overlapped.OffsetHigh = (position ushr 32).toUInt()
+                overlapped.OffsetHigh = (position ushr Int.SIZE_BITS).toUInt()
                 val read = alloc<DWORDVar>()
                 val ok = bytes.usePinned { pinned ->
                     ReadFile(

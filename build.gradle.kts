@@ -156,17 +156,6 @@ subprojects {
         }
     }
 
-    // fluxo-kmp-conf links and runs every native test suite a second time on a worker thread
-    // (`-trw`). That run finds only code bound to the main thread or to thread-local state, and
-    // this library has neither, while it doubles native link and test time, the slowest CI work.
-    // `onlyIf`, not `enabled = false`: the Kotlin plugin sets `enabled` on these tasks after this
-    // action runs, which would silently turn them back on.
-    tasks.matching {
-        it.name.startsWith("linkBackgroundDebugTest") || it.name.endsWith("BackgroundTest")
-    }.configureEach {
-        onlyIf("the worker-thread native test run is disabled in the root build script") { false }
-    }
-
     // On an arm64 host (the macOS CI runners, Apple Silicon Macs) the Kotlin plugin skips every
     // x64 native test, having no x64 host or simulator to run it, yet still links its test binary.
     // Nothing runs that binary, so the link only costs time; `assemble` still compiles the shipped

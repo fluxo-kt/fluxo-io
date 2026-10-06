@@ -34,15 +34,14 @@ jobs:
       # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
       # host per family keeps the slow Apple toolchains in parallel jobs.
       # `JVM` stays in every filter: fluxo-bcv-js 1.1.0 fails configuration without it.
-      # Filtered builds skip `mergeDetektSarif` (fluxo-kmp-conf 0.15.1 fails to build its task
-      # graph under KMP_TARGETS) and `klibApiCheck` (a filtered klib dump lacks the other targets,
-      # so it always differs); the unfiltered `api` job checks every ABI and merges SARIF.
+      # Filtered builds skip `klibApiCheck` (a filtered klib dump lacks the other targets, so it
+      # always differs); the unfiltered `api` job checks every ABI and merges SARIF.
       matrix:
         include:
           # No build cache here: CodeQL extracts Kotlin only from compiler runs it observes, so a
           # compile restored from cache leaves it nothing to analyse and fails the job.
           - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog --no-build-cache' }
-          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif', konan: true }
+          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll detektCommonTestSourceSet mergeDetektSarif', konan: true }
           - { shard: web, os: ubuntu-24.04, targets: 'JVM,COMMON_JS', tasks: 'allTests assemble -x jvmTest' }
           - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest', konan: true }
           - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest', konan: true }
@@ -167,7 +166,7 @@ jobs:
           TEST_JDK: ${{ matrix.jdk }}
         run: |
           read -r -a args <<< "$TASKS"
-          if [ -n "$KMP_TARGETS" ]; then args+=(-x mergeDetektSarif -x klibApiCheck); fi
+          if [ -n "$KMP_TARGETS" ]; then args+=(-x klibApiCheck); fi
           # Gradle finds the test JDK through the variable setup-java exports for it.
           if [ -n "$TEST_JDK" ]; then
             args+=("-Pfluxo.testJdk=$TEST_JDK" "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_${TEST_JDK}_X64")

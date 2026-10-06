@@ -27,7 +27,7 @@ import kotlin.jvm.JvmName
  *  then block whichever thread resumes the caller
  */
 public fun RandomAccessData.asAsync(blockingContext: CoroutineContext): AsyncRandomAccessData {
-    require(blockingContext[ContinuationInterceptor] != null) {
+    requireNotNull(blockingContext[ContinuationInterceptor]) {
         "asAsync needs a dispatcher to run blocking reads on, e.g. asAsync(Dispatchers.IO); " +
             "got $blockingContext"
     }

@@ -37,28 +37,28 @@ internal class RadAccessLeaseTest {
     fun closedAccessorsRefuseEveryRead() {
         val calls = buildMap<String, () -> Any> {
             FileChannelRad.FileChannelAccess(channel(), emptyArray()).closed().let {
-                put("FileChannel.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) }
-                put("FileChannel.read(buffer)") { it.read(ByteBuffer.allocate(1), 0) }
-                put("FileChannel.transferTo") { it.transferTo(0, 1, sink()) }
+                this["FileChannel.read(bytes)"] = { it.read(ByteArray(1), 0, 0, 1) }
+                this["FileChannel.read(buffer)"] = { it.read(ByteBuffer.allocate(1), 0) }
+                this["FileChannel.transferTo"] = { it.transferTo(0, 1, sink()) }
             }
             ByteBufferRad.ByteBufferAccess(ByteBuffer.allocate(16), emptyArray()).closed().let {
-                put("ByteBuffer.readByteAt") { it.readByteAt(0) }
-                put("ByteBuffer.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) }
-                put("ByteBuffer.read(buffer)") { it.read(ByteBuffer.allocate(1), 0) }
-                put("ByteBuffer.transferTo") { it.transferTo(0, 1, sink()) }
+                this["ByteBuffer.readByteAt"] = { it.readByteAt(0) }
+                this["ByteBuffer.read(bytes)"] = { it.read(ByteArray(1), 0, 0, 1) }
+                this["ByteBuffer.read(buffer)"] = { it.read(ByteBuffer.allocate(1), 0) }
+                this["ByteBuffer.transferTo"] = { it.transferTo(0, 1, sink()) }
             }
             SeekableByteChannelRad.SeekableChannelAccess(channel(), emptyArray()).closed().let {
-                put("Seekable.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) }
-                put("Seekable.read(buffer)") { it.read(ByteBuffer.allocate(1), 0) }
+                this["Seekable.read(bytes)"] = { it.read(ByteArray(1), 0, 0, 1) }
+                this["Seekable.read(buffer)"] = { it.read(ByteBuffer.allocate(1), 0) }
             }
             // These own their resource, so a missing lease fails with the resource's own error.
             RandomAccessFileRad.RafAccess(RandomAccessFile(file, "r")).closed().let {
-                put("Raf.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) }
-                put("Raf.readByte") { it.readByte(0) }
+                this["Raf.read(bytes)"] = { it.read(ByteArray(1), 0, 0, 1) }
+                this["Raf.readByte"] = { it.readByte(0) }
             }
             AsyncFileChannelRad.AsyncFileChannelAccess(AsynchronousFileChannel.open(file.toPath()))
                 .closed()
-                .let { put("AsyncFileChannel.read(bytes)") { it.read(ByteArray(1), 0, 0, 1) } }
+                .let { this["AsyncFileChannel.read(bytes)"] = { it.read(ByteArray(1), 0, 0, 1) } }
         }
         val unleased = calls.filter { (_, call) ->
             val e = try {

@@ -49,6 +49,10 @@ naming:
     active: false
 
 style:
+  # Java interop (CompletionHandler<Void, A>) requires Void in overrides and type arguments.
+  ForbiddenVoid:
+    ignoreOverridden: true
+    ignoreUsageInGenerics: true
   ForbiddenComment:
     excludes: [ '**/*Test/**' ]
   LoopWithTooManyJumpStatements:
@@ -67,7 +71,7 @@ style:
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview']
 
-formatting:
+ktlint:
   ArgumentListWrapping:
     maxLineLength: 100
   BlockCommentInitialStarAlignment:

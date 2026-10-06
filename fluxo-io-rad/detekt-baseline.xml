@@ -2,11 +2,11 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ForbiddenComment:AsyncFileChannelRad.kt$// TODO: Avoid runBlocking usage, block without coroutine suspension (use Semaphore?)</ID>
-    <ID>ForbiddenComment:RandomAccessDataInputStream.kt$RandomAccessDataInputStream$// TODO: Can it cause Int overflow?</ID>
-    <ID>ForbiddenComment:RandomAccessFileRad.kt$// TODO: Try to avoiding the excessive `filePointer` usages.</ID>
-    <ID>ForbiddenComment:ReflectionUtils.kt$// TODO: Complex search as for dynamic methods ?</ID>
-    <ID>ForbiddenComment:StreamFactoryRad.kt$// FIXME: Use own BufferedInputStream heir to gain better random access performance?</ID>
-    <ID>UnnecessaryAbstractClass:AbstractRandomAccessDataTest.kt$AbstractRandomAccessDataTest$AbstractRandomAccessDataTest</ID>
+    <ID>AbstractClassCanBeConcreteClass:AbstractRandomAccessDataTest.kt:AbstractRandomAccessDataTest$AbstractRandomAccessDataTest</ID>
+    <ID>ForbiddenComment:AsyncFileChannelRad.kt:// TODO: Avoid runBlocking usage, block without coroutine suspension (use Semaphore?)</ID>
+    <ID>ForbiddenComment:RandomAccessDataInputStream.kt:RandomAccessDataInputStream$// TODO: Can it cause Int overflow?</ID>
+    <ID>ForbiddenComment:RandomAccessFileRad.kt:// TODO: Try to avoiding the excessive `filePointer` usages.</ID>
+    <ID>ForbiddenComment:ReflectionUtils.kt:// TODO: Complex search as for dynamic methods ?</ID>
+    <ID>ForbiddenComment:StreamFactoryRad.kt:// FIXME: Use own BufferedInputStream heir to gain better random access performance?</ID>
   </CurrentIssues>
 </SmellBaseline>

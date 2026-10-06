@@ -30,8 +30,8 @@ macOS jobs.
 - `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
   checks klib ABI and lints every source set.
 - `web`, `linux`, `mingw`, `macos`, `ios`, `tvos`, `watchos`: `allTests assemble
-  -x jvmTest` for their family. `JVM` stays in every filter (fluxo-bcv-js
-  1.1.0 fails configuration without it).
+  -x jvmTest` for their family. `JVM` stays in every filter (Android host tests
+  resolve `:conformance-test` through its JVM variant).
 - `jdk17`, `jdk25`: `jvmTest` on that JDK via `-Pfluxo.testJdk` (root
   `build.gradle.kts`); Gradle itself runs on 21. 17 is the bytecode floor,
   where `-Xjdk-release` checks the API but nothing ran the code.

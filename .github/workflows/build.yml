@@ -33,7 +33,7 @@ jobs:
       # the slow toolchains in parallel.
       # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
       # host per family keeps the slow Apple toolchains in parallel jobs.
-      # `JVM` stays in every filter: fluxo-bcv-js 1.1.0 fails configuration without it.
+      # `JVM` stays in every filter: Android host tests resolve `:conformance-test` through its JVM variant.
       # Filtered builds skip `klibApiCheck` (a filtered klib dump lacks the other targets, so it
       # always differs); the unfiltered `api` job checks every ABI and merges SARIF.
       matrix:

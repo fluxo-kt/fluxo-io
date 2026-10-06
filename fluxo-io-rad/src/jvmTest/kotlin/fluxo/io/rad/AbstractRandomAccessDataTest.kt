@@ -421,21 +421,22 @@ internal abstract class AbstractRandomAccessDataTest(
             }
         }
 
-        for (buffer in arrayOf(
+        // The same bytes 2..4 from position 2, and through a slice whose section starts at 1.
+        for ((source, position) in listOf(rad to 2L, rad.slice(1, 9) to 1L)) for (buffer in arrayOf(
             ByteBuffer.wrap(ByteArray(3)),
             // A heap slice: its view starts at arrayOffset 5 of the backing array.
             ByteBuffer.wrap(ByteArray(8), 5, 3).slice(),
             ByteBuffer.allocateDirect(3),
         )) {
             try {
-                val read = rad.read(buffer, 2)
+                val read = source.read(buffer, position)
                 assertEquals(3, read)
                 assertEquals(3, buffer.capacity())
                 assertEquals(3, buffer.position())
                 assertEquals(3, buffer.limit())
                 assertEquals(EMPTY_BYTE_ARRAY, buffer.toArray())
                 buffer.flipCompat()
-                assertEquals(byteArrayOf(2, 3, 4), buffer.toArray())
+                assertEquals(byteArrayOf(2, 3, 4), buffer.toArray(), "$position $buffer")
             } finally {
                 buffer.releaseCompat()
             }

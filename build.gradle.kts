@@ -165,6 +165,18 @@ subprojects {
         onlyIf("the worker-thread native test run is disabled in the root build script") { false }
     }
 
+    // On an arm64 host (the macOS CI runners, Apple Silicon Macs) the Kotlin plugin skips every
+    // x64 native test, having no x64 host or simulator to run it, yet still links its test binary.
+    // Nothing runs that binary, so the link only costs time; `assemble` still compiles the shipped
+    // x64 klibs.
+    if (System.getProperty("os.arch") == "aarch64") {
+        tasks.matching {
+            it.name.startsWith("linkDebugTest") && it.name.endsWith("X64")
+        }.configureEach {
+            onlyIf("x64 native tests cannot run on an arm64 host") { false }
+        }
+    }
+
     // `-Pfluxo.testJdk=<N>` runs JVM tests on JDK N while the build itself stays on its own JDK.
     // `-Xjdk-release` already limits the API to the bytecode floor (17); only running the tests
     // there shows runtime differences (buffer methods, cleaners, Unsafe) on the oldest and the

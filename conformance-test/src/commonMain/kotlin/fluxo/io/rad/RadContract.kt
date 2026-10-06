@@ -302,6 +302,8 @@ public object RadContract {
         assertIOB(d) { rad.read(ba8, -100, maxLength = 1) }
         assertContentEquals(ByteArray(8), ba8, "$d: rejected reads must not write")
 
+        // Exact counts: the spec allows a short `read`, but these ranges are far below any
+        // source's per-call cap, so a short count here means a lost byte, not a cap.
         var ba = ByteArray(sizeInt)
         assertEquals(sizeInt, rad.read(ba, 0L, maxLength = sizeInt), d)
         assertContentEquals(BYTES.copyOf(sizeInt), ba, d)

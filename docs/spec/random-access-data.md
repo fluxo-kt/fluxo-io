@@ -17,8 +17,8 @@ Positions in a slice are relative to the slice. "Bounds error" means the platfor
 | Operation | Result |
 |---|---|
 | `readFrom(position, maxLength)` | a new array of `min(maxLength, size - position)` bytes; empty when `position == size` or `maxLength == 0` |
-| `read(buffer, position, offset, maxLength)` | `-1` when `position >= size` (checked first, even for an empty buffer); otherwise the count of bytes copied into `buffer` at `offset`: `min(maxLength, buffer.size - offset, size - position)`, which may be 0 |
-| `readFully(...)` | same arguments and results as `read`, but never returns fewer bytes than are available |
+| `read(buffer, position, offset, maxLength)` | `-1` when `position >= size` (checked first, even for an empty buffer); otherwise the count of bytes copied into `buffer` at `offset`: at most `n = min(maxLength, buffer.size - offset, size - position)` and at least 1 when `n > 0` (a source may cap one call, e.g. 64 KiB on Wasm), 0 only when `n == 0` |
+| `readFully(...)` | same arguments as `read`; returns exactly `n` (-1 past the end), looping over short reads |
 | `readAllBytes()` | the whole range |
 
 - A negative position, a `position > size` for `readFrom`, a negative `maxLength`, or an `offset` outside `[0, buffer.size]` is a bounds error. Positions that do not fit 32 bits behave by their 64-bit value, never truncated.

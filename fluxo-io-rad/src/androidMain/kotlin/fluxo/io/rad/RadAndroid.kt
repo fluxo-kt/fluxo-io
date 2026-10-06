@@ -17,7 +17,8 @@ import java.io.InputStream
  * attempted to find out.
  *
  * No device test: this file is glue over the FileChannel and ByteArray implementations that
- * the JVM and common tests already cover; the only Android-specific logic is that branch.
+ * the JVM and common tests already cover. The Android-specific parts are that branch and which
+ * stream an asset is read through (see `open(afd)`), both checked against AOSP sources only.
  */
 
 /**
@@ -48,7 +49,11 @@ public fun RandomAccessData.Companion.open(pfd: ParcelFileDescriptor): RandomAcc
 @Blocking
 @Throws(IOException::class)
 public fun RandomAccessData.Companion.open(afd: AssetFileDescriptor): RandomAccessData {
-    val stream = afd.createInputStream()
+    // Not afd.createInputStream(): since Android 15 its channel reports the asset's length as
+    // size() while still reading at absolute file positions, so any asset with startOffset > 0
+    // would fail the bounds check. The descriptor's own stream sees the whole file on every
+    // version, and its close closes the same descriptor.
+    val stream = ParcelFileDescriptor.AutoCloseInputStream(afd.parcelFileDescriptor)
     if (afd.parcelFileDescriptor.statSize < 0) {
         return readIntoMemory(stream)
     }

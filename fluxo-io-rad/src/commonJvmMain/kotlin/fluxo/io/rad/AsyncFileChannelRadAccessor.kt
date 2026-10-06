@@ -17,6 +17,7 @@ import java.nio.channels.AsynchronousFileChannel
  * WARNING: [AsynchronousFileChannel] is super slow for all platforms.
  * Seems to be the slowest possible IO API for JVM/Android.
  * Also, it often has [OutOfMemoryError] (Direct buffer memory) problems.
+ * Interrupting a reading thread cancels the read, which closes the channel for every handle.
  *
  * **WARNING: Remember to close the [RandomAccessData] when finished
  * to properly release resources!*
@@ -42,6 +43,7 @@ public fun RadAsyncFileChannelAccessor(
  * WARNING: [AsynchronousFileChannel] is super slow for all platforms.
  * Seems to be the slowest possible IO API for JVM/Android.
  * Also, it often has [OutOfMemoryError] (Direct buffer memory) problems.
+ * Interrupting a reading thread cancels the read, which closes the channel for every handle.
  *
  * **WARNING: Remember to close the [RandomAccessData] when finished
  * to properly release resources!*

@@ -185,6 +185,9 @@ public object RadContract {
                 // Empty ranges too: no read is needed to answer them, so only a check can fail.
                 assertFailsWith<IOException> { closed.readFully(ByteArray(1), closed.size) }
                 assertFailsWith<IOException> { closed.readFully(ByteArray(0)) }
+                assertFailsWith<IOException> { closed.read(ByteArray(0)) }
+                assertFailsWith<IOException> { closed.readFrom(0, 0) }
+                assertFailsWith<IOException> { closed.readFrom(closed.size) }
                 assertFailsWith<IOException> { closed.readAllBytes() }
             }
         },

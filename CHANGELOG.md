@@ -66,13 +66,13 @@ Central; its changes ship here.
 - `transferTo` on implementations without a native `ByteBuffer` read (random-access
   file, stream factory) no longer allocates a temporary array per chunk.
 - Read-after-(last-)close on direct/mmap `ByteBuffer` (was: JVM `SIGABRT`)
-  and silent stream-handle leak in `StreamFactoryRad`. Reads on a freed
+  and silent stream-handle leak in stream-factory sources. Reads on a freed
   shared resource now throw `IOException`; a close during a read defers the
   release until that read ends, and `close()` never waits for readers.
 - `close()` is idempotent per handle: a `Closeable`-legal double close no
   longer frees the shared resource still used by other handles.
-- `StreamFactoryRad` ghost-read race + DoS-on-close: a slow user factory no
-  longer blocks `close()`, and no stream leaks past the pool drain.
+- Stream-factory sources: a slow user factory no longer blocks `close()`, and a
+  stream opened while closing is no longer leaked.
 - Stream, `DataInput` and byte-channel factory sources with a non-zero offset
   failed every read past `size - offset`.
 - `Rad.forX(File)` factories leaked the opened file when the offset or size was
@@ -81,9 +81,8 @@ Central; its changes ship here.
   read threw.
 - Slicing on an interrupted thread closed a `FileChannel` for every handle (each
   slice queried the file size); the size is now read once at open.
-- `SharedDataAccessor.onSharedClose` is `final`; release goes in an overridable
-  `releaseApi()` slot. A release-throw never skips closing the `resources`
-  array (compile-blocked re-introduction of the bug class).
+- Closing still closes the `resources` passed to a factory when releasing the
+  main resource fails.
 
 
 ## [0.1.0] - 2024-11-26

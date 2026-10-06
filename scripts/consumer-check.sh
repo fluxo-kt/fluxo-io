@@ -23,7 +23,8 @@ modules=$(find "$repo" -path "*/fluxo-io-rad*/$version/*.module")
 test -n "$modules"
 # A pre-release coordinate in published metadata would force consumers onto a Beta/RC
 # toolchain library; Kotlin-built klibs otherwise stay consumable by the floor compiler.
-if grep -E -n '"version": *"[^"]*-(Beta|RC|dev|M)[0-9]*"' $modules; then
+# Dependency versions are rich objects ("version": {"requires": "…"}), so every key is matched.
+if grep -E -n '"(version|requires|strictly|prefers)": *"[^"]*-(Beta|RC|dev|M)[0-9]*"' $modules; then
   echo "consumer-check: published metadata references a pre-release dependency" >&2
   exit 1
 fi

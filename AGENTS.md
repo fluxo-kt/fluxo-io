@@ -201,6 +201,13 @@ Workflow / release / verification-metadata traps live in
   combine mutation plus later observation (for example `close(); isOpen`)
   in one operation; expose the observation as a separate operation or
   deterministic regression test.
+  Never assert an invariant by throwing inside an operation: Lincheck compares
+  results with a sequential run of the same code, where the throw is a legal
+  result, so the test cannot fail. Record the violation and check it in a
+  `@Validate` method; prove it with a planted defect.
+- A fix for code that only CI runs (mingw, Linux native, x64 Apple) is done
+  only when that CI job is green on the fix's commit (`gh run list --commit
+  <full sha>`). A local compile proves it builds, not that it works.
 - CI runs across macOS/Windows/Ubuntu; Gradle runs on JDK 21, JVM tests also on 17 and 25.
 - For workflow / release / verification-metadata traps see
   [`.github/AGENTS.md`](.github/AGENTS.md).

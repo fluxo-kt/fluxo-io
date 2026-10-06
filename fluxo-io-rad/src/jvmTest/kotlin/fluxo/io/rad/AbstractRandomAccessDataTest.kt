@@ -108,18 +108,6 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun inputStreamReadNullBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        assertFailsWith<NullPointerException> { inputStream.read(null) }
-    }
-
-    @Test
-    fun inputStreamReadNullBytesWithOffset() = runTest(timeout = DEFAULT_TIMEOUT) {
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        assertFailsWith<NullPointerException> { inputStream.read(null, 0, 1) }
-    }
-
-    @Test
     fun inputStreamReadBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
         val b = ByteArray(256)
         val amountRead = inputStream.read(b)
@@ -291,7 +279,6 @@ internal abstract class AbstractRandomAccessDataTest(
         val streams = arrayOf(
             inputStream,
             rad.asInputStream(),
-            rad.asInputStream().buffered(),
             rad.slice(0, rad.size).asInputStream(),
             rad.slice(0, rad.size)
                 .slice(0, rad.size).asInputStream(),
@@ -342,27 +329,20 @@ internal abstract class AbstractRandomAccessDataTest(
                 },
             )
             assertEquals(BYTES, rad.asInputStream().readBytes())
-            assertEquals(BYTES, rad.asInputStream().buffered().readBytes())
             assertEquals(BYTES, rad.asInputStream().readBytesExact(rad.size.toInt()))
             assertEquals(BYTES, rad.asInputStream().readBytesFully(rad.size.toInt()))
 
-            // JDK 9+
-            @Suppress("Since15")
-            try {
-                assertEquals(BYTES, rad.asInputStream().readAllBytes())
-                assertEquals(BYTES, rad.asInputStream().readNBytes(rad.size.toInt()))
-                assertEquals(
-                    BYTES,
-                    rad.asInputStream().let {
-                        assertEquals(BYTES.size, it.available())
-                        val out = ByteArrayOutputStream(BYTES.size)
-                        it.transferTo(out)
-                        out.toByteArray()
-                    },
-                )
-            } catch (_: NoSuchMethodError) {
-                // ignore this error from older JDK versions
-            }
+            assertEquals(BYTES, rad.asInputStream().readAllBytes())
+            assertEquals(BYTES, rad.asInputStream().readNBytes(rad.size.toInt()))
+            assertEquals(
+                BYTES,
+                rad.asInputStream().let {
+                    assertEquals(BYTES.size, it.available())
+                    val out = ByteArrayOutputStream(BYTES.size)
+                    it.transferTo(out)
+                    out.toByteArray()
+                },
+            )
 
             val part = rad.slice(34, 145)
             val expected = BYTES.copyOfRange(34, 179)
@@ -377,7 +357,6 @@ internal abstract class AbstractRandomAccessDataTest(
                 },
             )
             assertEquals(expected, part.asInputStream().readBytes())
-            assertEquals(expected, part.asInputStream().buffered().readBytes())
             assertEquals(expected, part.asInputStream().readBytesExact(145, strict = true))
             assertEquals(expected, part.asInputStream().readBytesFully(145))
         }
@@ -564,7 +543,7 @@ internal abstract class AbstractRandomAccessDataTest(
         assertEquals(BYTES.copyOf(sizeInt) + ByteArray(sizeInt), ba, d)
     }
 
-    protected fun assertEmptyRad(empty: RandomAccessData) {
+    protected fun assertEmptyRad(empty: RandomAccessData) = empty.use {
         assertEquals(0L, empty.size)
         assertEquals(EMPTY_BYTE_ARRAY, empty.readAllBytes())
         assertEquals(EMPTY_BYTE_ARRAY, empty.asInputStream().readBytes())

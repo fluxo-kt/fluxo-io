@@ -39,7 +39,7 @@ internal class RandomAccessDataAsyncFileChannelTest(
 
     @Test
     fun creationBoundaries() {
-        val emptyFile = File.createTempFile("tempFile123", "tmp")
+        val emptyFile = File.createTempFile("tempFile123", "tmp").apply { deleteOnExit() }
         assertEmptyRad(RadAsyncFileChannelAccessor(emptyFile))
         assertEmptyRad(RadAsyncFileChannelAccessor(emptyFile, 0, 0))
 

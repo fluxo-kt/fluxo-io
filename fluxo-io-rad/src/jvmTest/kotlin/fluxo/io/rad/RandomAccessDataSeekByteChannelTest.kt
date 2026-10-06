@@ -42,7 +42,7 @@ internal class RadSeekableByteChannelAccessorTest(
 
     @Test
     fun creationBoundaries() {
-        val emptyFile = File.createTempFile("tempFile123", "tmp")
+        val emptyFile = File.createTempFile("tempFile123", "tmp").apply { deleteOnExit() }
         assertEmptyRad(RadSeekableByteChannelAccessor(emptyFile))
         assertEmptyRad(RadSeekableByteChannelAccessor(emptyFile, 0, 0))
 

@@ -35,7 +35,7 @@ internal class RandomAccessDataRafTest(
 
     @Test
     fun creationBoundaries() {
-        val emptyFile = File.createTempFile("tempFile123", "tmp")
+        val emptyFile = File.createTempFile("tempFile123", "tmp").apply { deleteOnExit() }
         assertEmptyRad(RandomAccessFileRadAccessor(emptyFile))
         assertEmptyRad(RandomAccessFileRadAccessor(emptyFile, 0, 0))
 

@@ -34,9 +34,9 @@ tests only on its own host OS, so Apple families get two macOS jobs.
 - Every filtered job adds `-x mergeDetektSarif` (fluxo-kmp-conf 0.15.1 cannot
   build that task's graph under `KMP_TARGETS`) and `-x klibApiCheck` (a
   filtered klib dump always differs).
-- A filter with `WASM_JS` must also include `JS`: without it fluxo-kmp-conf
-  0.15.1 turns wasmJs into no-op tasks (compile UP-TO-DATE on changed
-  sources, `wasmJsNodeTest` SKIPPED) and the build still passes. Check the
+- A filter with `WASM_JS` or `WASM_WASI` must also include `JS`: without it
+  fluxo-kmp-conf 0.15.1 skips every Wasm test task (`wasmJsNodeTest` SKIPPED)
+  and the build still passes. Check the
   task outcomes, not the exit code, before trusting a filtered test run.
 - Build-script lookups of a source set or task must tolerate a filter that
   removes it (`matching { … }.configureEach`, never `named`).

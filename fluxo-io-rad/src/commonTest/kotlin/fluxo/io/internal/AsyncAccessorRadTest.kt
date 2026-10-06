@@ -128,17 +128,18 @@ internal class AsyncAccessorRadTest {
 
         override val size: Long get() = BYTES.size.toLong()
 
-        override suspend fun read(bytes: ByteArray, position: Long, offset: Int, length: Int) =
-            withLease {
-                if (gated && gate == null) {
-                    suspendCoroutine { gate = it }
-                }
-                check(!resource.closed) { "read after release" }
-                // A zero read must end readFully, so a second one is a spin: fail instead of hanging.
-                check(maxChunk > 0 || ++zeroReads == 1) { "zero-progress read retried" }
-                val n = minOf(length, maxChunk)
-                BYTES.copyInto(bytes, offset, position.toInt(), position.toInt() + n)
-                n
+        override suspend fun readLeased(
+            bytes: ByteArray, position: Long, offset: Int, length: Int,
+        ): Int {
+            if (gated && gate == null) {
+                suspendCoroutine { gate = it }
             }
+            check(!resource.closed) { "read after release" }
+            // A zero read must end readFully, so a second one is a spin: fail instead of hanging.
+            check(maxChunk > 0 || ++zeroReads == 1) { "zero-progress read retried" }
+            val n = minOf(length, maxChunk)
+            BYTES.copyInto(bytes, offset, position.toInt(), position.toInt() + n)
+            return n
+        }
     }
 }

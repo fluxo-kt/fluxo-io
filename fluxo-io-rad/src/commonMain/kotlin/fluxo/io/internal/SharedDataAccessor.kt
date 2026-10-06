@@ -22,8 +22,9 @@ protected constructor(
 /**
  * [SharedDataAccessor] for natively non-blocking sources (browser `Blob`, Node's async `fs`):
  * the read suspends instead of blocking a thread.
- * A read holds its lease across the suspension (`withLease` is inline), so a close while the
- * read is pending defers the release until the read completes.
+ * [read] takes the lease and holds it across the suspension (`withLease` is inline), so a close
+ * while a read is pending defers the release until it completes. Sources implement only
+ * [readLeased], so none can skip the lease.
  */
 @ThreadSafe
 @SubclassOptInRequired(InternalFluxoIoApi::class)
@@ -33,7 +34,14 @@ protected constructor(
 ) : SharedResource(resources) {
 
     @Throws(IOException::class, CancellationException::class)
-    abstract suspend fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int
+    suspend fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
+        withLease { readLeased(bytes, position, offset, length) }
+
+    /** The positional read; called only inside the lease [read] holds. */
+    @Throws(IOException::class, CancellationException::class)
+    protected abstract suspend fun readLeased(
+        bytes: ByteArray, position: Long, offset: Int, length: Int,
+    ): Int
 }
 
 /**

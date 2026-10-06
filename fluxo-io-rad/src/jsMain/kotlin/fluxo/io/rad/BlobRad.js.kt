@@ -28,22 +28,23 @@ private class BlobAccess(
 
     override val size: Long = blob.size.toLong()
 
-    override suspend fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
-        withLease {
-            val start = position.toDouble()
-            // Doubles, not the Int-typed stdlib slice(): a File can exceed 2 GiB.
-            val chunk = blob.asDynamic().slice(start, start + length).arrayBuffer()
-            val buffer = suspendCoroutine { cont ->
-                chunk.then(
-                    { b: ArrayBuffer -> cont.resume(b) },
-                    { e: dynamic ->
-                        val error = IOException("Cannot read Blob at $position: ${e?.message}")
-                        cont.resumeWithException(error)
-                    },
-                )
-            }
-            val n = buffer.byteLength
-            bytes.unsafeCast<Int8Array>().set(Int8Array(buffer), offset)
-            if (n > 0) n else -1
+    override suspend fun readLeased(
+        bytes: ByteArray, position: Long, offset: Int, length: Int,
+    ): Int {
+        val start = position.toDouble()
+        // Doubles, not the Int-typed stdlib slice(): a File can exceed 2 GiB.
+        val chunk = blob.asDynamic().slice(start, start + length).arrayBuffer()
+        val buffer = suspendCoroutine { cont ->
+            chunk.then(
+                { b: ArrayBuffer -> cont.resume(b) },
+                { e: dynamic ->
+                    val error = IOException("Cannot read Blob at $position: ${e?.message}")
+                    cont.resumeWithException(error)
+                },
+            )
         }
+        val n = buffer.byteLength
+        bytes.unsafeCast<Int8Array>().set(Int8Array(buffer), offset)
+        return if (n > 0) n else -1
+    }
 }

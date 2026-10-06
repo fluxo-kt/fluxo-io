@@ -46,7 +46,8 @@ jobs:
           - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest', konan: true }
           - { shard: macos, os: macos-15, targets: 'JVM,MACOS', tasks: 'allTests assemble -x jvmTest', konan: true }
           - { shard: ios, os: macos-15, targets: 'JVM,IOS', tasks: 'allTests assemble -x jvmTest', konan: true }
-          - { shard: tvos-watchos, os: macos-15, targets: 'JVM,TVOS,WATCHOS', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: tvos, os: macos-15, targets: 'JVM,TVOS', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: watchos, os: macos-15, targets: 'JVM,WATCHOS', tasks: 'allTests assemble -x jvmTest', konan: true }
           # JVM tests on the bytecode floor and on the newest LTS; the build itself stays on 21.
           - { shard: jdk17, os: ubuntu-24.04, targets: JVM, tasks: 'jvmTest', jdk: '17' }
           - { shard: jdk25, os: ubuntu-24.04, targets: JVM, tasks: 'jvmTest', jdk: '25' }

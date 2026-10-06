@@ -25,7 +25,7 @@ tests only on its own host OS, so Apple families get two macOS jobs.
   SARIF upload runs only if `build/lint-merged.sarif` exists.
 - `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
   checks klib ABI and lints every source set.
-- `web`, `linux`, `mingw`, `macos`, `ios`, `tvos-watchos`: `allTests assemble
+- `web`, `linux`, `mingw`, `macos`, `ios`, `tvos`, `watchos`: `allTests assemble
   -x jvmTest` for their family. `JVM` stays in every filter (fluxo-bcv-js
   1.1.0 fails configuration without it).
 - `jdk17`, `jdk25`: `jvmTest` on that JDK via `-Pfluxo.testJdk` (root

@@ -29,6 +29,10 @@ is written so that ports can pass the same case table.
 <details>
   <summary>Show</summary>
 
+* Build on Kotlin 2.5 once 2.5.0 is stable, not on a Beta: Native/JS/Wasm
+  consumers need at least the compiler minor the klibs were built with. Kotlin
+  2.5 drops `watchosArm32`; drop it and the deprecated x64 Apple targets (now
+  declared explicitly in each module) together, listed under Removed.
 * Migrate to Kotlin's built-in ABI validation only after fluxo-kmp-conf supports
   it for this project shape.
 * Consider stdlib atomics only after `ExperimentalAtomicApi` is no longer

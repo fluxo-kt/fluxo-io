@@ -104,12 +104,11 @@ Workflow / release / verification-metadata traps live in
   (a double close must not give back the ownership twice, which would free
   data other handles use: `IOException` for files, **JVM `SIGABRT`** for
   mmap/direct `ByteBuffer`). `subsection()` is deprecated as
-  `slice(p, l).share()`. Regressions run on every impl:
-  `doubleClosingShareKeepsDataForParent`,
-  `closedHandleRejectsReadsWhileOtherHandleIsOpen`,
-  `readingClosedHolderThrowsNotCrashes` (all public read paths; only the
-  ByteArray run can catch a missing `ensureOpen`, since resource-backed
-  impls still fail via the lease).
+  `slice(p, l).share()`. Regressions run on every impl as `RadContract`
+  cases ("closing a handle twice gives back one ownership", "a closed
+  handle and its slices never read", "every read path of a closed handle
+  and its slices throws"); only the ByteArray run can catch a missing
+  `ensureOpen`, since resource-backed impls still fail via the lease.
 - **Every access to a releasable resource runs inside
   `SharedCloseable.withLease { … }`**, the only read-after-close guard.
   A lease is one atomic add, granted only while an owner exists; once the
@@ -125,7 +124,10 @@ Workflow / release / verification-metadata traps live in
   base `read`. ByteArray needs no lease (nothing to release). Sequential
   read-after-close is rejected earlier, at the handle; the lease matters
   when a close races an in-flight read, which `RadConcurrentCloseTest`
-  latch-freezes (no sleeps) and which is RED when the lease is removed.
+  latch-freezes (no sleeps). Handle tests cannot see a missing lease (the
+  handle's closed check throws first): `RadAccessLeaseTest` calls every
+  accessor method after close and names any that skips the lease. A new
+  accessor method goes into that list.
 - `SharedDataAccessor` owns the JVM resource and the only
   `read(bytes, position, offset, length)` primitive.
   `onSharedClose()` is `final`; release the API in
@@ -193,8 +195,8 @@ Workflow / release / verification-metadata traps live in
 
 ## Adding a new RAD impl (canonical recipe)
 
-1. Any platform: `internal class FooRad(access, offset, size) :
-   AccessorAwareRad<FooAccess>(access, offset, size)`. Inner
+1. Any platform: `internal class FooRad(access, offset, size, owner: RadHandle? = null) :
+   AccessorAwareRad<FooAccess>(access, offset, size, owner)`. Inner
    `FooAccess(api, resources) : SharedDataAccessor(resources)` exposes
    `size: Long` + `read(bytes, position, offset, length)`.
    `view0(access, globalPosition, length, owner)` returns
@@ -204,9 +206,9 @@ Workflow / release / verification-metadata traps live in
    touches it runs inside `withLease { … }` (read-after-close UAF/leak).
    Optional perf overrides (`read(ByteBuffer, position)`,
    `transferTo(WritableByteChannel, …)`, see `FileChannelRad`) call such
-   leased `FooAccess` methods, never the resource directly. The cross-impl
-   `readingClosedHolderThrowsNotCrashes` exercises these four entry points,
-   so a missing lease reds CI.
+   leased `FooAccess` methods, never the resource directly. Add every
+   `FooAccess` method to `RadAccessLeaseTest` (JVM): handle-level tests
+   pass without the lease.
 3. Public factory in `FooRadAccessor.kt` with
    `@file:JvmName("Rad") @file:JvmMultifileClass` and `@JvmName("forFoo")`
    per overload. Mark `@Blocking` if the constructor opens resources.

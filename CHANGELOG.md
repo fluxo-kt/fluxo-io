@@ -26,8 +26,8 @@ Central; its changes ship here.
 - Android: `RandomAccessData.open(ParcelFileDescriptor)` and
   `open(AssetFileDescriptor)`; a pipe or socket is read into memory once.
 - `AsyncRandomAccessData.open(path)` on JS and Wasm-JS (Node's async `fs`: reads
-  never block the event loop; the open is one quick synchronous call) and `AsyncRandomAccessData.open(Blob)` on JS (browser
-  `Blob`/`File`).
+  never block the event loop; the open is one quick synchronous call) and
+  `AsyncRandomAccessData.open(Blob)` on JS (browser `Blob`/`File`).
 - Wasm-WASI target.
 - New modules: `fluxo-io-rad-okio` (`RandomAccessData.open(FileHandle)`,
   `RandomAccessData.source()`) and `fluxo-io-rad-kotlinx-io`

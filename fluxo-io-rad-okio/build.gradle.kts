@@ -4,6 +4,7 @@
 // task cannot resolve a project dependency on a KMP-Android module.
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.kotlinx.bcv)
     alias(libs.plugins.vanniktech.mvn.publish)
     alias(libs.plugins.dokka)

@@ -53,6 +53,8 @@ fkcSetupRaw {
 kover.reports {
     dependencies {
         kover(projects.fluxoIoRad)
+        kover(projects.fluxoIoRadOkio)
+        kover(projects.fluxoIoRadKotlinxIo)
     }
 
     // TODO: Disable Kover by default to reduce performance penalty.

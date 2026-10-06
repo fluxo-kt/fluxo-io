@@ -3,7 +3,7 @@ package fluxo.io.rad
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.nio.limitCompat
+import fluxo.io.nio.readAtMost
 import fluxo.io.rad.FileChannelRad.FileChannelAccess
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -12,7 +12,6 @@ import java.nio.channels.ClosedChannelException
 import java.nio.channels.FileChannel
 import java.nio.channels.WritableByteChannel
 import javax.annotation.concurrent.ThreadSafe
-import kotlin.math.min
 
 /**
  * [RandomAccessData] implementation backed by a [FileChannel].
@@ -47,21 +46,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long, owner: 
         if (position >= srcLen) {
             return -1
         }
-        val bufLimit = buffer.limit()
-        val bufPos = buffer.position()
-        val destLen = (bufLimit - bufPos).toLong()
-        val len = min(srcLen - position, destLen)
-        if (len <= 0L) {
-            return 0
-        }
-        if (destLen > len) {
-            buffer.limitCompat(bufPos + len.toInt())
-        }
-        val read = access.read(buffer, offset + position)
-        if (destLen > len) {
-            buffer.limitCompat(bufLimit)
-        }
-        return read
+        return buffer.readAtMost(srcLen - position) { access.read(it, offset + position) }
     }
 
     @Throws(IOException::class)

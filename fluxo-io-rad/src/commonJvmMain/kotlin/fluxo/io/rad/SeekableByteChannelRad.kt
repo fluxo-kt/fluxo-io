@@ -4,13 +4,12 @@ import androidx.annotation.RequiresApi
 import fluxo.io.internal.AccessorAwareRad
 import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
-import fluxo.io.nio.limitCompat
+import fluxo.io.nio.readAtMost
 import fluxo.io.rad.SeekableByteChannelRad.SeekableChannelAccess
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 import javax.annotation.concurrent.ThreadSafe
-import kotlin.math.min
 
 /**
  * [RandomAccessData] implementation backed by a NIO [SeekableByteChannel].
@@ -54,7 +53,6 @@ private constructor(
         access: SeekableChannelAccess, globalPosition: Long, length: Long, owner: RadHandle?,
     ) = SeekableByteChannelRad(access, globalPosition, length, owner)
 
-    @Suppress("ReturnCount")
     @Throws(IOException::class)
     override fun read0(buffer: ByteBuffer, position: Long): Int {
         val srcLen = size
@@ -64,21 +62,7 @@ private constructor(
         if (position >= srcLen) {
             return -1
         }
-        val bufLimit = buffer.limit()
-        val bufPos = buffer.position()
-        val destLen = (bufLimit - bufPos).toLong()
-        val len = min(srcLen - position, destLen)
-        if (len <= 0L) {
-            return 0
-        }
-        if (destLen > len) {
-            buffer.limitCompat(bufPos + len.toInt())
-        }
-        val read = access.read(buffer, offset + position)
-        if (destLen > len) {
-            buffer.limitCompat(bufLimit)
-        }
-        return read
+        return buffer.readAtMost(srcLen - position) { access.read(it, offset + position) }
     }
 
 

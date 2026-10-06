@@ -6,6 +6,7 @@ import fluxo.io.internal.RadHandle
 import fluxo.io.internal.SharedDataAccessor
 import fluxo.io.nio.limitCompat
 import fluxo.io.nio.positionCompat
+import fluxo.io.nio.readAtMost
 import fluxo.io.nio.releaseCompat
 import fluxo.io.nio.writeFully
 import fluxo.io.rad.ByteBufferRad.ByteBufferAccess
@@ -62,21 +63,7 @@ private constructor(access: ByteBufferAccess, offset: Int, size: Int, owner: Rad
         if (position >= srcLen) {
             return -1
         }
-        val bufLimit = buffer.limit()
-        val bufPos = buffer.position()
-        val destLen = (bufLimit - bufPos).toLong()
-        val len = min(srcLen - position, destLen)
-        if (len <= 0L) {
-            return 0
-        }
-        if (destLen > len) {
-            buffer.limitCompat(bufPos + len.toInt())
-        }
-        val read = access.read(buffer, offset + position)
-        if (destLen > len) {
-            buffer.limitCompat(bufLimit)
-        }
-        return read
+        return buffer.readAtMost(srcLen - position) { access.read(it, offset + position) }
     }
 
     @Throws(IOException::class)

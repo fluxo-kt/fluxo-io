@@ -322,3 +322,21 @@ internal fun java.nio.channels.WritableByteChannel.writeFully(buffer: ByteBuffer
         }
     }
 }
+
+/**
+ * Lets [read] fill at most [maxLength] bytes of this buffer by lowering its limit for the call.
+ * The caller's limit is restored even if [read] throws: the buffer is the caller's, and a
+ * shrunken limit would silently cap their next read or retry.
+ */
+internal inline fun ByteBuffer.readAtMost(maxLength: Long, read: (ByteBuffer) -> Int): Int {
+    val limit = limit()
+    val room = limit - position()
+    if (room <= 0 || maxLength <= 0L) return 0
+    if (room <= maxLength) return read(this)
+    limitCompat(position() + maxLength.toInt())
+    try {
+        return read(this)
+    } finally {
+        limitCompat(limit)
+    }
+}

@@ -97,13 +97,24 @@ jobs:
         shell: bash
         run: echo "KONAN_DATA_DIR=${RUNNER_TEMP}\\konan" >> "$GITHUB_ENV"
 
+      # The toolchains depend on the Kotlin version alone. Keying on the whole catalog made every
+      # dependency bump re-download and re-commonize them (+1.5–2 min per native job).
+      - name: Read Kotlin version
+        id: kotlin
+        if: matrix.konan
+        shell: bash
+        run: |
+          version="$(awk -F ' *= *' '$1 == "kotlin" { gsub(/"/, "", $2); print $2; exit }' gradle/libs.versions.toml)"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Restore Kotlin/Native toolchains
         id: konan
         if: matrix.konan
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.KONAN_DATA_DIR || '~/.konan' }}
-          key: konan-${{ runner.os }}-${{ matrix.shard }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          key: konan-${{ runner.os }}-${{ matrix.shard }}-kotlin-${{ steps.kotlin.outputs.version }}
 
       - name: Setup Gradle with encrypted cache
         if: env.GRADLE_ENCRYPTION_KEY != ''

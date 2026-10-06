@@ -37,8 +37,9 @@ tests only on its own host OS, so Apple families get two macOS jobs.
 - Build-script lookups of a source set or task must tolerate a filter that
   removes it (`matching { … }.configureEach`, never `named`).
 - Every job that compiles Kotlin/Native code sets `konan: true`, including
-  `api` (it compiles every klib for the ABI check). The cache key is per
-  shard: a cache is saved only on a key miss, so a shared key froze whatever
+  `api` (it compiles every klib for the ABI check). The cache key is the
+  shard plus the catalog's `kotlin` version, never a catalog hash (any
+  dependency bump would re-download every toolchain). Per shard: a cache is saved only on a key miss, so a shared key froze whatever
   the first job saved, and the other shard redid its own part every run
   (macOS: ~20 s of `commonizeNativeDistribution` per module). No
   `restore-keys`: a prefix fallback would carry old Kotlin toolchains forward.

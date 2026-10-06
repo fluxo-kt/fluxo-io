@@ -22,7 +22,7 @@ Central; its changes ship here.
   `open(Path)`, callable from Java), `pread` on Apple/Linux/Android Native,
   `ReadFile` on Windows, Node's `fs` on JS and Wasm-JS (Node, Bun, Deno), and
   `fd_pread` on Wasm-WASI. A browser has no file system: `open(path)` throws.
-  On Native, only regular files open: a directory, FIFO or device throws.
+  On JVM and Native, only regular files open: a directory, FIFO or device throws.
 - Android: `RandomAccessData.open(ParcelFileDescriptor)` and
   `open(AssetFileDescriptor)`; a pipe or socket is read into memory once.
 - `AsyncRandomAccessData.open(path)` on JS and Wasm-JS (Node's async `fs`, the

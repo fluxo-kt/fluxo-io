@@ -16,6 +16,7 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.WritableByteChannel
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
@@ -266,27 +267,38 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
          * (`Future.cancel(true)`, `shutdownNow()`), use `Rad.forRandomAccessFile(file)`: its
          * reads are uninterruptible but run one at a time.
          *
-         * @throws IOException if the file cannot be opened
+         * @throws IOException if the file cannot be opened or is not a regular file
          */
         @Blocking
         @JvmStatic
         @Throws(IOException::class)
-        public fun open(file: File): RandomAccessData = openChannel(FileInputStream(file).channel)
+        public fun open(file: File): RandomAccessData {
+            if (file.exists() && !file.isFile) throw notRegular(file)
+            return openChannel(FileInputStream(file).channel)
+        }
 
         /**
          * Opens the file at [path] for random-access reads; same as `open(path.toFile())`
          * for the default file system, and works for any NIO file system provider (zip, jimfs).
          * Returns a handle: close it once when finished.
          *
-         * @throws IOException if the file cannot be opened
+         * @throws IOException if the file cannot be opened or is not a regular file
          */
         @Blocking
         @JvmStatic
         @RequiresApi(26)
         @Throws(IOException::class)
         public fun open(path: Path): RandomAccessData {
+            if (Files.exists(path) && !Files.isRegularFile(path)) throw notRegular(path)
             return openChannel(FileChannel.open(path, StandardOpenOption.READ))
         }
+
+        /**
+         * Only a regular file has a fixed size to read at positions, as on every other target.
+         * Checked before opening: a FileChannel opens a directory, and opening a FIFO waits for
+         * a writer. A missing file is left to the open, whose exception names the cause.
+         */
+        private fun notRegular(file: Any) = IOException("Cannot open $file: not a regular file")
 
         /** Takes over [channel]: closed here if setup fails, else by the last handle. */
         private fun openChannel(channel: FileChannel): RandomAccessData =

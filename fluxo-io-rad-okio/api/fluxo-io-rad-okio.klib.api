@@ -6,5 +6,6 @@
 // - Show declarations: true
 
 // Library unique name: <io.github.fluxo-kt:fluxo-io-rad-okio>
+final fun (fluxo.io.rad/RandomAccessData).fluxo.io.rad.okio/asFileHandle(): okio/FileHandle // fluxo.io.rad.okio/asFileHandle|asFileHandle@fluxo.io.rad.RandomAccessData(){}[0]
 final fun (fluxo.io.rad/RandomAccessData).fluxo.io.rad.okio/source(kotlin/Long = ...): okio/Source // fluxo.io.rad.okio/source|source@fluxo.io.rad.RandomAccessData(kotlin.Long){}[0]
 final fun (fluxo.io.rad/RandomAccessData.Companion).fluxo.io.rad.okio/open(okio/FileHandle): fluxo.io.rad/RandomAccessData // fluxo.io.rad.okio/open|open@fluxo.io.rad.RandomAccessData.Companion(okio.FileHandle){}[0]

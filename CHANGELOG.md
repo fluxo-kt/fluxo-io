@@ -30,7 +30,7 @@ Central; its changes ship here.
   `AsyncRandomAccessData.open(Blob)` on JS (browser `Blob`/`File`).
 - Wasm-WASI target.
 - New modules: `fluxo-io-rad-okio` (`RandomAccessData.open(FileHandle)`,
-  `RandomAccessData.source()`) and `fluxo-io-rad-kotlinx-io`
+  `RandomAccessData.asFileHandle()`, `RandomAccessData.source()`) and `fluxo-io-rad-kotlinx-io`
   (`RandomAccessData.asRawSource()`). The core gains no dependency.
 
 ### Changed

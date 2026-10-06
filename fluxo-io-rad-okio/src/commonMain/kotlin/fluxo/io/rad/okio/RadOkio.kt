@@ -90,6 +90,44 @@ private class RadSource(private val rad: RandomAccessData, private var position:
     }
 }
 
+/**
+ * This data as a read-only Okio [FileHandle], for APIs that take one (`handle.source(offset)`,
+ * Okio file-system code). Takes ownership, the inverse of `RandomAccessData.open(handle)`:
+ * once the handle and every source opened from it are closed, this data is closed; use
+ * `share().asFileHandle()` to keep this one usable. Okio serialises the handle's reads.
+ */
+public fun RandomAccessData.asFileHandle(): FileHandle = RadFileHandle(this)
+
+private class RadFileHandle(private val rad: RandomAccessData) : FileHandle(readWrite = false) {
+
+    override fun protectedRead(
+        fileOffset: Long,
+        array: ByteArray,
+        arrayOffset: Int,
+        byteCount: Int,
+    ): Int = try {
+        rad.read(array, fileOffset, arrayOffset, byteCount)
+    } catch (e: fluxo.io.IOException) {
+        throw e.asOkioIOException()
+    }
+
+    override fun protectedSize(): Long = rad.size
+
+    override fun protectedClose() = rad.close()
+
+    // FileHandle checks readWrite before each of these, so a read-only handle never gets here.
+    override fun protectedWrite(
+        fileOffset: Long,
+        array: ByteArray,
+        arrayOffset: Int,
+        byteCount: Int,
+    ) = throw UnsupportedOperationException("read-only")
+
+    override fun protectedFlush() = throw UnsupportedOperationException("read-only")
+
+    override fun protectedResize(size: Long) = throw UnsupportedOperationException("read-only")
+}
+
 // One class on the JVM (java.io.IOException); distinct classes elsewhere, where a caller catching
 // one would miss the other.
 private fun fluxo.io.IOException.asOkioIOException(): IOException =

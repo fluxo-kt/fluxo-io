@@ -96,8 +96,8 @@ Adapter modules, which keep Okio and kotlinx-io out of the core (it depends
 only on the Kotlin stdlib, plus AtomicFU off the JVM). Use the same version as
 the core: adapters call its internal API, which may change in any release.
 
-- `io.github.fluxo-kt:fluxo-io-rad-okio`: `RandomAccessData.open(FileHandle)`
-  and `RandomAccessData.source(position)`.
+- `io.github.fluxo-kt:fluxo-io-rad-okio`: `RandomAccessData.open(FileHandle)`,
+  `RandomAccessData.asFileHandle()` and `RandomAccessData.source(position)`.
 - `io.github.fluxo-kt:fluxo-io-rad-kotlinx-io`:
   `RandomAccessData.asRawSource(position)`.
 

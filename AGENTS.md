@@ -87,7 +87,9 @@ Workflow / release / verification-metadata traps live in
 - **The obvious entry point is `RandomAccessData.open(…)` in Kotlin and Java**
   (maintainer ruling; no `Rad.open`). Overloads live on the interface's
   companion: `@JvmStatic` members of the JVM `actual companion`, Kotlin
-  extensions on the companion for Android-only types, and
+  extensions on the companion for Android-only types (Java sees those as
+  `RadAndroid.open(RandomAccessData.Companion, pfd)`: the JVM companion cannot
+  name Android types), and
   `AsyncRandomAccessData.Companion` extensions for natively async sources.
   The explicit `Rad.forX` factories stay.
 - **Handles and slices (`fluxo.io.internal.RadHandle`).** A factory or

@@ -25,8 +25,8 @@ Central; its changes ship here.
   On JVM and Native, only regular files open: a directory, FIFO or device throws.
 - Android: `RandomAccessData.open(ParcelFileDescriptor)` and
   `open(AssetFileDescriptor)`; a pipe or socket is read into memory once.
-- `AsyncRandomAccessData.open(path)` on JS and Wasm-JS (Node's async `fs`, the
-  event loop never blocks) and `AsyncRandomAccessData.open(Blob)` on JS (browser
+- `AsyncRandomAccessData.open(path)` on JS and Wasm-JS (Node's async `fs`: reads
+  never block the event loop; the open is one quick synchronous call) and `AsyncRandomAccessData.open(Blob)` on JS (browser
   `Blob`/`File`).
 - Wasm-WASI target.
 - New modules: `fluxo-io-rad-okio` (`RandomAccessData.open(FileHandle)`,

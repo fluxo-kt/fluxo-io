@@ -9,7 +9,7 @@
 ![JVM][badge-jvm] ![badge][badge-android] ![badge][badge-android-native]
 ![badge][badge-ios] ![badge][badge-watchos] ![badge][badge-tvos] ![badge][badge-mac]
 ![badge][badge-win] ![badge][badge-linux]
-![badge][badge-js] ![badge][badge-wasm]
+![badge][badge-js] ![badge][badge-wasm] ![badge][badge-wasi]
 
 ---
 
@@ -32,7 +32,10 @@ dependencies {
 ```
 
 `0.1.0` is the latest published version. From `0.2.0` the coordinate becomes
-`io.github.fluxo-kt:fluxo-io-rad`.
+`io.github.fluxo-kt:fluxo-io-rad`. The rest of this README describes `0.2.0`,
+which is not published yet: `0.1.0` has only the `Rad…Accessor` factories
+(`Rad.forX` from Java), without `open`, `slice`, `share`, `asAsync` or the
+adapter modules.
 
 Use only versions that exist in Maven Central or the Central Portal snapshot
 repository. This module is alpha; do not assume unpublished coordinates are
@@ -53,9 +56,10 @@ RandomAccessData.open("data.bin").use { rad ->
 ```
 
 Reads block the calling thread. To suspend instead, wrap any instance:
-`rad.asAsync(Dispatchers.IO)`. Sources that are async by nature
+`rad.asAsync(Dispatchers.IO)` (JS and Wasm have no `Dispatchers.IO`; use
+`Dispatchers.Default`). Sources that are async by nature
 (`AsyncRandomAccessData.open(path)` on Node, `open(blob)` in a browser) never
-block at all.
+block while reading; opening a Node file is one quick synchronous call.
 
 | Platform           | `RandomAccessData.open(path)` reads with  | Also                                                  |
 |:-------------------|:------------------------------------------|:------------------------------------------------------|
@@ -88,24 +92,26 @@ Which one when (JVM/Android):
 > On JVM and Android, `ByteBuffer` reads, `transferTo(channel)` and an
 > `InputStream` view are provided for existing APIs.
 
-Adapter modules (same version; the core has no dependencies):
+Adapter modules, which keep Okio and kotlinx-io out of the core (it depends
+only on the Kotlin stdlib, plus AtomicFU off the JVM). Use the same version as
+the core: adapters call its internal API, which may change in any release.
 
 - `io.github.fluxo-kt:fluxo-io-rad-okio`: `RandomAccessData.open(FileHandle)`
   and `RandomAccessData.source(position)`.
 - `io.github.fluxo-kt:fluxo-io-rad-kotlinx-io`:
   `RandomAccessData.asRawSource(position)`.
 
-[RandomAccessData]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RandomAccessData.common.kt#L29
+[RandomAccessData]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RandomAccessData.common.kt
 
-[ByteArray]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RadByteArrayAccessor.kt#L21
-[ByteBuffer]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/ByteBufferRadAccessor.kt#L30
-[ByteBufferMmap]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/ByteBufferRadAccessor.kt#L85
-[FileChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/FileChannelRadAccessor.kt#L28
-[RandomAccessFile]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/RandomAccessFileRadAccessor.kt#L29
-[SeekableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/SeekableByteChannelRadAccessor.kt#L34
-[() -> InputStream]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L62
-[() -> DataInput]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L92
-[() -> ReadableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt#L122
+[ByteArray]: fluxo-io-rad/src/commonMain/kotlin/fluxo/io/rad/RadByteArrayAccessor.kt
+[ByteBuffer]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/ByteBufferRadAccessor.kt
+[ByteBufferMmap]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/ByteBufferRadAccessor.kt
+[FileChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/FileChannelRadAccessor.kt
+[RandomAccessFile]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/RandomAccessFileRadAccessor.kt
+[SeekableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/SeekableByteChannelRadAccessor.kt
+[() -> InputStream]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt
+[() -> DataInput]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt
+[() -> ReadableByteChannel]: fluxo-io-rad/src/commonJvmMain/kotlin/fluxo/io/rad/StreamFactoryRadAccessor.kt
 
 <details>
   <summary>History notes</summary>

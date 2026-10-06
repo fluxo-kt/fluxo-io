@@ -109,8 +109,6 @@ fkcSetupMultiplatform(
 
     val commonJs = commonJs
     commonJs.main.dependencies {
-        // Fix JS build KLIB issue
-        implementation(libs.kotlinx.atomicfu)
         // Kotlin/JS doesn't support an older standard library than the compiler.
         implementation(libs.kotlin.stdlib)
     }

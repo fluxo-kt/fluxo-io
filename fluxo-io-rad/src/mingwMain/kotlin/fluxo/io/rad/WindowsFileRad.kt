@@ -74,9 +74,10 @@ private fun longPath(path: String): String {
         return path
     }
     val full = fullPath(path)
-    if (full == null || full.length < MAX_PATH) {
-        return path
-    }
+    // The resolved path, not the raw one: a short path written with `..` can be longer than
+    // MAX_PATH itself, and the raw form would then fail even though the file is reachable.
+    if (full == null) return path
+    if (full.length < MAX_PATH) return full
     return if (full.startsWith("\\\\")) "\\\\?\\UNC\\" + full.substring(2) else "\\\\?\\$full"
 }
 

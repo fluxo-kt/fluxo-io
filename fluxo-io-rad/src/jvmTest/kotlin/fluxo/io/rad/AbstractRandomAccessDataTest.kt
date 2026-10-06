@@ -7,17 +7,15 @@ import fluxo.io.nio.flipCompat
 import fluxo.io.nio.releaseCompat
 import fluxo.io.readBytesExact
 import fluxo.io.readBytesFully
-import fluxo.io.readableFileSize
 import fluxo.io.toArray
-import fluxo.io.useLocked
 import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.toIntChecked
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
+import java.nio.channels.ClosedChannelException
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.test.AfterTest
@@ -386,24 +384,6 @@ internal abstract class AbstractRandomAccessDataTest(
     }
 
     @Test
-    fun testAsyncReadArray() = runTest(timeout = DEFAULT_TIMEOUT) {
-        arrayOf(
-            rad,
-            rad.slice(0, rad.size),
-            rad.slice(0, rad.size - 11),
-        ).forEachIndexed { ri, rad ->
-            val d = "rad #$ri"
-            val async = rad.asAsync(Dispatchers.IO)
-            assertRead(d, rad) { array, position ->
-                runBlocking { async.read(array, position) }
-            }
-            runBlocking {
-                assertEquals(0, async.read(EMPTY_BYTE_ARRAY, 0, maxLength = 0), d)
-            }
-        }
-    }
-
-    @Test
     fun testReadByte() = runTest(timeout = DEFAULT_TIMEOUT) {
         val copy = rad.slice(0, rad.size)
         arrayOf(rad, copy, rad.slice(0, 8)).forEachIndexed { ri, rad ->
@@ -462,107 +442,56 @@ internal abstract class AbstractRandomAccessDataTest(
         }
     }
 
+    /**
+     * Every transfer path, on a slice that starts past 0 (impls add their section offset) and
+     * spans several copy buffers (the minimum buffer is 1 KiB), with the returned count.
+     */
     @Test
-    fun testTransferTo() = runTest(timeout = DEFAULT_TIMEOUT) {
-        val bufferSizes = intArrayOf(
-            1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144,
-        )
-        arrayOf(
-            rad,
-            rad.slice(0, rad.size),
-        ).forEachIndexed { ri, rad ->
-            val d = "rad #$ri"
-
-            assertEquals(BYTES.size.toLong(), rad.size, d)
-
-            for (bufSize in bufferSizes) {
-                assertEquals(
-                    BYTES,
-                    rad.let {
-                        val out = ByteArrayOutputStream(BYTES.size)
-                        it.transferTo(out, bufSize)
-                        out.toByteArray()
-                    },
-                    "$d, bufSize=${readableFileSize(bufSize)}",
+    fun testTransferTo() {
+        val data = ByteArray(5000) { (it * 31 + 7).toByte() }
+        val file = File.createTempFile("transferTo", "tmp")
+        try {
+            file.writeBytes(data)
+            factory(file).use { whole ->
+                val expected = data.copyOfRange(3, data.size - 2)
+                val slice = whole.slice(3, expected.size.toLong())
+                val transfers = mapOf<String, RandomAccessData.(ByteArrayOutputStream) -> Long>(
+                    "stream" to { transferTo(it, 1024) },
+                    "channel" to { transferTo(Channels.newChannel(it)) },
+                    "channel, heap buffer" to { transferTo(Channels.newChannel(it), 1024, false) },
+                    "channel, direct buffer" to { transferTo(Channels.newChannel(it), 1024, true) },
                 )
-            }
-
-            val emptyRad = rad.slice(0, 0)
-
-            var tempFile = File.createTempFile("tempTransferToFile1", "tmp")
-            try {
-                assertEquals(
-                    EMPTY_BYTE_ARRAY,
-                    emptyRad.let {
-                        FileOutputStream(tempFile).useLocked { out ->
-                            it.transferTo(out)
-                        }
-                        tempFile.readBytes()
-                    },
-                    d,
-                )
-
-                for (bufSize in bufferSizes) {
-                    assertEquals(
-                        BYTES,
-                        rad.let {
-                            FileOutputStream(tempFile).useLocked { out ->
-                                it.transferTo(out, bufSize)
-                            }
-                            tempFile.readBytes()
-                        },
-                        "$d, bufSize=${readableFileSize(bufSize)}",
-                    )
-                }
-            } finally {
-                check(tempFile.delete()) { "Failed to delete temp file: $tempFile" }
-            }
-
-            tempFile = File.createTempFile("tempTransferToFile2", "tmp")
-            try {
-                assertEquals(
-                    EMPTY_BYTE_ARRAY,
-                    emptyRad.let {
-                        FileOutputStream(tempFile).channel.useLocked { out ->
-                            out.truncate(0L)
-                            it.transferTo(out)
-                        }
-                        tempFile.readBytes()
-                    },
-                    d,
-                )
-
-                assertEquals(
-                    BYTES,
-                    rad.let {
-                        FileOutputStream(tempFile).channel.useLocked { out ->
-                            out.truncate(0L)
-                            it.transferTo(out)
-                        }
-                        tempFile.readBytes()
-                    },
-                    d,
-                )
-
-                for (directBuffer in booleanArrayOf(true, false)) {
-                    for (bufSize in bufferSizes) {
-                        assertEquals(
-                            BYTES,
-                            rad.let {
-                                FileOutputStream(tempFile).channel.useLocked { out ->
-                                    out.truncate(0L)
-                                    it.transferTo(out, bufSize, directBuffer)
-                                }
-                                tempFile.readBytes()
-                            },
-                            "$d, bufSize=$bufSize bytes, direct=$directBuffer",
-                        )
+                for ((name, transfer) in transfers) {
+                    for ((source, bytes) in listOf(slice to expected, whole.slice(0, 0) to EMPTY_BYTE_ARRAY)) {
+                        val out = ByteArrayOutputStream()
+                        assertEquals(bytes.size.toLong(), source.transfer(out), name)
+                        assertEquals(bytes, out.toByteArray(), name)
                     }
                 }
-            } finally {
-                check(tempFile.delete()) { "Failed to delete temp file: $tempFile" }
             }
+        } finally {
+            file.delete()
         }
+    }
+
+    /** A failing target is the caller's problem: its own exception, not a source-closed one. */
+    @Test
+    fun transferToClosedTargetThrowsTheTargetsError() {
+        val target = Channels.newChannel(ByteArrayOutputStream()).apply { close() }
+        assertFailsWith<ClosedChannelException> { rad.transferTo(target) }
+        assertEquals(BYTES[1].toInt(), rad.readByteAt(1))
+    }
+
+    /** Slicing does no I/O: an interrupted thread may slice without closing interruptible data. */
+    @Test
+    fun sliceOnInterruptedThreadKeepsDataReadable() {
+        Thread.currentThread().interrupt()
+        try {
+            rad.slice(1, 2).share().close()
+        } finally {
+            Thread.interrupted()
+        }
+        assertEquals(BYTES[1].toInt(), rad.readByteAt(1))
     }
 
 

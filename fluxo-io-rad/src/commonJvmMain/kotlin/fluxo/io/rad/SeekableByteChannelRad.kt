@@ -73,7 +73,7 @@ private constructor(
 
         private val monitor = Any()
 
-        override val size: Long get() = api.size()
+        override val size: Long = api.size()
 
         // The monitor serialises seek+read on the shared channel position; the lease keeps the
         // channel open until the read ends.

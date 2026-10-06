@@ -86,7 +86,7 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long, owner: 
         resources: Array<out AutoCloseable>,
     ) : SharedDataAccessor(resources) {
 
-        override val size: Long get() = api.size()
+        override val size: Long = api.size()
 
         @Throws(IOException::class)
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =
@@ -111,6 +111,8 @@ private constructor(access: FileChannelAccess, offset: Long, size: Long, owner: 
             } catch (e: ClosedByInterruptException) {
                 throw e
             } catch (e: ClosedChannelException) {
+                // Thrown for a closed transferTo target too; that error is the caller's own.
+                if (api.isOpen) throw e
                 throw IOException(
                     "FileChannel was closed because a thread reading it was interrupted; " +
                         "open the data again, or use Rad.forRandomAccessFile where reader " +

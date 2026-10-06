@@ -5,27 +5,8 @@ package fluxo.io
 import fluxo.io.nio.markCompat
 import fluxo.io.nio.resetCompat
 import fluxo.io.util.EMPTY_BYTE_ARRAY
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
-import kotlin.math.ln
-import kotlin.math.pow
-
-
-fun readableFileSize(bytes: Int): String = readableFileSize(bytes.toLong())
-
-/**
- * Convert byte size into the human-readable format.
- */
-fun readableFileSize(bytes: Long): String {
-    val unit = 1024.0
-    if (bytes < unit) return "$bytes B"
-    val exp = (ln(bytes.toDouble()) / ln(unit)).toInt()
-    val pre = "kMGTPE"[exp - 1]
-    return "%.1f %sB".format(bytes / unit.pow(exp.toDouble()), pre)
-}
 
 
 /**
@@ -119,33 +100,3 @@ fun ByteBuffer.toArray(): ByteArray {
     return array
 }
 
-
-/**
- * @see kotlin.io.use
- * @see java.nio.channels.FileChannel.lock
- */
-inline fun <R> FileInputStream.useLocked(block: (FileInputStream) -> R): R =
-    use { s -> s.channel.useReadLocked { block(s) } }
-
-/**
- * @see kotlin.io.use
- * @see java.nio.channels.FileChannel.lock
- */
-inline fun <R> FileOutputStream.useLocked(block: (FileOutputStream) -> R): R =
-    use { s -> s.channel.useLocked { block(s) } }
-
-/**
- * @see kotlin.io.use
- * @see java.nio.channels.FileChannel.lock
- */
-inline fun <R> FileChannel.useLocked(block: (FileChannel) -> R): R =
-    // lock will be auto-closed on channel close.
-    use { ch -> ch.lock(); block(ch) }
-
-/**
- * @see kotlin.io.use
- * @see java.nio.channels.FileChannel.lock
- */
-inline fun <R> FileChannel.useReadLocked(block: (FileChannel) -> R): R =
-    // lock will be auto-closed on channel close.
-    use { ch -> ch.lock(0, java.lang.Long.MAX_VALUE, true); block(ch) }

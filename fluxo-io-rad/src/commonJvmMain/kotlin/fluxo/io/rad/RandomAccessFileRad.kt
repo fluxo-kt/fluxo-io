@@ -59,7 +59,7 @@ private constructor(access: RafAccess, offset: Long, size: Long, owner: RadHandl
 
         private val monitor = Any()
 
-        override val size: Long get() = api.length()
+        override val size: Long = api.length()
 
         private fun seek(api: RandomAccessFile, position: Long) {
             // Retry until the seek is successful

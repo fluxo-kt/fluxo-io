@@ -47,6 +47,11 @@ protected constructor(
     private val resources: Array<out AutoCloseable>,
 ) : SharedCloseable() {
 
+    /**
+     * Read on every slice and handle construction, outside any lease: take it once when opening.
+     * A per-call query (`FileChannel.size()`) is a syscall, fails after close, and on an
+     * interrupted thread closes an interruptible channel for every handle.
+     */
     abstract val size: Long
 
     /**

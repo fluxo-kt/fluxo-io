@@ -90,7 +90,7 @@ private constructor(
         private val api: AsynchronousFileChannel,
     ) : SharedDataAccessor(resources = arrayOf(api)) {
 
-        override val size: Long get() = api.size()
+        override val size: Long = api.size()
 
         @Throws(IOException::class)
         override fun read(bytes: ByteArray, position: Long, offset: Int, length: Int): Int =

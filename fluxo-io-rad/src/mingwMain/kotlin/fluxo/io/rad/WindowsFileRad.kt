@@ -9,9 +9,11 @@ import fluxo.io.util.EMPTY_AUTO_CLOSEABLE_ARRAY
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.toKStringFromUtf16
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import platform.windows.CloseHandle
@@ -24,6 +26,7 @@ import platform.windows.FILE_SHARE_READ
 import platform.windows.FILE_SHARE_WRITE
 import platform.windows.GENERIC_READ
 import platform.windows.GetFileSizeEx
+import platform.windows.GetFullPathNameW
 import platform.windows.GetLastError
 import platform.windows.HANDLE
 import platform.windows.INVALID_HANDLE_VALUE
@@ -31,10 +34,12 @@ import platform.windows.LARGE_INTEGER
 import platform.windows.OPEN_EXISTING
 import platform.windows.OVERLAPPED
 import platform.windows.ReadFile
+import platform.windows.WCHARVar
 
 /**
  * Opens [path] on Windows. Reads are `ReadFile` with the offset in an `OVERLAPPED` on a
- * synchronous handle: positional, so concurrent reads on one handle need no lock and no seek.
+ * synchronous handle: positional, so concurrent reads on one handle are correct without a lock
+ * or a seek. Windows still runs them one at a time: it serialises I/O on a synchronous handle.
  * Sharing READ | WRITE | DELETE matches POSIX: holding the file open does not stop others
  * from writing, renaming or deleting it.
  */
@@ -60,17 +65,28 @@ internal actual fun openPlatformFile(path: String): RandomAccessData {
 }
 
 /**
- * Absolute paths longer than MAX_PATH (260) need the `\\?\` prefix, which also turns off
- * `/` → `\` translation, so separators are normalised first. Relative paths cannot use it.
+ * Paths of MAX_PATH (260) or more need the `\\?\` prefix, which turns off every Win32 path
+ * rule (`/` → `\`, `.` and `..`, the current directory). So Windows resolves the path first
+ * (GetFullPathNameW), exactly as an unprefixed open would, and only the result is prefixed.
  */
 private fun longPath(path: String): String {
-    val absolute = path.length > 2 && path[1] == ':' || path.startsWith("\\\\")
-    if (path.length < MAX_PATH || !absolute || path.startsWith("\\\\?\\")) {
+    if (path.startsWith("\\\\?\\") || path.startsWith("\\\\.\\")) {
         return path
     }
-    val normalized = path.replace('/', '\\')
-    return if (normalized.startsWith("\\\\")) "\\\\?\\UNC\\" + normalized.substring(2)
-    else "\\\\?\\$normalized"
+    val full = fullPath(path)
+    if (full == null || full.length < MAX_PATH) {
+        return path
+    }
+    return if (full.startsWith("\\\\")) "\\\\?\\UNC\\" + full.substring(2) else "\\\\?\\$full"
+}
+
+/** The absolute form of [path], or `null` when Windows cannot resolve it (open then reports). */
+private fun fullPath(path: String): String? = memScoped {
+    val needed = GetFullPathNameW(path, 0u, null, null)
+    if (needed == 0u) return null
+    val buffer = allocArray<WCHARVar>(needed.toInt())
+    val length = GetFullPathNameW(path, needed, buffer, null)
+    if (length == 0u || length >= needed) null else buffer.toKStringFromUtf16()
 }
 
 private const val MAX_PATH = 260

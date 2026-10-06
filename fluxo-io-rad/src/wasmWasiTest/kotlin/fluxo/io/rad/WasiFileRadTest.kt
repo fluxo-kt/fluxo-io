@@ -24,9 +24,9 @@ internal class WasiFileRadTest {
 
     @Test
     fun relativePathResolvesAgainstTheFirstPreopen() {
-        val path = tempFile(RadContract.BYTES)
+        val path = tempFile(RadContract.bytes())
         RandomAccessData.open(path.removePrefix("/tmp/")).use {
-            assertContentEquals(RadContract.BYTES, it.readAllBytes())
+            assertContentEquals(RadContract.bytes(), it.readAllBytes())
         }
     }
 

@@ -24,8 +24,15 @@ public object RadContract {
     /**
      * Fixture data, generated, never stored. `(i * 31 + 7)` makes no byte equal to its index and
      * none at index 0 equal to 0, so a shifted read or an untouched zeroed buffer cannot pass.
+     *
+     * Private, and [verify] opens a copy: a ByteArray-backed implementation wraps the array it is
+     * given, so if it shared this one, a read that wrote into its data instead of out of it would
+     * change the expected values too and pass every case.
      */
-    public val BYTES: ByteArray = ByteArray(256) { (it * 31 + 7).toByte() }
+    private val BYTES: ByteArray = ByteArray(256) { (it * 31 + 7).toByte() }
+
+    /** A fresh copy of the fixture data, for tests outside this table. */
+    public fun bytes(): ByteArray = BYTES.copyOf()
 
     private const val LONG_GIVES_INT_MINUS_2: Long = Int.MAX_VALUE.toLong() + Int.MAX_VALUE
     private const val LONG_GIVES_INT_0: Long = LONG_GIVES_INT_MINUS_2 + 2
@@ -40,7 +47,7 @@ public object RadContract {
      */
     public fun verify(open: (ByteArray) -> RandomAccessData) {
         val failures = CASES.mapNotNull { (name, case) ->
-            runCatching { case(open) }.exceptionOrNull()?.let { name to it }
+            runCatching { case { open(it.copyOf()) } }.exceptionOrNull()?.let { name to it }
         }
         if (failures.isNotEmpty()) {
             fail(

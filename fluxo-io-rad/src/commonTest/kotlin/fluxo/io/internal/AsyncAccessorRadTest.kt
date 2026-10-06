@@ -1,7 +1,7 @@
 package fluxo.io.internal
 
 import fluxo.io.IOException
-import fluxo.io.rad.RadContract.BYTES
+import fluxo.io.rad.RadContract
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
@@ -23,6 +23,8 @@ import kotlin.test.assertTrue
  * suspended until the test resumes it, so the close-during-read case is deterministic and runs
  * on every target, JS included.
  */
+private val BYTES = RadContract.bytes()
+
 internal class AsyncAccessorRadTest {
 
     @Test

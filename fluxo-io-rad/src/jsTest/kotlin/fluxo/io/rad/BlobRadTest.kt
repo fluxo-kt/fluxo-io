@@ -14,7 +14,7 @@ internal class BlobRadTest {
 
     @Test
     fun rangeReads() = runTest {
-        val bytes = RadContract.BYTES
+        val bytes = RadContract.bytes()
         val rad = AsyncRandomAccessData.open(Blob(arrayOf(bytes.unsafeCast<Int8Array>())))
         assertEquals(bytes.size.toLong(), rad.size)
         val buf = ByteArray(20)

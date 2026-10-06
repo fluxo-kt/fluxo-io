@@ -17,7 +17,7 @@ import kotlinx.coroutines.test.runTest
  */
 internal class NodeAsyncFileRadTest {
 
-    private val bytes = RadContract.BYTES
+    private val bytes = RadContract.bytes()
 
     @Test
     fun positionalReadsAndSlices() = runTest {

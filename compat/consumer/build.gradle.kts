@@ -14,6 +14,8 @@ kotlin {
     js { nodejs() }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs { nodejs() }
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmWasi { nodejs() }
     macosArm64()
     linuxX64()
     mingwX64()

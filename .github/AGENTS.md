@@ -13,9 +13,11 @@ language traps live in the **root `AGENTS.md`** — read that first.
 
 ## Build shards (`build.yml`)
 
-One job per target family keeps every job inside the 5-minute budget; one
-job per OS could not. A Kotlin/Native target compiles and runs
-tests only on its own host OS, so Apple families get two macOS jobs.
+The matrix is the full cross-platform check on every push, not a time-budgeted
+test lane: lane budgets apply to the local fast and complete lanes. One job per
+target family runs the slow toolchains in parallel. A Kotlin/Native target
+compiles and runs tests only on its own host OS, so Apple families get several
+macOS jobs.
 
 - `jvm` (COMMON_JVM): `build koverLog` — JVM tests (no Android test source set exists), kover, Android
   lint, CodeQL, verifyBuildPolicy, dependencyGuard. Runs with
@@ -52,7 +54,7 @@ tests only on its own host OS, so Apple families get two macOS jobs.
   `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
   `if: always()`: an actions/cache step saves only on success, so cold native
   jobs that time out would never warm it. Step and job timeouts only bound
-  hangs; the budget is judged from measured job times.
+  hangs.
 - Modules need no workflow edit: every job runs root tasks.
 
 ## `/ff` recursion-guard (load-bearing)

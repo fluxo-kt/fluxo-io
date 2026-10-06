@@ -28,8 +28,9 @@ jobs:
   buildAndCheck:
     strategy:
       fail-fast: false
-      # One job per target family, so each aims for the 5-minute routine-lane budget (met warm;
-      # a cold toolchain download can exceed it).
+      # This matrix is the full cross-platform check on every push, not a time-budgeted test lane
+      # (lane budgets apply to the local fast and complete lanes). One job per target family runs
+      # the slow toolchains in parallel.
       # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
       # host per family keeps the slow Apple toolchains in parallel jobs.
       # `JVM` stays in every filter: fluxo-bcv-js 1.1.0 fails configuration without it.
@@ -156,7 +157,7 @@ jobs:
           # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
           # queries: security-extended, security-and-quality.
 
-      # Bounds a hang only; the 5-minute budget is judged from measured job times.
+      # Bounds a hang only.
       - name: 'Build and check'
         id: check
         timeout-minutes: 30

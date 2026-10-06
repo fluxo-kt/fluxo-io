@@ -68,7 +68,7 @@ public fun StreamFactoryRadAccessor(
 ): RandomAccessData {
     checkOffsetAndCount(fullSize, offset, size)
     return StreamFactoryRad(
-        factory = InputStreamFactory(size, factory),
+        factory = InputStreamFactory(fullSize, factory),
         offset = offset,
         size = size,
         maxPoolSize = maxPoolSize,
@@ -98,7 +98,7 @@ public fun DataInputFactoryRadAccessor(
 ): RandomAccessData {
     checkOffsetAndCount(fullSize, offset, size)
     return StreamFactoryRad(
-        factory = DataInputFactory(size, factory),
+        factory = DataInputFactory(fullSize, factory),
         offset = offset,
         size = size,
         maxPoolSize = maxPoolSize,
@@ -128,7 +128,7 @@ public fun ByteChannelFactoryRadAccessor(
 ): RandomAccessData {
     checkOffsetAndCount(fullSize, offset, size)
     return StreamFactoryRad(
-        factory = ByteChannelFactory(size, factory),
+        factory = ByteChannelFactory(fullSize, factory),
         offset = offset,
         size = size,
         maxPoolSize = maxPoolSize,

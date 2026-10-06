@@ -37,8 +37,12 @@ tests only on its own host OS, so Apple families get two macOS jobs.
 - Build-script lookups of a source set or task must tolerate a filter that
   removes it (`matching { … }.configureEach`, never `named`).
 - Every job that compiles Kotlin/Native code sets `konan: true`, including
-  `api` (it compiles every klib for the ABI check); the cache key is per OS,
-  and toolchain parts a job finds missing are downloaded on demand.
+  `api` (it compiles every klib for the ABI check). The cache key is per
+  shard: a cache is saved only on a key miss, so a shared key froze whatever
+  the first job saved, and the other shard redid its own part every run
+  (macOS: ~20 s of `commonizeNativeDistribution` per module). No
+  `restore-keys`: a prefix fallback would carry old Kotlin toolchains forward.
+  Windows keeps them on D: (`KONAN_DATA_DIR`); extraction to C: was slow.
   `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
   `if: always()`: an actions/cache step saves only on success, so cold native
   jobs that time out would never warm it. Step and job timeouts only bound

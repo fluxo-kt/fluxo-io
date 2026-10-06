@@ -101,7 +101,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.KONAN_DATA_DIR || '~/.konan' }}
-          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          key: konan-${{ runner.os }}-${{ matrix.shard }}-${{ hashFiles('gradle/libs.versions.toml') }}
 
       - name: Setup Gradle with encrypted cache
         if: env.GRADLE_ENCRYPTION_KEY != ''

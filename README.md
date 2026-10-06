@@ -93,8 +93,9 @@ Which one when (JVM/Android):
 > `InputStream` view are provided for existing APIs.
 
 Adapter modules, which keep Okio and kotlinx-io out of the core (it depends
-only on the Kotlin stdlib, plus AtomicFU off the JVM). Use the same version as
-the core: adapters call its internal API, which may change in any release.
+only on the Kotlin stdlib, plus AtomicFU off the JVM). Adapters call the core's internal API,
+so they must match its version: Gradle aligns them on its own (every module depends on
+`io.github.fluxo-kt:fluxo-io-bom`); with Maven, import that BOM.
 
 - `io.github.fluxo-kt:fluxo-io-rad-okio`: `RandomAccessData.open(FileHandle)`,
   `RandomAccessData.asFileHandle()` and `RandomAccessData.source(position)`.

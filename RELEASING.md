@@ -68,10 +68,11 @@ Before publishing a release deployment, verify:
   resolves, compiles, links and runs the locally published build, and no
   published metadata names a Beta/RC dependency. CI does not run it.
 - Root metadata coordinates are `io.github.fluxo-kt:fluxo-io-rad:<version>`,
-  `fluxo-io-rad-okio:<version>` and `fluxo-io-rad-kotlinx-io:<version>`.
+  `fluxo-io-rad-okio:<version>`, `fluxo-io-rad-kotlinx-io:<version>` and
+  `fluxo-io-bom:<version>` (a POM-only platform listing the other three).
 - Target artifacts keep their module-name prefix.
-- Each publication has a POM, Gradle module metadata, sources jar, and javadoc
-  jar.
+- Each library publication has a POM, Gradle module metadata, sources jar, and
+  javadoc jar; the BOM has the POM and module metadata only.
 - POM metadata includes name, description, URL, inception year, Apache-2.0
   license, developer, and SCM fields.
 - `compileOnly` dependencies do not become runtime dependencies.

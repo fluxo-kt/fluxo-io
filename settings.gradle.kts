@@ -52,5 +52,6 @@ rootProject.name = "fluxo-io"
 include(":fluxo-io-rad")
 include(":fluxo-io-rad-okio")
 include(":fluxo-io-rad-kotlinx-io")
+include(":fluxo-io-bom")
 // Unpublished test support; see conformance-test/build.gradle.kts.
 include(":conformance-test")

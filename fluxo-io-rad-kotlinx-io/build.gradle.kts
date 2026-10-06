@@ -33,6 +33,7 @@ fkcSetupMultiplatform(
 ) {
     common.main.dependencies {
         api(projects.fluxoIoRad)
+        api(project.dependencies.platform(projects.fluxoIoBom))
         api(libs.kotlinx.io.core)
     }
     // Kotlin/JS links only against a standard library at least as new as the compiler.

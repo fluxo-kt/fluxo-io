@@ -1,2 +1,3 @@
+:fluxo-io-bom
 org.jetbrains.kotlin:kotlin-stdlib:2.2.21
 org.jetbrains:annotations:13.0

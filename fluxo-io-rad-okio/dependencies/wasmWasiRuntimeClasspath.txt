@@ -1,3 +1,4 @@
+:fluxo-io-bom
 :fluxo-io-rad
 com.squareup.okio:okio-wasm-wasi:3.18.2
 com.squareup.okio:okio:3.18.2

@@ -80,7 +80,8 @@ fkcSetupMultiplatform(
     },
 ) {
     common.main.dependencies {
-        // implementation(libs.kotlinx.io.core)
+        // Gradle aligns every fluxo-io artifact a consumer uses to one version (see the BOM).
+        api(project.dependencies.platform(projects.fluxoIoBom))
     }
     common.test.dependencies {
         implementation(libs.kotlin.test)

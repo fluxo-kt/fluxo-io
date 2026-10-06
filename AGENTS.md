@@ -1,7 +1,8 @@
 # fluxo-io — Agents Guide
 
-Kotlin Multiplatform read-only random-access I/O lib. Single published
-module `:fluxo-io-rad`. **Alpha** — public API may shift. Apache-2.0.
+Kotlin Multiplatform read-only random-access I/O lib. Core module
+`:fluxo-io-rad`, plus Okio/kotlinx-io adapters and a BOM. **Alpha** — public API
+may shift. Apache-2.0.
 
 Workflow / release / verification-metadata traps live in
 [`.github/AGENTS.md`](.github/AGENTS.md). Auxiliary docs:
@@ -40,7 +41,7 @@ Workflow / release / verification-metadata traps live in
 
 ## Layout
 
-- `:fluxo-io-rad` — only published module.
+- `:fluxo-io-rad` — the core; every other published module builds on it.
   - `commonMain` — `expect interface RandomAccessData` + `expect fun byteArrayRad`
     (each platform's `ByteArrayRad` is a plain internal class behind it).
   - `commonJvmMain` — JVM+Android impl set (`ByteBuffer`, mmap,
@@ -62,6 +63,10 @@ Workflow / release / verification-metadata traps live in
   core stays dependency-free. They build sources with `fluxo.io.internal.radOf`
   (public, but `@InternalFluxoIoApi` at ERROR level and absent from API dumps:
   the adapters ship in lockstep with the core, consumers must not call it).
+  `:fluxo-io-bom` (`java-platform`) constrains all three to one version, and every
+  published module depends on it as a platform: that makes Gradle align a stale
+  adapter to a newer core by itself. A new published module goes into its
+  constraints and depends on it.
   Inside any `SharedCloseable` subclass, a name `close` resolves to the member
   function, never to a function-typed property: name such properties otherwise.
 - Root `build.gradle.kts` — umbrella via `fkcSetupRaw {…}`, Kover

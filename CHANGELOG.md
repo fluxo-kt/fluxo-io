@@ -33,6 +33,8 @@ Central; its changes ship here.
   `RandomAccessData.asFileHandle()`, `RandomAccessData.source()`) and
   `fluxo-io-rad-kotlinx-io` (`RandomAccessData.asRawSource()`). The core gains no
   dependency.
+- `io.github.fluxo-kt:fluxo-io-bom`: keeps the core and its adapters on one version.
+  Gradle applies it automatically; Maven users import it.
 
 ### Changed
 

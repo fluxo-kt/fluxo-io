@@ -91,10 +91,10 @@ jobs:
       # steps so a failed or timed-out job still saves them: a cache saved only on success is
       # never saved while cold jobs keep timing out.
       # On Windows the toolchains and the Gradle home live on D: (the workspace drive), not in ~
-      # on C:. Restoring konan to C: took 138 s of extraction for 6 s of download (Defender is
+      # on C:. Restoring konan to C: spent minutes extracting a download of seconds (Defender is
       # already off there). The Gradle home cache, once disabled on Windows as too slow (most
       # likely the same C: cost), moves there too: without it every job compiled buildSrc and
-      # resolved all dependencies cold, ~90 s before the first task.
+      # resolved all dependencies cold before the first task.
       - name: Keep Kotlin/Native toolchains and the Gradle home on D
         if: runner.os == 'Windows'
         shell: bash
@@ -172,8 +172,12 @@ jobs:
           fi
           ./gradlew "${args[@]}" --continue --stacktrace --scan
 
+      # Saved from the default branch only: other branches can read its caches, and each extra
+      # ~1 GB copy pushes the repository past its cache quota. A cancelled job (superseded push)
+      # may hold a half-downloaded toolchain, so it never saves; a failed or timed-out step does.
       - name: Save Kotlin/Native toolchains
-        if: always() && matrix.konan && steps.konan.outputs.cache-hit != 'true'
+        if: "!cancelled() && matrix.konan && steps.konan.outputs.cache-hit != 'true'
+          && env.IS_DEFAULT_BRANCH == 'true'"
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.KONAN_DATA_DIR || '~/.konan' }}

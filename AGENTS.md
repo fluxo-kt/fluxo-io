@@ -34,8 +34,9 @@ Workflow / release / verification-metadata traps live in
   `api/jvm/fluxo-io-rad.api` before any rename. (No custom lint enforces
   this — BCV catches the ABI side, naming is review-gated.)
 - `explicitApi()` is on. New public symbols need explicit `public` + KDoc.
-- `optInInternal = true` (fluxo-kmp-conf) auto-opts the project's own code
-  into `InternalFluxoIoApi`, so internal accessors don't sprinkle `@OptIn`.
+- `:fluxo-io-rad` opts its own code into `InternalFluxoIoApi` by compiler
+  flag (`optIns` in `fluxo-io-rad/build.gradle.kts`), so internal accessors
+  don't sprinkle `@OptIn`; the adapter modules opt in per file.
 
 ## Layout
 
@@ -173,7 +174,7 @@ Workflow / release / verification-metadata traps live in
 ## Build, test, regen baselines
 
 ```
-./gradlew build                    # full verify, as CI: check (BCV apiCheck, kover, detekt, AGP lint wiring, depGuard, tests) + assemble
+./gradlew build                    # full verify (CI runs it split into per-target shards): check (BCV apiCheck, kover, detekt, AGP lint wiring, depGuard, tests) + assemble
                                    # `check` alone never compiles common metadata (compileCommonMainKotlinMetadata), where expect/actual breaks show
 ./gradlew :fluxo-io-rad:jvmTest    # JVM unit tests
 ./gradlew :fluxo-io-rad:detektAll  # fast lint verdict (plain `detekt` is NO-SOURCE here: checks zero files, exits 0)
@@ -189,7 +190,7 @@ Workflow / release / verification-metadata traps live in
   combine mutation plus later observation (for example `close(); isOpen`)
   in one operation; expose the observation as a separate operation or
   deterministic regression test.
-- CI runs across macOS/Windows/Ubuntu on JDK 21.
+- CI runs across macOS/Windows/Ubuntu; Gradle runs on JDK 21, JVM tests also on 17 and 25.
 - For workflow / release / verification-metadata traps see
   [`.github/AGENTS.md`](.github/AGENTS.md).
 

@@ -13,11 +13,11 @@ language traps live in the **root `AGENTS.md`** — read that first.
 
 ## Build shards (`build.yml`)
 
-One job per target family keeps every job inside the 5-minute budget; the
-single job per OS took 8–17 min. A Kotlin/Native target compiles and runs
+One job per target family keeps every job inside the 5-minute budget; one
+job per OS could not. A Kotlin/Native target compiles and runs
 tests only on its own host OS, so Apple families get two macOS jobs.
 
-- `jvm` (COMMON_JVM): `build koverLog` — JVM/Android tests, kover, Android
+- `jvm` (COMMON_JVM): `build koverLog` — JVM tests (no Android test source set exists), kover, Android
   lint, CodeQL, verifyBuildPolicy, dependencyGuard. Runs with
   `--no-build-cache`: CodeQL extracts Kotlin only from compiles it sees, so a
   commit that leaves Kotlin sources unchanged (compile FROM-CACHE) fails it.
@@ -234,7 +234,7 @@ repro is a **fresh empty `GRADLE_USER_HOME`** (copy in `wrapper/` to skip
 the distro download, leave `modules-2` empty) run with `--no-daemon` and
 cleared `.gradle/configuration-cache`. The same trap hides missing keys:
 without the committed keyring CI must fetch every `<trusted-key>` from
-flaky keyservers and reds on ~126 buildscript-classpath artifacts. Keep
+flaky keyservers and reds on most buildscript-classpath artifacts. Keep
 keyservers **enabled** (no `<key-servers enabled="false"/>`): the keyring
 satisfies verify-time, and the fallback is what lets `--refresh-keys` fetch
 material for newly-added deps — disabling it would break the regen writer

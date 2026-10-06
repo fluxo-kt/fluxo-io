@@ -3,8 +3,6 @@ name: Build
 on:
   pull_request:
   push:
-    # Dependabot branches always have a PR, whose run covers them; a push run would double it.
-    branches-ignore: [ "dependabot/**" ]
 
 permissions:
   contents: read

@@ -5,6 +5,7 @@ package fluxo.io.rad
 import fluxo.io.IOException
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
@@ -37,6 +38,27 @@ internal class NativeFileRadTest {
     fun missingFileAndDirectoryFailAtOpen() {
         assertFailsWith<IOException> { RandomAccessData.open(tempDir() + "/does-not-exist-" + Random.nextLong()) }
         assertFailsWith<IOException> { RandomAccessData.open(tempDir()) }
+    }
+
+    /**
+     * Over 260 characters, with `..` and mixed separators, resolving to a short path. Windows
+     * needs `\\?\` beyond 260, and that prefix leaves `..` unresolved unless the path is resolved
+     * first; POSIX resolves it natively.
+     */
+    @Test
+    fun longPathWithDotDotSegmentsOpens() {
+        val path = tempFile(RadContract.bytes())
+        try {
+            val dir = tempDir()
+            val name = dir.substring(dir.lastIndexOfAny(charArrayOf('/', '\\')) + 1)
+            var detour = dir
+            while (detour.length < 300) detour += "/../$name"
+            val long = detour + "/" + path.substring(dir.length + 1)
+            val size = RandomAccessData.open(long).use { it.size }
+            assertEquals(RadContract.bytes().size.toLong(), size)
+        } finally {
+            remove(path)
+        }
     }
 
     private fun tempDir(): String =

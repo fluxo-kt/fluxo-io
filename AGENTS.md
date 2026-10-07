@@ -231,7 +231,7 @@ Workflow / release / verification-metadata traps live in
 - Code whose tests run only in CI (mingw, Linux native): a fix is DONE only when
   that job is green on the fix commit (`gh run list --commit <full sha>`). A
   local compile proves nothing about behaviour.
-- CI runs across macOS/Windows/Ubuntu; Gradle runs on JDK 21, JVM tests also on 17 and 25.
+- CI runs across macOS/Windows/Ubuntu; Gradle runs on JDK 21, JVM tests also on 8, 17 and 25.
 - For workflow / release / verification-metadata traps see
   [`.github/AGENTS.md`](.github/AGENTS.md).
 

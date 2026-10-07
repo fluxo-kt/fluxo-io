@@ -18,7 +18,6 @@ env:
   #GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   IS_DEFAULT_REPO: ${{ github.repository == 'fluxo-kt/fluxo-io' }}
   IS_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-  GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -123,18 +122,10 @@ jobs:
           path: ${{ env.KONAN_DATA_DIR || '~/.konan' }}
           key: konan-${{ runner.os }}-${{ matrix.shard }}-kotlin-${{ steps.kotlin.outputs.version }}
 
-      - name: Setup Gradle with encrypted cache
-        if: env.GRADLE_ENCRYPTION_KEY != ''
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
-        with:
-          cache-encryption-key: ${{ env.GRADLE_ENCRYPTION_KEY }}
-          cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
-          add-job-summary-as-pr-comment: never
-          artifact-retention-days: 1
-          validate-wrappers: true
-
-      - name: Setup Gradle without encrypted cache
-        if: env.GRADLE_ENCRYPTION_KEY == ''
+      # No `cache-encryption-key`: setup-gradle saves configuration-cache data only for a licensed
+      # Develocity trial (`ProjectCacheStatus` in its vendored caching library), so a key alone
+      # caches nothing and every job configures from scratch.
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}

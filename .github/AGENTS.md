@@ -16,9 +16,12 @@ language traps live in the **root `AGENTS.md`** — read that first.
 
 ## Build shards (`build.yml`)
 
-The matrix is the full cross-platform check on every push, not a time-budgeted
-test lane: lane budgets apply to the local fast and complete lanes. One job per
-target family runs the slow toolchains in parallel. A Kotlin/Native target
+**CI budget (maintainer ruling):** a normal CI lane must finish 8–15× under its
+budget (5 min for a complete routine lane), because a shared runner can be
+~15× slower. Only separate deep flows (benchmarks, release, full long test
+runs) sit outside lane budgets, and the label is the maintainer's to give:
+never call a job deep to excuse its time. Speed must not cost soundness,
+fidelity or cleanup. One job per target family runs the slow toolchains in parallel. A Kotlin/Native target
 compiles and runs tests only on its own host OS, so Apple families get several
 macOS jobs.
 

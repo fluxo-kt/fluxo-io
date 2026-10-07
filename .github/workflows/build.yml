@@ -143,14 +143,17 @@ jobs:
       # Per shard, saved every run: its configuration cache (a hit skips configuring, ~30 s) and
       # the local build cache, which a read-only job above would otherwise never keep. Restored
       # over the writer's Gradle home. An entry is reusable only while every Gradle-home file it
-      # recorded comes back, which the one stable writer per OS gives; Gradle checks each entry
-      # against its real inputs, so a stale one costs only a recompute.
+      # recorded comes back. The writer's restored home lacks the Develocity settings plugin
+      # (every entry missed on its marker POM), so the plugin's module groups travel here too.
+      # Gradle checks each entry against its real inputs, so a stale one costs only a recompute.
       - name: Gradle shard state
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             .gradle/configuration-cache
             ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/build-cache-1
+            ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/modules-2/files-2.1/com.gradle
+            ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/modules-2/files-2.1/com.gradle.develocity
           key: gradle-shard-${{ matrix.shard }}-${{ github.sha }}
           restore-keys: gradle-shard-${{ matrix.shard }}-
 

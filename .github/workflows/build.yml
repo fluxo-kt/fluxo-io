@@ -29,9 +29,9 @@ jobs:
   buildAndCheck:
     strategy:
       fail-fast: false
-      # Every job here is a normal CI lane: it must finish 8–15× under the 5 min lane budget
-      # (maintainer ruling; .github/AGENTS.md "CI budget"). One job per target family runs the
-      # slow toolchains in parallel.
+      # Timeouts keep 8–15× headroom over the local build time, since a shared runner can be
+      # ~15× slower (maintainer ruling; .github/AGENTS.md "CI headroom"). One job per target
+      # family runs the slow toolchains in parallel.
       # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
       # host per family keeps the slow Apple toolchains in parallel jobs.
       # `JVM` stays in every filter: the adapters have no Android target, so a one-target filter

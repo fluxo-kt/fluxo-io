@@ -16,15 +16,14 @@ language traps live in the **root `AGENTS.md`** — read that first.
 
 ## Build shards (`build.yml`)
 
-**CI budget (maintainer ruling):** a normal CI lane must finish 8–15× under its
-budget (5 min for a complete routine lane), because a shared runner can be
-~15× slower. Only separate deep flows (benchmarks, release, full long test
-runs) sit outside lane budgets, and the label is the maintainer's to give:
-never call a job deep to excuse its time. Speed must not cost soundness,
-fidelity or cleanup. One job per target family runs the slow toolchains in parallel.
-Before calling any CI cost fixed, split the job log: setup steps, then in the
-Gradle step "Calculating task graph" → first `> Task` (configuration) versus
-the tasks themselves (`gh api …/actions/runs/<id>/jobs` gives step times). A Kotlin/Native target
+**CI headroom (maintainer ruling):** "CI design MUST retain 8–15× headroom
+(shared CI runner could be ~15x slower)." Lane time budgets (5 min for a
+complete routine lane) apply to the lane on normal hardware; CI timeouts must
+let a runner ~15× slower still pass. It is not a time limit on CI jobs: never
+restate it as one. Deep flows (benchmarks, release, long full-test runs) sit
+outside lane budgets. Speed must not cost soundness, fidelity or cleanup, and
+comes after correctness and design. One job per target family runs the slow
+toolchains in parallel. A Kotlin/Native target
 compiles and runs tests only on its own host OS, so Apple families get several
 macOS jobs.
 

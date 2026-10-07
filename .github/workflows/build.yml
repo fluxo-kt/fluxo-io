@@ -41,12 +41,12 @@ jobs:
           # No build cache here: CodeQL extracts Kotlin only from compiler runs it observes, so a
           # compile restored from cache leaves it nothing to analyse and fails the job.
           - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog --no-build-cache' }
-          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif', konan: true }
+          - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif', konan: true, cache-writer: true }
           - { shard: web, os: ubuntu-24.04, targets: 'JVM,COMMON_JS', tasks: 'allTests assemble -x jvmTest' }
           - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest', konan: true }
-          - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: mingw, os: windows-2025, targets: 'JVM,MINGW', tasks: 'allTests assemble -x jvmTest', konan: true, cache-writer: true }
           - { shard: macos, os: macos-15, targets: 'JVM,MACOS', tasks: 'allTests assemble -x jvmTest', konan: true }
-          - { shard: ios, os: macos-15, targets: 'JVM,IOS', tasks: 'allTests assemble -x jvmTest', konan: true }
+          - { shard: ios, os: macos-15, targets: 'JVM,IOS', tasks: 'allTests assemble -x jvmTest', konan: true, cache-writer: true }
           - { shard: tvos, os: macos-15, targets: 'JVM,TVOS', tasks: 'allTests assemble -x jvmTest', konan: true }
           - { shard: watchos, os: macos-15, targets: 'JVM,WATCHOS', tasks: 'allTests assemble -x jvmTest', konan: true }
           # JVM tests on the bytecode floor and on the newest LTS; the build itself stays on 21.
@@ -127,11 +127,16 @@ jobs:
       # `.gradle/configuration-cache` yourself needs a restored Gradle home holding every file the
       # entry recorded. With both providers it did not: entries missed on removed
       # kotlin/kotlinx/Develocity artifacts in 8 of 11 jobs. Where an entry hit, the Gradle step
-      # fell to 12-28 s, so a per-job Gradle home would be the next thing to try.
+      # fell to 12-28 s.
+      # One `cache-writer` job per runner OS saves the Gradle home; the others only read it and
+      # fall back to that writer's entry. Each job wrote a new ~600 MB dependency entry on every
+      # run, ~6 GB per push against the 10 GB repository quota, so GitHub evicted the previous
+      # run's build-cache entries before any run could reuse them. A reader downloads the few
+      # dependencies the writer lacks.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
-          cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' }}
+          cache-read-only: ${{ env.IS_DEFAULT_BRANCH != 'true' || !matrix.cache-writer }}
           add-job-summary-as-pr-comment: never
           artifact-retention-days: 1
           validate-wrappers: true

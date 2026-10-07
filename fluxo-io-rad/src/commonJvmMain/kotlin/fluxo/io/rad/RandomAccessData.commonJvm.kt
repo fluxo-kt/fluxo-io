@@ -236,8 +236,6 @@ public actual interface RandomAccessData : Closeable, AutoCloseable {
      * @see java.io.InputStream.transferTo
      * @see java.io.InputStream.readNBytes
      * @see java.nio.channels.FileChannel.transferTo
-     * @see azagroup.io.readBytesExact
-     * @see azagroup.io.readBytesFully
      */
     @Blocking
     @Throws(IOException::class)

@@ -6,8 +6,6 @@ import fluxo.io.IOException
 import fluxo.io.JAVA_9_PLUS
 import fluxo.io.nio.flipCompat
 import fluxo.io.nio.releaseCompat
-import fluxo.io.readBytesExact
-import fluxo.io.readBytesFully
 import fluxo.io.toArray
 import fluxo.io.util.EMPTY_BYTE_ARRAY
 import fluxo.io.util.toIntChecked
@@ -63,6 +61,14 @@ internal abstract class AbstractRandomAccessDataTest(
     protected lateinit var tempFile: File
     protected lateinit var rad: RandomAccessData
     protected lateinit var inputStream: InputStream
+    private val extraFiles = ArrayList<File>()
+
+    /** Opens [bytes] through [factory] over a temp file deleted after the test. */
+    protected fun openFile(bytes: ByteArray): RandomAccessData {
+        val file = File.createTempFile("rad", "tmp").also(extraFiles::add)
+        file.writeBytes(bytes)
+        return factory(file)
+    }
 
 
     @BeforeTest
@@ -80,24 +86,14 @@ internal abstract class AbstractRandomAccessDataTest(
             rad.close()
         } finally {
             tempFile.delete()
+            extraFiles.forEach(File::delete)
         }
     }
 
 
     /** The cross-platform contract, run against this implementation over a real temp file. */
     @Test
-    fun contract() {
-        val files = ArrayList<File>()
-        try {
-            RadContract.verify { bytes ->
-                val file = File.createTempFile("contract", "tmp").also(files::add)
-                file.writeBytes(bytes)
-                factory(file)
-            }
-        } finally {
-            files.forEach(File::delete)
-        }
-    }
+    fun contract() = RadContract.verify(::openFile)
 
     @Test
     fun inputStreamRead() = runTest(timeout = DEFAULT_TIMEOUT) {
@@ -237,6 +233,7 @@ internal abstract class AbstractRandomAccessDataTest(
 
     @Test
     fun testConcurrency() = runTest(timeout = DEFAULT_TIMEOUT) {
+        val data = openFile(RadContract.bytes())
         val threadPool = Executors.newFixedThreadPool(30)
         (0 until 180).map { taskIndex ->
             threadPool.submit<Unit> {
@@ -250,29 +247,13 @@ internal abstract class AbstractRandomAccessDataTest(
                 assertEquals(len, stream.read(b), d)
                 assertEquals(BYTES, b, d)
 
-                arrayOf(rad, slice).forEachIndexed { ri, rad ->
-                    assertRead("$d rad #$ri", rad) { array, position ->
-                        try {
-                            randRead(array, position)
-                        } catch (e: Throwable) {
-                            when (e) {
-                                is IndexOutOfBoundsException,
-                                is IOException,
-                                    -> {
-                                    throw e
-                                }
-
-                                else -> {
-                                    throw IllegalStateException("$d rad #$ri", e)
-                                }
-                            }
-                        }
-                    }
-                }
+                RadContract.verifyPositionalRead(data) { array, p -> randRead(array, p) }
             }
         }.forEach {
             it.get()
         }
+        threadPool.shutdown()
+        data.close()
     }
 
     @Test
@@ -315,13 +296,7 @@ internal abstract class AbstractRandomAccessDataTest(
 
     @Test
     fun testAllBytes() = runTest(timeout = DEFAULT_TIMEOUT) {
-        assertEquals(BYTES, inputStream.readBytes())
-
         for (rad in arrayOf(rad, rad.slice(0, rad.size))) {
-            assertEquals(BYTES.size.toLong(), rad.size)
-            assertEquals(BYTES.copyOf(BYTES.size), rad.readAllBytes())
-            assertEquals(BYTES.copyOfRange(0, BYTES.size), rad.readAllBytes())
-            assertEquals(BYTES, rad.readFrom(0L, BYTES.size))
             assertEquals(
                 BYTES,
                 rad.asInputStream().let {
@@ -329,9 +304,6 @@ internal abstract class AbstractRandomAccessDataTest(
                     it.readBytes()
                 },
             )
-            assertEquals(BYTES, rad.asInputStream().readBytes())
-            assertEquals(BYTES, rad.asInputStream().readBytesExact(rad.size.toInt()))
-            assertEquals(BYTES, rad.asInputStream().readBytesFully(rad.size.toInt()))
             // JDK 9+ InputStream defaults over our stream; absent on JDK 8 (NoSuchMethodError).
             if (JAVA_9_PLUS) {
                 assertEquals(BYTES, rad.asInputStream().readAllBytes())
@@ -348,20 +320,13 @@ internal abstract class AbstractRandomAccessDataTest(
             }
 
             val part = rad.slice(34, 145)
-            val expected = BYTES.copyOfRange(34, 179)
-            assertEquals(145L, part.size)
-            assertEquals(expected, part.readAllBytes())
-            assertEquals(expected, part.readFrom(0L, 145))
             assertEquals(
-                expected,
+                BYTES.copyOfRange(34, 179),
                 part.asInputStream().let {
                     assertEquals(145, it.available())
                     it.readBytes()
                 },
             )
-            assertEquals(expected, part.asInputStream().readBytes())
-            assertEquals(expected, part.asInputStream().readBytesExact(145, strict = true))
-            assertEquals(expected, part.asInputStream().readBytesFully(145))
         }
     }
 
@@ -393,14 +358,8 @@ internal abstract class AbstractRandomAccessDataTest(
 
     @Test
     fun testReadBuffer() = runTest(timeout = DEFAULT_TIMEOUT) {
-        arrayOf(
-            rad,
-            rad.slice(0, rad.size),
-            rad.slice(0, rad.size - 11),
-        ).forEachIndexed { ri, rad ->
-            assertRead("rad #$ri", rad) { array, position ->
-                read(ByteBuffer.wrap(array), position)
-            }
+        openFile(RadContract.bytes()).use { data ->
+            RadContract.verifyPositionalRead(data) { array, p -> read(ByteBuffer.wrap(array), p) }
         }
 
         // The same bytes 2..4 from position 2, and through a slice whose section starts at 1.
@@ -491,66 +450,10 @@ internal abstract class AbstractRandomAccessDataTest(
         }
     }
 
-    private fun assertRead(
-        d: String,
-        rad: RandomAccessData,
-        r: RandomAccessData.(array: ByteArray, position: Long) -> Int,
-    ) {
-        val size = rad.size
-        val sizeInt = size.toIntChecked()
-
-        val ba0 = EMPTY_BYTE_ARRAY
-        var ba8 = ByteArray(8)
-        assertEquals(0, rad.r(ba0, 0), d)
-        assertEquals(0, rad.r(ba0, size - 1), d)
-        assertEquals(-1, rad.r(ba0, size), d)
-        assertEquals(-1, rad.r(ba8, size), d)
-        assertEquals(-1, rad.r(ba0, size + 1), d)
-        assertEquals(-1, rad.r(ba8, size + 1), d)
-        assertEquals(-1, rad.r(ba0, Int.MAX_VALUE.toLong()), d)
-        assertEquals(-1, rad.r(ba8, Int.MAX_VALUE.toLong()), d)
-        assertEquals(-1, rad.r(ba0, Long.MAX_VALUE), d)
-        assertEquals(-1, rad.r(ba0, LONG_GIVES_INT_MINUS_2), d)
-        assertEquals(-1, rad.r(ba8, LONG_GIVES_INT_MINUS_2), d)
-        assertEquals(-1, rad.r(ba0, LONG_GIVES_INT_0), d)
-        assertEquals(-1, rad.r(ba8, LONG_GIVES_INT_0), d)
-        assertEquals(-1, rad.r(ba0, LONG_GIVES_INT_2), d)
-        assertEquals(ByteArray(8), ba8, d)
-
-        assertIOB(d) { rad.r(ba0, -1) }
-        assertIOB(d) { rad.r(ba8, -1) }
-        assertIOB(d) { rad.r(ba0, Int.MIN_VALUE.toLong()) }
-        assertIOB(d) { rad.r(ba8, Int.MIN_VALUE.toLong()) }
-        assertIOB(d) { rad.r(ba0, LONG_NEG_GIVES_INT_2) }
-        assertIOB(d) { rad.r(ba8, LONG_NEG_GIVES_INT_2) }
-        assertIOB(d) { rad.r(ba0, Long.MIN_VALUE) }
-        assertIOB(d) { rad.r(ba8, Long.MIN_VALUE) }
-        assertEquals(ByteArray(8), ba8, d)
-
-        assertEquals(1, rad.r(ba8, size - 1), d)
-        assertEquals(ByteArray(8).also { it[0] = BYTES[sizeInt - 1] }, ba8, d)
-
-        assertEquals(8, rad.r(ba8, 0), d)
-        assertEquals(BYTES.copyOf(8), ba8, d)
-
-        ba8 = ByteArray(8)
-        assertEquals(4, rad.r(ba8, size - 4), d)
-        assertEquals(BYTES.copyOfRange(sizeInt - 4, sizeInt) + ByteArray(4), ba8, d)
-
-        var ba = ByteArray(sizeInt + 3)
-        assertEquals(sizeInt, rad.r(ba, 0), d)
-        assertEquals(BYTES.copyOf(sizeInt) + ByteArray(3), ba, d)
-
-        ba = ByteArray(sizeInt * 2)
-        assertEquals(sizeInt, rad.r(ba, 0), d)
-        assertEquals(BYTES.copyOf(sizeInt) + ByteArray(sizeInt), ba, d)
-    }
-
     protected fun assertEmptyRad(empty: RandomAccessData) = empty.use {
         assertEquals(0L, empty.size)
         assertEquals(EMPTY_BYTE_ARRAY, empty.readAllBytes())
         assertEquals(EMPTY_BYTE_ARRAY, empty.asInputStream().readBytes())
-        assertEquals(EMPTY_BYTE_ARRAY, empty.asInputStream().readBytesFully(0))
         assertEquals(EMPTY_BYTE_ARRAY, empty.readFrom(0))
 
         assertEquals(-1, empty.read(EMPTY_BYTE_ARRAY, 0))

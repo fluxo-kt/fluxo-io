@@ -243,6 +243,16 @@ public object RadContract {
         assertContentEquals(BYTES.copyOfRange(8, 13), part.readFrom(3L), d)
     }
 
+    /**
+     * The positional-read rules for a platform-only read path (e.g. JVM `read(ByteBuffer, p)`),
+     * checked on [rad] and its slices with the same cases as `read` and `readFully`.
+     * [rad] must hold [bytes].
+     */
+    public fun verifyPositionalRead(
+        rad: RandomAccessData,
+        read: RandomAccessData.(array: ByteArray, position: Long) -> Int,
+    ): Unit = forEachView(rad, trimmed = true) { d, view -> positionalReadCases(d, view, read) }
+
     /** Shared by `read` and `readFully`: positional results and buffer contents. */
     private fun positionalReadCases(
         d: String,

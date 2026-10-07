@@ -1,6 +1,7 @@
 package fluxo.io.rad
 
 import java.io.File
+import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -59,7 +60,9 @@ internal class RadFactoryFailureTest {
 
     /** macOS has no /proc: lsof prints one `n<canonical path>` line per open file. */
     private fun lsofFiles(): Set<String>? = runCatching {
-        val pid = ProcessHandle.current().pid().toString()
+        // Not ProcessHandle (Java 9): tests compile for the Java 8 floor. The runtime name is
+        // "<pid>@<host>" on HotSpot and OpenJ9.
+        val pid = ManagementFactory.getRuntimeMXBean().name.substringBefore('@')
         val lsof = ProcessBuilder("lsof", "-p", pid, "-Fn").start()
         val names = lsof.inputStream.bufferedReader().readLines()
         check(lsof.waitFor() == 0 || names.isNotEmpty()) { "lsof failed" }

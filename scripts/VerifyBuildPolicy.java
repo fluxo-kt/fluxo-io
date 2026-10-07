@@ -461,7 +461,7 @@ public final class VerifyBuildPolicy {
 
     private static final List<RequiredLiteral> REQUIRED_LITERALS = List.of(
             new RequiredLiteral("gradle.properties", "kotlin.jvm.target.validation.mode=error", "JVM target drift must fail the build."),
-            new RequiredLiteral("gradle/libs.versions.toml", "javaLangTarget = \"17\"", "Published bytecode target is Java 17."),
+            new RequiredLiteral("gradle/libs.versions.toml", "javaLangTarget = \"1.8\"", "Published bytecode target is Java 8, the floor 0.1.0 shipped; raising it breaks JVM consumers."),
             new RequiredLiteral("gradle/libs.versions.toml", "androidMinSdk = \"21\"", "Android minSdk must stay on the modern floor."),
             new RequiredLiteral("build.gradle.kts", "useDokka = true", "Dokka publication jars are required."),
             new RequiredLiteral("fluxo-io-rad/build.gradle.kts", "tsApiChecks = true", "TypeScript API checks are required.")

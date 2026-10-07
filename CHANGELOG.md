@@ -50,7 +50,7 @@ Central; its changes ship here.
 - **Artifact coordinate renamed** to `io.github.fluxo-kt:fluxo-io-rad` (was
   `fluxo-io` / `fluxo-io-jvm` / platform klibs in 0.1.0). Migrate the
   dependency coord; the old artifacts are no longer published.
-- Toolchain: built with Kotlin 2.4.20 at language 2.2, AGP 9, JVM target 17,
+- Toolchain: built with Kotlin 2.4.20 at language 2.2, AGP 9, JVM target 8 (as in 0.1.0),
   Android minSdk 21. Consumers need Kotlin 2.1+ on the JVM and Kotlin 2.4+ on
   Native/JS/Wasm (a klib is readable only by its compiler's minor or newer).
 - Publishing via Maven Central Portal (vanniktech); Sonatype S01/OSSRH retired.

@@ -19,7 +19,7 @@ Workflow / release / verification-metadata traps live in
   (`azadev.io.rad`, `DataAccessor`) and use this instead. Plan and open
   hypotheses: `ROADMAP.md`.
 - **Best mechanism per runtime, with a fallback ladder** from the oldest
-  supported runtime (JDK 17, Android API 21, every KMP target) up to the newest,
+  supported runtime (JDK 8, Android API 21, every KMP target) up to the newest,
   experimental APIs included behind runtime detection. Choose by what works best
   there, never by deprecation status, and never cut every platform down to a
   common denominator. Platform APIs lie and break: each rung needs a fallback
@@ -287,7 +287,12 @@ Workflow / release / verification-metadata traps live in
   Apple/Native targets, so its build emits a broken metadata-incomplete
   artifact. Removal + the repository ban are correct — keep both. (See
   also `.github/AGENTS.md` "Release publication".)
-- Build floors are deliberate: `javaLangTarget=17`, `androidMinSdk=21`,
+- **JVM floor is Java 8** (`javaLangTarget=1.8`; 0.1.0 shipped at 8, raising it breaks
+  consumers). Published JVM code compiles against JDK 8's own class library (root
+  `build.gradle.kts`, so every machine and CI job needs a JDK 8 installed): Kotlin's
+  `-Xjdk-release` misses JDK 9+ methods on old classes. Tests compile against the build JDK
+  and run on 8 too: wrap JDK 9+ calls in `if (JAVA_9_PLUS)`, never delete such checks.
+- Build floors are deliberate: `androidMinSdk=21`,
   `kotlinLangVersion=2.2` (maintainer ruling: the library follows the newest
   compiler that still accepts this language version). Native/JS/Wasm consumers
   need at least the library compiler's minor version (a klib built by 2.4.20

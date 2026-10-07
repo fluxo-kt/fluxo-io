@@ -29,6 +29,9 @@ fkcSetupRaw {
         developerEmail = "artyom.shendrik@gmail.com"
     }
 
+    // Published JVM code compiles against the JDK 8 class library instead (subprojects block
+    // below), and tests deliberately see the build JDK's API.
+    useJdkRelease = false
     enableApiValidation = true
     useDokka = true
 
@@ -38,7 +41,7 @@ fkcSetupRaw {
     experimentalLatestCompilation = true
     latestSettingsForTests = true
     // Without this, latestSettingsForTests also compiles tests for the newest JDK the build
-    // finds, and the JDK 17 test lane cannot load them (class file 65 on a 17 runtime).
+    // finds, and the oldest-JDK test lane cannot load them (e.g. class file 65 on a Java 8 runtime).
     javaTestsLangTarget = libs.versions.javaLangTarget.get()
     allWarningsAsErrors = false
     optInInternal = true
@@ -112,6 +115,10 @@ kover.reports {
 // name). Modules set only their POM description.
 val publishVersion = libs.versions.version.get()
 val unsignedLocalPublish = providers.gradleProperty("fluxo.unsignedLocalPublish").orNull == "true"
+/** The JDK whose class library published JVM code compiles against: the bytecode floor. */
+val floorJdk: JavaLanguageVersion =
+    JavaLanguageVersion.of(libs.versions.javaLangTarget.get().removePrefix("1."))
+
 subprojects {
     plugins.withId("com.vanniktech.maven.publish") {
         extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
@@ -167,10 +174,28 @@ subprojects {
         }
     }
 
+    // Published JVM code compiles against JDK 8's own class library, the bytecode floor: only
+    // that catches every JDK 9+ call. Kotlin's `-Xjdk-release=1.8` (fkc `useJdkRelease`) hides
+    // JDK 9+ classes but not JDK 9+ members of old classes: `InputStream.readAllBytes()` compiled
+    // and then threw NoSuchMethodError on Java 8. The compiler itself still runs on the build JDK.
+    // Tests are left on the build JDK's API on purpose: they also cover JDK 9+ behaviour, guarded
+    // by the runtime version, and are compiled to floor bytecode so the JDK 8 lane loads them.
+    val floorLauncher = provider { project.extensions.getByType<JavaToolchainService>() }
+        .flatMap { it.launcherFor { languageVersion.set(floorJdk) } }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>()
+        .matching { it.name == "compileKotlinJvm" }
+        .configureEach { kotlinJavaToolchain.toolchain.use(floorLauncher) }
+    tasks.withType<JavaCompile>().matching { it.name == "compileJvmMainJava" }.configureEach {
+        javaCompiler.set(
+            project.extensions.getByType<JavaToolchainService>()
+                .compilerFor { languageVersion.set(floorJdk) },
+        )
+    }
+
     // `-Pfluxo.testJdk=<N>` runs JVM tests on JDK N while the build itself stays on its own JDK.
-    // `-Xjdk-release` already limits the API to the bytecode floor (17); only running the tests
-    // there shows runtime differences (buffer methods, cleaners, Unsafe) on the oldest and the
-    // newest JDK that consumers use. Each CI lane passes the JDK it installed.
+    // Only running the tests there shows runtime differences (buffer methods, cleaners, Unsafe,
+    // JDK 9+ methods) on the oldest and the newest JDK that consumers use. Each CI lane passes
+    // the JDK it installed.
     val testJdk = providers.gradleProperty("fluxo.testJdk").map { JavaLanguageVersion.of(it) }
     if (testJdk.isPresent) {
         tasks.withType<Test>().configureEach {

@@ -3,6 +3,7 @@
 package fluxo.io.rad
 
 import fluxo.io.IOException
+import fluxo.io.JAVA_9_PLUS
 import fluxo.io.nio.flipCompat
 import fluxo.io.nio.releaseCompat
 import fluxo.io.readBytesExact
@@ -331,18 +332,20 @@ internal abstract class AbstractRandomAccessDataTest(
             assertEquals(BYTES, rad.asInputStream().readBytes())
             assertEquals(BYTES, rad.asInputStream().readBytesExact(rad.size.toInt()))
             assertEquals(BYTES, rad.asInputStream().readBytesFully(rad.size.toInt()))
-
-            assertEquals(BYTES, rad.asInputStream().readAllBytes())
-            assertEquals(BYTES, rad.asInputStream().readNBytes(rad.size.toInt()))
-            assertEquals(
-                BYTES,
-                rad.asInputStream().let {
-                    assertEquals(BYTES.size, it.available())
-                    val out = ByteArrayOutputStream(BYTES.size)
-                    it.transferTo(out)
-                    out.toByteArray()
-                },
-            )
+            // JDK 9+ InputStream defaults over our stream; absent on JDK 8 (NoSuchMethodError).
+            if (JAVA_9_PLUS) {
+                assertEquals(BYTES, rad.asInputStream().readAllBytes())
+                assertEquals(BYTES, rad.asInputStream().readNBytes(rad.size.toInt()))
+                assertEquals(
+                    BYTES,
+                    rad.asInputStream().let {
+                        assertEquals(BYTES.size, it.available())
+                        val out = ByteArrayOutputStream(BYTES.size)
+                        it.transferTo(out)
+                        out.toByteArray()
+                    },
+                )
+            }
 
             val part = rad.slice(34, 145)
             val expected = BYTES.copyOfRange(34, 179)

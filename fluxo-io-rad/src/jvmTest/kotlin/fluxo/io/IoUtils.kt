@@ -8,6 +8,11 @@ import fluxo.io.util.EMPTY_BYTE_ARRAY
 import java.io.InputStream
 import java.nio.ByteBuffer
 
+/**
+ * Tests compile against the build JDK's API but run on JDK 8 too (the `jdk8` CI lane): wrap any
+ * JDK 9+ call in `if (JAVA_9_PLUS)`. JDK 8 reports "1.8", later JDKs "9", "17", ….
+ */
+val JAVA_9_PLUS: Boolean = !System.getProperty("java.specification.version").startsWith("1.")
 
 /**
  * Reads this stream completely into a byte array.

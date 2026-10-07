@@ -17,7 +17,7 @@ androidTargetSdk = "37"
 androidCompileSdk = "37"
 androidBuildTools = "37.0.0"
 
-javaLangTarget = "17"
+javaLangTarget = "1.8"
 kotlinLangVersion = "2.2"
 kotlinCoreLibraries = "2.2.21"
 

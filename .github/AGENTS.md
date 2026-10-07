@@ -30,17 +30,16 @@ macOS jobs.
 - `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
   checks klib ABI and lints every source set.
 - `web`, `linux`, `mingw`, `macos`, `ios`, `tvos`, `watchos`: `allTests assemble
-  -x jvmTest` for their family. `JVM` stays in every filter (Android host tests
-  resolve `:conformance-test` through its JVM variant).
+  -x jvmTest` for their family. `JVM` stays in every filter: the adapters have
+  no Android target, so a one-target filter compiles their `commonMain` as
+  platform code, which rejects `@JvmName`/`@JvmStatic` (`@OptionalExpectation`).
 - `jdk17`, `jdk25`: `jvmTest` on that JDK via `-Pfluxo.testJdk` (root
   `build.gradle.kts`); Gradle itself runs on 21. 17 is the bytecode floor,
   where `-Xjdk-release` checks the API but nothing ran the code.
 - Every filtered job adds `-x klibApiCheck` (a filtered klib dump always
   differs).
-- A filter with `WASM_JS` or `WASM_WASI` must also include `JS`: without it
-  fluxo-kmp-conf 0.15.1 skips every Wasm test task (`wasmJsNodeTest` SKIPPED)
-  and the build still passes. Check the
-  task outcomes, not the exit code, before trusting a filtered test run.
+- A filtered build skips some test tasks yet passes (Android host tests are
+  SKIPPED under the family filters): check task outcomes, not the exit code.
 - Build-script lookups of a source set or task must tolerate a filter that
   removes it (`matching { … }.configureEach`, never `named`).
 - Every job that compiles Kotlin/Native code sets `konan: true`, including

@@ -33,7 +33,8 @@ jobs:
       # the slow toolchains in parallel.
       # A Kotlin/Native target compiles and runs its tests only on its own host OS, and one
       # host per family keeps the slow Apple toolchains in parallel jobs.
-      # `JVM` stays in every filter: Android host tests resolve `:conformance-test` through its JVM variant.
+      # `JVM` stays in every filter: the adapters have no Android target, so a one-target filter
+      # builds their `commonMain` as platform code, which rejects `@JvmName`/`@JvmStatic`.
       # Filtered builds skip `klibApiCheck` (a filtered klib dump lacks the other targets, so it
       # always differs); the unfiltered `api` job checks every ABI and merges SARIF.
       matrix:

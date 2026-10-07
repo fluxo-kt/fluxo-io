@@ -1,8 +1,7 @@
 // Unpublished: holds the behaviour table (`RadContract`) that every module shipping a
 // `RandomAccessData` implementation runs from its own tests. Each consumer test compilation
 // needs a variant of this module for its target, so the targets match `:fluxo-io-rad` except
-// Android: no Android test compilation consumes it, and fluxo-kmp-conf 0.15.1's Android Detekt
-// task cannot resolve a KMP-Android project dependency (ambiguous `androidApiElements` variants).
+// Android: the core's Android host tests resolve its JVM variant, so CI target filters keep `JVM`.
 // The `-test` in the module name makes fluxo-kmp-conf skip Dependency Guard here, whose release
 // policy rejects kotlin-test on a main classpath; this module exists to put it there.
 plugins {

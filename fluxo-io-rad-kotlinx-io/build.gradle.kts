@@ -1,7 +1,6 @@
 // Published adapter: the core stays dependency-free, this module carries the kotlinx-io dependency.
 // kotlinx-io has no random-access file API, so the adapter goes one way only.
-// No Android target: Android consumers get the JVM variant; and fkc 0.15.1's Android Detekt
-// task cannot resolve a project dependency on a KMP-Android module.
+// No Android target: Android consumers get the JVM variant, which needs no Android API.
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.kover)

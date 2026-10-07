@@ -1,7 +1,6 @@
 // Published adapter: the core stays dependency-free, this module carries the okio dependency.
 // Okio publishes no Android Native variants, so this module has none either.
-// No Android target: Android consumers get the JVM variant; and fkc 0.15.1's Android Detekt
-// task cannot resolve a project dependency on a KMP-Android module.
+// No Android target: Android consumers get the JVM variant, which needs no Android API.
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.kover)

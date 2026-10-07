@@ -56,8 +56,8 @@ Workflow / release / verification-metadata traps live in
     together with its own wasmJs. Its test task patches KGP's driver to
     preopen `/tmp` (KT-65179); a WASI module reaches no file otherwise.
 - `:conformance-test` — unpublished; `RadContract` for every module's tests.
-  No Android target: no Android test consumes it, and fkc 0.15.1's Android
-  Detekt task fails on a KMP-Android project dependency. The `-test` name
+  No Android target: the core's Android host tests resolve its JVM variant
+  (a filter without `JVM` fails there). The `-test` name
   makes fkc skip Dependency Guard (it bans kotlin-test on main classpaths).
 - `:fluxo-io-rad-okio`, `:fluxo-io-rad-kotlinx-io` — published adapters, so the
   core stays dependency-free. They build sources with `fluxo.io.internal.radOf`
@@ -140,8 +140,7 @@ Workflow / release / verification-metadata traps live in
   `read(bytes, position, offset, length)` primitive.
   `onSharedClose()` is `final`; release the API in
   `protected open fun releaseApi()` — the template always closes the
-  `resources` array even if release throws. Direct `onSharedClose`
-  overrides are compile-blocked (see `SharedDataAccessorReleaseApiTest`).
+  `resources` array even if release throws (`SharedDataAccessorReleaseApiTest`).
   `AccessorAwareRad<A>` (common, every platform) wraps it with offset/size + bounds checks
   (`fluxo.io.util.IoUtil`). `BasicRad` (expect/actual) carries the JVM
   common impl: `readByteAt`, `transferTo`, `read(ByteBuffer, position)`,

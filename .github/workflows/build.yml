@@ -169,8 +169,9 @@ jobs:
       # writer's home lacks (lincheck, per-target atomicfu klibs, the commonizer) are gone next
       # run, and the entry misses. Configuring every target and task here, without running any,
       # puts them into the home this writer saves. Its own entry makes this a cache hit later.
+      # No reader runs on Windows, so the Windows writer skips it.
       - name: Resolve every shard's configuration inputs
-        if: matrix.cache-writer && env.IS_DEFAULT_BRANCH == 'true'
+        if: matrix.cache-writer && env.IS_DEFAULT_BRANCH == 'true' && runner.os != 'Windows'
         shell: bash
         run: KMP_TARGETS='' ./gradlew build koverLog mergeDetektSarif --dry-run
 

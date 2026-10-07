@@ -61,6 +61,12 @@ macOS jobs.
   `if: always()`: an actions/cache step saves only on success, so cold native
   jobs that time out would never warm it. Step and job timeouts only bound
   hangs.
+- **Only one job per runner OS writes the setup-gradle cache (`cache-writer: true`).** A job
+  that writes saves its own ~600 MB dependency entry on every run; a writer per shard put
+  ~6 GB a push into the 10 GB repository quota, and GitHub then evicted every earlier entry
+  (build cache, Gradle homes), so no run reused another's. A new shard stays a reader. Its
+  configuration cache and build cache travel in its own small `gradle-shard-<shard>` entry.
+  Check `gh api repos/<o>/<r>/actions/caches` when CI slows: a near-full quota means eviction.
 - Modules need no workflow edit: every job runs root tasks.
 
 ## `/ff` recursion-guard (load-bearing)

@@ -18,8 +18,6 @@ env:
   #GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   IS_DEFAULT_REPO: ${{ github.repository == 'fluxo-kt/fluxo-io' }}
   IS_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-  # Gradle encrypts configuration-cache entries with this key; a stable key lets a later run read them.
-  GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -125,8 +123,10 @@ jobs:
           key: konan-${{ runner.os }}-${{ matrix.shard }}-kotlin-${{ steps.kotlin.outputs.version }}
 
       # No `cache-encryption-key`: setup-gradle saves configuration-cache data only for a licensed
-      # Develocity trial (`ProjectCacheStatus` in its vendored caching library); the step below
-      # caches it instead.
+      # Develocity trial (`ProjectCacheStatus` in its vendored caching library). Caching
+      # `.gradle/configuration-cache` with actions/cache does not hit, not even on a re-run of the
+      # same commit: a fresh checkout rebuilds buildSrc (":buildSrc:jar input changed") and
+      # the restored Gradle home lacks Develocity plugin files the entry recorded.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
@@ -134,17 +134,6 @@ jobs:
           add-job-summary-as-pr-comment: never
           artifact-retention-days: 1
           validate-wrappers: true
-
-      # Configuring is most of a warm job's Gradle time, and a configuration cache hit skips it. Gradle validates every entry against its real inputs and recomputes on
-      # a mismatch, so the key only spreads entries per job and a stale fallback is safe. Entries
-      # are encrypted with GRADLE_ENCRYPTION_KEY; without the secret (fork PRs) they are unreadable
-      # next run, which only costs the miss.
-      - name: Gradle configuration cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .gradle/configuration-cache
-          key: gradle-cc-${{ runner.os }}-${{ matrix.shard }}-${{ hashFiles('**/*.gradle.kts', 'gradle/*.toml', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties', 'buildSrc/src/**') }}
-          restore-keys: gradle-cc-${{ runner.os }}-${{ matrix.shard }}-
 
       # TODO: If it's a "build(deps): ..." commit, then run the dependency review actions,
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results

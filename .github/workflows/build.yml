@@ -40,9 +40,11 @@ jobs:
       # always differs); the unfiltered `api` job checks every ABI and merges SARIF.
       matrix:
         include:
-          # No build cache here: CodeQL extracts Kotlin only from compiler runs it observes, so a
-          # compile restored from cache leaves it nothing to analyse and fails the job.
-          - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog --no-build-cache' }
+          - { shard: jvm, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'build koverLog' }
+          # CodeQL extracts Kotlin only from compiler runs it observes, so a compile restored from
+          # cache leaves it nothing to analyse and fails the job. Its own shard compiles the JVM
+          # and Android code uncached, which leaves the build cache to every other job.
+          - { shard: codeql, os: ubuntu-24.04, targets: COMMON_JVM, tasks: 'jvmTestClasses compileAndroidMain --no-build-cache' }
           - { shard: api, os: ubuntu-24.04, targets: '', tasks: 'apiCheck detektAll mergeDetektSarif', konan: true, cache-writer: true }
           - { shard: web, os: ubuntu-24.04, targets: 'JVM,COMMON_JS', tasks: 'allTests assemble -x jvmTest' }
           - { shard: linux, os: ubuntu-24.04, targets: 'JVM,LINUX,ANDROID_NATIVE', tasks: 'allTests assemble -x jvmTest', konan: true }
@@ -176,7 +178,7 @@ jobs:
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results
 
       - name: Initialize CodeQL
-        if: matrix.shard == 'jvm'
+        if: matrix.shard == 'codeql'
         uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: ${{ env.CODEQL_LANGUAGE }}
@@ -281,7 +283,7 @@ jobs:
           compression-level: 9
 
       - name: Perform CodeQL Analysis
-        if: matrix.shard == 'jvm'
+        if: matrix.shard == 'codeql'
         timeout-minutes: 6
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         env:

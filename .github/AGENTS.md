@@ -29,10 +29,11 @@ compiles and runs tests only on its own host OS, so Apple families get several
 macOS jobs.
 
 - `jvm` (COMMON_JVM): `build koverLog` — JVM tests (no Android test source set exists), kover, Android
-  lint, CodeQL, verifyBuildPolicy, dependencyGuard. Runs with
-  `--no-build-cache`: CodeQL extracts Kotlin only from compiles it sees, so a
-  commit that leaves Kotlin sources unchanged (compile FROM-CACHE) fails it.
+  lint, verifyBuildPolicy, dependencyGuard.
   The Lint SARIF upload runs only if `build/lint-merged.sarif` exists.
+- `codeql` (COMMON_JVM): compiles JVM and Android code with `--no-build-cache`
+  for CodeQL, which extracts Kotlin only from compiles it sees: a compile
+  restored from cache leaves it nothing and fails the job.
 - `api` (unfiltered): `apiCheck detektAll mergeDetektSarif` — the only job that
   checks klib ABI and lints every source set.
 - `web`, `linux`, `mingw`, `macos`, `ios`, `tvos`, `watchos`: `allTests assemble

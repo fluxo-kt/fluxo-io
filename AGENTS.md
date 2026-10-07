@@ -228,6 +228,10 @@ Workflow / release / verification-metadata traps live in
   sequential run of the same code, where the throw is a legal result, so the
   test cannot fail. Record it; fail in a `@Validate` method. Prove red with a
   planted defect.
+- A planted defect counts as red only when the log names the target test FAILED on an
+  assertion: a `--tests` filter that matches nothing also exits 1 ("No tests found"). Filter
+  by the class name, which can differ from the file name (`RandomAccessDataByteBufferTest.kt`
+  holds `RadByteBufferAccessorTest`).
 - Code whose tests run only in CI (mingw, Linux native): a fix is DONE only when
   that job is green on the fix commit (`gh run list --commit <full sha>`). A
   local compile proves nothing about behaviour.

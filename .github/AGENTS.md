@@ -68,6 +68,13 @@ macOS jobs.
   (build cache, Gradle homes), so no run reused another's. A new shard stays a reader. Its
   configuration cache and build cache travel in its own small `gradle-shard-<shard>` entry.
   Check `gh api repos/<o>/<r>/actions/caches` when CI slows: a near-full quota means eviction.
+- **A reader's configuration cache hits only if every Gradle-home file it recorded comes
+  back**, and a reader saves no Gradle home. When a job logs "configuration cache cannot be
+  reused because file … has been removed", carry that file's kind in the `Gradle shard state`
+  paths (the comment there lists the kinds and why each goes missing). Never drop a carried
+  path without a run showing every job still logs "Reusing configuration cache": a dropped
+  path that looked unneeded broke every Linux reader. Changing those paths resets every
+  shard entry, so judge reuse on the second run after the change, never the first.
 - Modules need no workflow edit: every job runs root tasks.
 
 ## `/ff` recursion-guard (load-bearing)

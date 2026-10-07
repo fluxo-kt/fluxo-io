@@ -118,19 +118,6 @@ jobs:
           test -n "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      # Apple shards stall 50-90 s at their first test compile, where Kotlin/Native first asks
-      # xcrun for an SDK; the macOS shard, which needs no simulator SDK, does not. Times each
-      # lookup on a fresh runner.
-      - name: Warm up Xcode SDK lookups
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          for sdk in macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator; do
-            start=$SECONDS
-            xcrun --sdk "$sdk" --show-sdk-path > /dev/null
-            echo "$sdk: $((SECONDS - start)) s"
-          done
-
       - name: Restore Kotlin/Native toolchains
         id: konan
         if: matrix.konan

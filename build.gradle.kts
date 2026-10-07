@@ -1,4 +1,3 @@
-import buildlogic.VerifyBuildPolicyTask
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.jvm.tasks.Jar
 
@@ -222,43 +221,14 @@ allprojects {
     }
 }
 
-val buildPolicyRootDir: java.io.File = layout.projectDirectory.asFile
-val buildPolicyExcludedDirs = setOf(
-    ".git",
-    ".gradle",
-    ".idea",
-    ".kotlin",
-    ".kotlin-js-store",
-    "build",
-    "buildSrc/build",
-    "dependencies",
-    "node_modules",
-)
-val buildPolicyTextExtensions = setOf(
-    "gradle",
-    "kts",
-    "kt",
-    "java",
-    "properties",
-    "toml",
-    "md",
-    "txt",
-    "xml",
-    "yml",
-    "yaml",
-)
-val buildPolicyFiles = fileTree(buildPolicyRootDir) {
-    buildPolicyExcludedDirs.forEach { dir ->
-        exclude("$dir/**", "**/$dir/**")
-    }
-    include(buildPolicyTextExtensions.map { "**/*.$it" })
-}
-
-tasks.register<VerifyBuildPolicyTask>("verifyBuildPolicy") {
+// A single-file Java program run by the Gradle JVM's `java`: it scans text only, so keeping it out
+// of build logic spares every build a compile and keeps configuration-cache entries valid on a
+// fresh checkout. The file set and every rule live in scripts/VerifyBuildPolicy.java.
+tasks.register<Exec>("verifyBuildPolicy") {
     group = "verification"
     description = "Verifies non-negotiable build, publication, and workflow policy invariants."
-    rootDirectory.set(buildPolicyRootDir.absolutePath)
-    policyFiles.from(buildPolicyFiles)
+    val java = providers.systemProperty("java.home").map { "$it/bin/java" }
+    commandLine(java.get(), "scripts/VerifyBuildPolicy.java", ".")
 }
 
 tasks.named("check") {

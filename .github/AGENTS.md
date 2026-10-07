@@ -207,7 +207,7 @@ Regenerate the lockfile via `./gradlew kotlinUpgradeYarnLock` (run by
   via an unpinned transitive `@actions/tool-cache` under
   `actions/github-script@v7`.
 - **`setup-gradle` is special** — its allowed SHA is the hardcoded
-  `SETUP_GRADLE_PINNED_REF` constant in `VerifyBuildPolicyTask.java`.
+  `SETUP_GRADLE_PINNED_REF` constant in `scripts/VerifyBuildPolicy.java`.
   Bumping the workflow pin requires editing that constant in the same
   change.
 

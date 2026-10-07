@@ -1,53 +1,68 @@
-package buildlogic;
-
-import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
-import org.gradle.api.tasks.TaskAction;
-
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
-public abstract class VerifyBuildPolicyTask extends DefaultTask {
-    private final ConfigurableFileCollection policyFiles =
-            getProject().getObjects().fileCollection();
-    private final Property<String> rootDirectory =
-            getProject().getObjects().property(String.class);
+/**
+ * Text-level build, publication and workflow policy for this repository. Usage, from the root:
+ * `java scripts/VerifyBuildPolicy.java [rootDir]`; `./gradlew verifyBuildPolicy` runs the same.
+ *
+ * A single-file program, not build logic: it only scans text, so it needs nothing from Gradle.
+ * As build logic (buildSrc) it cost a compile in every CI job, and a fresh checkout rebuilding it
+ * invalidated every configuration-cache entry.
+ */
+public final class VerifyBuildPolicy {
+    // Generated or tool-owned trees: skipped wherever they occur.
+    private static final Set<String> EXCLUDED_DIRS = Set.of(
+            ".git", ".gradle", ".idea", ".kotlin", ".kotlin-js-store", "build",
+            "dependencies", "node_modules");
+    private static final Set<String> TEXT_EXTENSIONS = Set.of(
+            "gradle", "kts", "kt", "java", "properties", "toml", "md", "txt", "xml", "yml", "yaml");
 
-    @InputFiles
-    @PathSensitive(PathSensitivity.RELATIVE)
-    public final ConfigurableFileCollection getPolicyFiles() {
-        return policyFiles;
-    }
-
-    @Input
-    public final Property<String> getRootDirectory() {
-        return rootDirectory;
-    }
-
-    @TaskAction
-    public final void verify() throws IOException {
-        File rootDir = new File(rootDirectory.get());
-        List<String> failures = new ArrayList<>();
-        List<File> files = new ArrayList<>(policyFiles.getFiles());
+    public static void main(String[] args) throws IOException {
+        File rootDir = new File(args.length > 0 ? args[0] : ".").getCanonicalFile();
+        List<File> files = policyFiles(rootDir.toPath());
         files.sort(Comparator.comparing(file -> toPolicyPath(file, rootDir)));
 
+        List<String> failures = new ArrayList<>();
         checkForbiddenLiterals(files, rootDir, failures);
         checkRequiredLiterals(rootDir, failures);
         checkWorkflowPolicy(files, rootDir, failures);
 
         if (!failures.isEmpty()) {
-            throw new GradleException("Build policy violations:\n" + String.join("\n", failures));
+            System.err.println("Build policy violations:\n" + String.join("\n", failures));
+            System.exit(1);
         }
+    }
+
+    private static List<File> policyFiles(Path root) throws IOException {
+        List<File> files = new ArrayList<>();
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                return !dir.equals(root) && EXCLUDED_DIRS.contains(dir.getFileName().toString())
+                        ? FileVisitResult.SKIP_SUBTREE
+                        : FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                String name = file.getFileName().toString();
+                int dot = name.lastIndexOf('.');
+                if (dot >= 0 && TEXT_EXTENSIONS.contains(name.substring(dot + 1))) {
+                    files.add(file.toFile());
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return files;
     }
 
     private static void checkForbiddenLiterals(

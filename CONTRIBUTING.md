@@ -18,8 +18,8 @@ Please also make sure your code is ready by running:<br>
 - Don’t change public API lightly, avoid if possible, and include your reasoning in the PR if essential.
   It causes pain for users of the library, and sometimes runtime errors.
 
-- Fluxo is a small and light dependency.
-  Don't introduce new dependencies or major new functionality.
+- The core module stays dependency-free: anything that needs a dependency goes in its own module.
+  Open an issue before major new functionality.
 
 - Use [conventional commits](https://conventionalcommits.org/) specification for commit messages.
   Please use this format for PR titles too.

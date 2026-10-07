@@ -12,9 +12,22 @@ Workflow / release / verification-metadata traps live in
 
 ## Vibe & principles
 
-- **Small, fast, allocation-careful, no deps.** `CONTRIBUTING.md` says:
-  don't add deps or major new functionality. `kotlinx-coroutines` and
-  `androidx-annotation` are `compileOnly` — consumers opt in.
+- **Goal: the one read-I/O library you throw at any problem and get the best
+  result the running device allows.** First user: the Reedy Android app, which
+  must be able to delete its own copies (`azadev.io.rad`, `DataAccessor`) and use
+  this instead. Plan and open hypotheses: `ROADMAP.md`.
+- **Best mechanism per runtime, with a fallback ladder** from the oldest
+  supported runtime (JDK 17, Android API 21, every KMP target) up to the newest,
+  experimental APIs included behind runtime detection. Choose by what works best
+  there, never by deprecation status, and never cut every platform down to a
+  common denominator. Platform APIs lie and break: each rung needs a fallback
+  that a test exercises.
+- **Defaults come from measurements**, never from reasoning alone: a default
+  without benchmark data behind it is an open ROADMAP hypothesis.
+- **The core has no dependencies; anything needing one is its own module**
+  (as `:fluxo-io-rad-okio`). `kotlinx-coroutines` and `androidx-annotation` are
+  `compileOnly`: consumers opt in. Minimal work per read: every syscall,
+  copy and allocation on a read path must be needed.
 - **Tests use real temp files, not mocks.** Behaviour every impl must
   share lives in ONE table, `RadContract` (main code of the unpublished
   `:conformance-test` module, so adapter modules can run it too), run on every
@@ -241,8 +254,9 @@ Workflow / release / verification-metadata traps live in
 
 - **Mmap limit**: only files < 2 GiB (`Int.MAX_VALUE`) work with
   `RadByteBufferAccessor(File|FileChannel|FileDescriptor|FileInputStream)`.
-- **Don't recommend `RadAsyncFileChannelAccessor`** — deprecated, slow,
-  direct-buffer OOM-prone. Same for `RadMemoryMappedAccessor` →
+- **Don't recommend `RadAsyncFileChannelAccessor`**: slowest source in the
+  ancestor benchmarks and direct-buffer OOM-prone (its deprecation is not the
+  reason). Same for `RadMemoryMappedAccessor` →
   `RadByteBufferAccessor`.
 - **`fluxo.io.nio.Java8BufferCompat`** (`flipCompat`, `clearCompat`, …)
   must be used in JVM source instead of raw `Buffer.flip()` to dodge the
@@ -275,7 +289,8 @@ Workflow / release / verification-metadata traps live in
   Detekt's `--language-version` and logs it; that log is expected.
 - Okio and kotlinx-io are used only by their adapter modules
   (`:fluxo-io-rad-okio`, `:fluxo-io-rad-kotlinx-io`); the core never depends
-  on them. JMH is catalogue-reserved; don't wire it without a feature need.
+  on them. Benchmarks (JMH via kotlinx-benchmark, Android devices) live only in
+  the planned unpublished `:benchmarks` module (ROADMAP "M0").
 - JSR305 stays at `3.0.2`; upstream has no newer release.
 - `kotlin.concurrent.atomics` is still experimental; keep AtomicFU.
 - Keep the explicit `apiValidation { klib { enabled = true } }` in

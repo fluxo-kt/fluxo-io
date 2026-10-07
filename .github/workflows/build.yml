@@ -79,18 +79,9 @@ jobs:
         with:
           persist-credentials: false
 
-      # Published JVM code compiles against JDK 8's class library (root build.gradle.kts), found
-      # through JAVA_HOME_8_<arch> (gradle.properties). Zulu: Temurin has no JDK 8 for arm64 macOS.
-      # It is also the jdk8 lane's test JDK.
-      - name: Set up JDK 8
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          distribution: zulu
-          java-version: '8'
-
       # Installed before 21 so that 21 stays the default JAVA_HOME for Gradle itself.
       - name: Set up test JDK ${{ matrix.jdk }}
-        if: matrix.jdk && matrix.jdk != '8'
+        if: matrix.jdk
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
@@ -214,7 +205,7 @@ jobs:
           if [ -n "$KMP_TARGETS" ]; then args+=(-x klibApiCheck); fi
           # Gradle finds the test JDK through the variable setup-java exports for it.
           if [ -n "$TEST_JDK" ]; then
-            args+=("-Pfluxo.testJdk=$TEST_JDK" "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_8_X64,JAVA_HOME_${TEST_JDK}_X64")
+            args+=("-Pfluxo.testJdk=$TEST_JDK" "-Porg.gradle.java.installations.fromEnv=JAVA_HOME_${TEST_JDK}_X64")
           fi
           ./gradlew "${args[@]}" --continue --stacktrace --scan 2>&1 | tee "$RUNNER_TEMP/gradle.log"
           # A configuration-cache miss fails nothing yet costs every later run its configuration
@@ -332,13 +323,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      # Published JVM code compiles against JDK 8's class library (see build.yml "Set up JDK 8").
-      - name: Set up JDK 8
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          distribution: zulu
-          java-version: '8'
 
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1

@@ -1,5 +1,6 @@
 package fluxo.io.rad
 
+import fluxo.io.nio.limitCompat
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -30,7 +31,7 @@ internal class RadByteBufferOwnershipTest {
     /** The data ends at the buffer's limit, for every read path, so a range past it fails. */
     @Test
     fun dataEndsAtTheLimitNotTheCapacity() {
-        val buffer = ByteBuffer.allocate(16).apply { limit(8) }
+        val buffer = ByteBuffer.allocate(16).apply { limitCompat(8) }
         assertFails { RadByteBufferAccessor(buffer, 0, 16) }
         RadByteBufferAccessor(buffer).use { assertEquals(8L, it.size) }
     }

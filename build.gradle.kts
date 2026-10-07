@@ -29,8 +29,8 @@ fkcSetupRaw {
         developerEmail = "artyom.shendrik@gmail.com"
     }
 
-    // Published JVM code compiles against the JDK 8 class library instead (subprojects block
-    // below), and tests deliberately see the build JDK's API.
+    // Off for tests: they also cover JDK 9+ behaviour behind runtime checks. Published JVM code
+    // gets the floor API limit in the subprojects block below.
     useJdkRelease = false
     enableApiValidation = true
     useDokka = true
@@ -115,9 +115,8 @@ kover.reports {
 // name). Modules set only their POM description.
 val publishVersion = libs.versions.version.get()
 val unsignedLocalPublish = providers.gradleProperty("fluxo.unsignedLocalPublish").orNull == "true"
-/** The JDK whose class library published JVM code compiles against: the bytecode floor. */
-val floorJdk: JavaLanguageVersion =
-    JavaLanguageVersion.of(libs.versions.javaLangTarget.get().removePrefix("1."))
+/** The JVM bytecode floor ("1.8"): the oldest JDK whose API published JVM code may call. */
+val floorTarget: String = libs.versions.javaLangTarget.get()
 
 subprojects {
     plugins.withId("com.vanniktech.maven.publish") {
@@ -174,22 +173,13 @@ subprojects {
         }
     }
 
-    // Published JVM code compiles against JDK 8's own class library, the bytecode floor: only
-    // that catches every JDK 9+ call. Kotlin's `-Xjdk-release=1.8` (fkc `useJdkRelease`) hides
-    // JDK 9+ classes but not JDK 9+ members of old classes: `InputStream.readAllBytes()` compiled
-    // and then threw NoSuchMethodError on Java 8. The compiler itself still runs on the build JDK.
-    // Tests are left on the build JDK's API on purpose: they also cover JDK 9+ behaviour, guarded
-    // by the runtime version, and are compiled to floor bytecode so the JDK 8 lane loads them.
-    val floorLauncher = provider { project.extensions.getByType<JavaToolchainService>() }
-        .flatMap { it.launcherFor { languageVersion.set(floorJdk) } }
+    // fkc's `useJdkRelease` is off so tests see the build JDK's API (root setup above); published
+    // JVM code still gets the floor API limit here, so a JDK 9+ call there fails to compile.
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>()
         .matching { it.name == "compileKotlinJvm" }
-        .configureEach { kotlinJavaToolchain.toolchain.use(floorLauncher) }
+        .configureEach { compilerOptions.freeCompilerArgs.add("-Xjdk-release=$floorTarget") }
     tasks.withType<JavaCompile>().matching { it.name == "compileJvmMainJava" }.configureEach {
-        javaCompiler.set(
-            project.extensions.getByType<JavaToolchainService>()
-                .compilerFor { languageVersion.set(floorJdk) },
-        )
+        options.release.set(floorTarget.removePrefix("1.").toInt())
     }
 
     // `-Pfluxo.testJdk=<N>` runs JVM tests on JDK N while the build itself stays on its own JDK.

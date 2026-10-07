@@ -92,9 +92,12 @@ Workflow / release / verification-metadata traps live in
   Inside any `SharedCloseable` subclass, a name `close` resolves to the member
   function, never to a function-typed property: name such properties otherwise.
 - Root `build.gradle.kts` — umbrella via `fkcSetupRaw {…}`, Kover
-  aggregation. `commonJvmMain` compiles against the Android SDK jar taken
-  from AGP's `sdkComponents.bootClasspath` (`fluxo-io-rad/build.gradle.kts`);
-  never build an SDK path by hand, SDK directory names vary (`android-37.0`).
+  aggregation.
+- **NEVER put `android.jar` on a JVM compile classpath** (e.g. `compileOnly` in
+  `commonJvmMain`): it carries Android's newer `java.*` members
+  (`InputStream.readAllBytes`), which beat the Java 8 API limit, so the JVM build
+  compiles calls that crash on Java 8. Shared JVM code reads Android facts by
+  reflection (`ANDROID_SDK_INT`); Android-only code lives in `androidMain`.
 - `gradle/libs.versions.toml` — version+toolchain SoT; per-pin rationale
   lives in catalog comments.
 - `config/{detekt.yml,lint.xml}`; `.editorconfig` (ktlint_official,
@@ -288,10 +291,9 @@ Workflow / release / verification-metadata traps live in
   artifact. Removal + the repository ban are correct — keep both. (See
   also `.github/AGENTS.md` "Release publication".)
 - **JVM floor is Java 8** (`javaLangTarget=1.8`; 0.1.0 shipped at 8, raising it breaks
-  consumers). Published JVM code compiles against JDK 8's own class library (root
-  `build.gradle.kts`, so every machine and CI job needs a JDK 8 installed): Kotlin's
-  `-Xjdk-release` misses JDK 9+ methods on old classes. Tests compile against the build JDK
-  and run on 8 too: wrap JDK 9+ calls in `if (JAVA_9_PLUS)`, never delete such checks.
+  consumers). Published JVM code gets `-Xjdk-release=1.8`/`--release 8` (root
+  `build.gradle.kts`). Tests compile against the build JDK's API and also run on 8 (`jdk8`
+  CI lane): wrap JDK 9+ calls in `if (JAVA_9_PLUS)`, never delete such checks.
 - Build floors are deliberate: `androidMinSdk=21`,
   `kotlinLangVersion=2.2` (maintainer ruling: the library follows the newest
   compiler that still accepts this language version). Native/JS/Wasm consumers

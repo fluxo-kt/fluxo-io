@@ -43,12 +43,7 @@ families get several macOS jobs.
 - `jdk8`, `jdk17`, `jdk25`: `jvmTest` on that JDK via `-Pfluxo.testJdk` (root
   `build.gradle.kts`); Gradle itself runs on 21. 8 is the bytecode floor: only
   running there shows JDK 8 behaviour (e.g. a closed `Channels.newChannel`
-  stream that silently drops writes).
-- **Every job that compiles JVM code installs JDK 8 (Zulu) before JDK 21**:
-  published JVM code compiles against JDK 8's class library, found through
-  `JAVA_HOME_8_X64`/`_ARM64` (`gradle.properties`). A job without it fails with
-  "no matching toolchain". A `-Porg.gradle.java.installations.fromEnv=…`
-  override replaces that list, so keep `JAVA_HOME_8_X64` in it.
+  stream that silently drops writes) and catches JDK 9+ calls in tests.
 - Every filtered job adds `-x klibApiCheck` (a filtered klib dump always
   differs).
 - A filtered build skips some test tasks yet passes (Android host tests are

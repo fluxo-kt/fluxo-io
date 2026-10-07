@@ -3,11 +3,9 @@
 
 package fluxo.io.nio
 
-import android.os.Build
-import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
 import fluxo.io.LOGGER
-import fluxo.io.internal.IS_ANDROID
+import fluxo.io.internal.ANDROID_SDK_INT
 import fluxo.io.internal.classForNameOrNull
 import fluxo.io.internal.getStaticField
 import fluxo.io.internal.invokeStaticMethod
@@ -38,6 +36,12 @@ public val EMPTY_BYTE_BUFFER: ByteBuffer = ByteBuffer.wrap(EMPTY_BYTE_ARRAY)
 // https://github.com/cddesire/hoss/blob/4a97dc0/src/hdfs/org/apache/hadoop/hdfs/hoss/meta/ByteBufferCleaner.java
 // https://github.com/graphhopper/graphhopper/blob/d310f63/core/src/main/java/com/graphhopper/storage/MMapDataAccess.java#L83
 // https://github.com/graphhopper/graphhopper/issues/933.
+
+/** `Build.VERSION_CODES.P`; that class is not on the JVM classpath (see `ANDROID_SDK_INT`). */
+private const val ANDROID_P = 28
+
+/** `Build.VERSION_CODES.O_MR1`. */
+private const val ANDROID_O_MR1 = 27
 
 private object BufferUtil0 {
 
@@ -94,7 +98,7 @@ private object BufferUtil0 {
             ?: classForNameOrNull("sun.misc.Cleaner")?.reflectionMethodOrNull("clean")
 
         // Strictly forbidden in Android since API level 28
-        ATTACHMENT_METHOD = if (IS_ANDROID && Build.VERSION.SDK_INT >= VERSION_CODES.P) null else {
+        ATTACHMENT_METHOD = if (ANDROID_SDK_INT >= ANDROID_P) null else {
             sunDirectBuffer?.reflectionMethodOrNull("attachment")
             // They changed the name in Java 7 (???)
                 ?: sunDirectBuffer?.reflectionMethodOrNull("viewedBuffer")
@@ -103,7 +107,7 @@ private object BufferUtil0 {
 
         // Android API level 27, public API!
         // android.os.SharedMemory.unmap
-        UNMAP_METHOD = if (!IS_ANDROID || Build.VERSION.SDK_INT < VERSION_CODES.O_MR1) null else {
+        UNMAP_METHOD = if (ANDROID_SDK_INT < ANDROID_O_MR1) null else {
             classForNameOrNull("android.os.SharedMemory")
                 ?.reflectionMethodOrNull("unmap", ByteBuffer::class.java)
         }

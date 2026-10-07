@@ -144,11 +144,11 @@ jobs:
       # the local build cache, which a read-only job above would otherwise never keep. Restored
       # over the writer's Gradle home. An entry is reusable only while every Gradle-home file it
       # recorded comes back. A reader saves no Gradle home, so a recorded file the writer's home
-      # lacks is gone every run and its entry never hits. Two kinds are known and travel here:
-      # plugin marker POMs (`*.gradle.plugin`), which the writer's cache cleanup purges, and
-      # kotlin-stdlib, whose metadata jar (`-all`) version depends on the target filter (2.2.21
-      # JVM-only, 2.3.0 Linux, 2.4.20 unfiltered). Another kind shows as the missing file named
-      # in the reader's "configuration cache cannot be reused" line.
+      # lacks is gone every run and its entry never hits. Two kinds are known and travel here
+      # (~6 MB): dependency metadata (`.pom`, `.module`), which the writer's cache cleanup purges
+      # (seen on plugin markers and parent POMs), and kotlin-stdlib, whose metadata jar (`-all`)
+      # version depends on the target filter (2.2.21 JVM-only, 2.3.0 Linux, 2.4.20 unfiltered).
+      # Another kind shows as the file named in a reader's "cannot be reused" line.
       # Gradle checks each entry against its real inputs, so a stale one costs only a recompute.
       - name: Gradle shard state
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -156,7 +156,8 @@ jobs:
           path: |
             .gradle/configuration-cache
             ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/build-cache-1
-            ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/modules-2/files-2.1/*/*.gradle.plugin
+            ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/modules-2/files-2.1/**/*.pom
+            ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/modules-2/files-2.1/**/*.module
             ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib
           key: gradle-shard-${{ matrix.shard }}-${{ github.sha }}
           restore-keys: gradle-shard-${{ matrix.shard }}-

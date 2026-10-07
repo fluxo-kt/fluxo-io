@@ -33,6 +33,9 @@ import java.io.InputStream
 @Blocking
 @Throws(IOException::class)
 public fun RandomAccessData.Companion.open(pfd: ParcelFileDescriptor): RandomAccessData {
+    // AutoCloseInputStream, not FileInputStream(pfd.fileDescriptor): on Android, closing a
+    // stream or channel built on the raw descriptor can leave the descriptor open, unlike the
+    // desktop JVM (device-tested in Reedy's FdWrapperTest). Its close closes the pfd itself.
     val stream = ParcelFileDescriptor.AutoCloseInputStream(pfd)
     return if (pfd.statSize < 0) readIntoMemory(stream) else open(stream, offset = 0L, size = -1L)
 }

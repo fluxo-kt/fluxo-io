@@ -13,21 +13,30 @@ Workflow / release / verification-metadata traps live in
 ## Vibe & principles
 
 - **Goal: the one read-I/O library you throw at any problem and get the best
-  result the running device allows.** First user: the Reedy Android app, which
-  must be able to delete its own copies (`azadev.io.rad`, `DataAccessor`) and use
-  this instead. Plan and open hypotheses: `ROADMAP.md`.
+  result the running device allows.** `RandomAccessData.open(…)` MUST pick the
+  mechanism itself; `Rad.forX` is the explicit override, never the required path.
+  First user: the Reedy Android app, which must be able to delete its own copies
+  (`azadev.io.rad`, `DataAccessor`) and use this instead. Plan and open
+  hypotheses: `ROADMAP.md`.
 - **Best mechanism per runtime, with a fallback ladder** from the oldest
   supported runtime (JDK 17, Android API 21, every KMP target) up to the newest,
   experimental APIs included behind runtime detection. Choose by what works best
   there, never by deprecation status, and never cut every platform down to a
   common denominator. Platform APIs lie and break: each rung needs a fallback
   that a test exercises.
-- **Defaults come from measurements**, never from reasoning alone: a default
-  without benchmark data behind it is an open ROADMAP hypothesis.
+- **Defaults come from measurements**, never from reasoning alone, taken on the
+  platforms the default runs on, across several metrics (throughput, latency,
+  allocations, syscalls, memory) and devices: one number on one machine decides
+  nothing. Until measured, a default is a hypothesis listed in `ROADMAP.md`.
 - **The core has no dependencies; anything needing one is its own module**
   (as `:fluxo-io-rad-okio`). `kotlinx-coroutines` and `androidx-annotation` are
-  `compileOnly`: consumers opt in. Minimal work per read: every syscall,
-  copy and allocation on a read path must be needed.
+  `compileOnly`: consumers opt in.
+- **Minimal work per read.** Every syscall, copy and allocation on a read path
+  MUST be needed; small costs repeat on every read and add up.
+- **Every published artifact MUST work for three consumer kinds**: Android apps,
+  KMP projects, and plain Java projects on Gradle or Maven. A build trick that
+  only one of them accepts (e.g. classes for a newer JDK in a multi-release jar,
+  which Android's D8 must also accept) is proven against all three first.
 - **Tests use real temp files, not mocks.** Behaviour every impl must
   share lives in ONE table, `RadContract` (main code of the unpublished
   `:conformance-test` module, so adapter modules can run it too), run on every
@@ -289,8 +298,10 @@ Workflow / release / verification-metadata traps live in
   Detekt's `--language-version` and logs it; that log is expected.
 - Okio and kotlinx-io are used only by their adapter modules
   (`:fluxo-io-rad-okio`, `:fluxo-io-rad-kotlinx-io`); the core never depends
-  on them. Benchmarks (JMH via kotlinx-benchmark, Android devices) live only in
-  the planned unpublished `:benchmarks` module (ROADMAP "M0").
+  on them. Benchmarks (JMH via kotlinx-benchmark; androidx.benchmark on devices)
+  MUST live in one unpublished `:benchmarks` module, never in test source sets:
+  test lanes stay fast, and the benchmark dependencies never reach a published
+  module.
 - JSR305 stays at `3.0.2`; upstream has no newer release.
 - `kotlin.concurrent.atomics` is still experimental; keep AtomicFU.
 - Keep the explicit `apiValidation { klib { enabled = true } }` in

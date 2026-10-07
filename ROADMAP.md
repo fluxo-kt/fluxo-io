@@ -8,24 +8,11 @@ is written so that ports can pass the same case table.
 * Native TypeScript/JavaScript, across runtimes (Node, Bun, Deno, browsers).
 * Rust, including Rust compiled to WASM/WASI.
 
-## Direction
+## Plan
 
-Goal: one read-I/O library you throw at any problem and get the best result the
-running device allows. `RandomAccessData.open(source)` picks the mechanism; the
-explicit `Rad.forX` factories stay for callers who must choose. Done means the
-Reedy Android app deletes its own copies (`azadev.io.rad`, the I/O half of
-`DataAccessor`, `ZipWrapper` plumbing) and uses this library.
-
-Rules (also in `AGENTS.md`):
-
-* Each platform gets a fallback ladder from its oldest supported runtime (JDK 17,
-  Android API 21, every KMP target) to its newest APIs, experimental ones
-  included, chosen at runtime. Deprecation is not a reason to skip a mechanism;
-  measured results are the only reason.
-* A default needs benchmark data from the platforms it runs on. Until then it is
-  a hypothesis below.
-* The core takes no dependencies; a source or adapter that needs one is its own
-  module.
+Goal and rules: `AGENTS.md` "Vibe & principles". This plan ends when the Reedy
+Android app deletes `azadev.io.rad`, the I/O half of `DataAccessor` and its
+`ZipWrapper` plumbing, and uses this library instead.
 
 ```mermaid
 graph LR
@@ -59,8 +46,7 @@ Axes (each swept geometrically to its mechanism limits, never one point):
 | Runtime | JDK 17/21/25; Android API 21-23, 29-30, 35+ on low- and high-end devices; Linux, macOS, Windows native |
 
 Metrics: throughput, p50/p99 latency, allocations per read, syscalls per read,
-resident memory and page-cache footprint, open cost. A decision never rests on
-one metric or one device.
+resident memory and page-cache footprint, open cost.
 
 Done when every M1 rule below cites a row of the table.
 

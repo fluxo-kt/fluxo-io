@@ -8,14 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-/**
- * Falsifies the structural fix for the `onSharedClose` leak-on-throw bug class:
- * a release-throw MUST NOT skip the [SharedDataAccessor] `resources` close pass.
- *
- * RED-bisect: revert [SharedDataAccessor] to the pre-template form
- * (`api.releaseCompat(); super.onSharedClose()` pattern with no try-finally)
- * and these tests turn red; restore the final-template form to make them green.
- */
+/** A throwing `releaseApi` MUST NOT skip closing the [SharedDataAccessor] `resources`. */
 internal class SharedDataAccessorReleaseApiTest {
 
     @Test

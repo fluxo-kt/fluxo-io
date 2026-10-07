@@ -53,7 +53,8 @@ internal class RadFactoryFailureTest {
 
     /** Linux: each fd is a link to its file. One can close between listing and read: skip it. */
     private fun procFiles(procFds: Path): Set<String> = Files.list(procFds).use { fds ->
-        fds.toList().mapNotNullTo(HashSet()) {
+        // Not fds.toList(): that resolves to Stream.toList(), JDK 16+, and the jdk8 lane runs this.
+        fds.iterator().asSequence().mapNotNullTo(HashSet()) {
             runCatching { Files.readSymbolicLink(it).toString() }.getOrNull()
         }
     }

@@ -314,6 +314,9 @@ public fun Buffer?.releaseCompat(): ByteBuffer =
 @Throws(java.io.IOException::class)
 internal fun java.nio.channels.WritableByteChannel.writeFully(buffer: ByteBuffer) {
     while (buffer.hasRemaining()) {
+        // JDK 8's `Channels.newChannel(OutputStream)` keeps accepting writes after close and
+        // drops the bytes; JDK 9+ throws. Checked per write: a close can race the transfer.
+        if (!isOpen) throw java.nio.channels.ClosedChannelException()
         if (write(buffer) == 0) {
             throw java.io.IOException(
                 "Target channel accepted no bytes (${buffer.remaining()} left): " +

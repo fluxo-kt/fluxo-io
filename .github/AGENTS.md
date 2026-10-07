@@ -16,16 +16,17 @@ language traps live in the **root `AGENTS.md`** — read that first.
 
 ## Build shards (`build.yml`)
 
-**CI headroom (maintainer ruling):** "CI design MUST retain 8–15× headroom
-(shared CI runner could be ~15x slower)." Lane time budgets (5 min for a
-complete routine lane) apply to the lane on normal hardware; CI timeouts must
-let a runner ~15× slower still pass. It is not a time limit on CI jobs: never
-restate it as one. Deep flows (benchmarks, release, long full-test runs) sit
-outside lane budgets. Speed must not cost soundness, fidelity or cleanup, and
-comes after correctness and design. One job per target family runs the slow
-toolchains in parallel. A Kotlin/Native target
-compiles and runs tests only on its own host OS, so Apple families get several
-macOS jobs.
+**CI headroom:** "CI design MUST retain 8–15× headroom (shared CI runner could
+be ~15x slower)." Lane budgets (5 min per complete routine lane) apply on normal
+hardware. On CI, set every step timeout to ≥15× the local time of its tasks.
+It is NOT a time limit on CI jobs: quote it, NEVER restate or compute a limit
+from it. Deep flows (benchmarks, release, long full-test runs) sit outside lane
+budgets. Speed never costs soundness, fidelity or cleanup; it comes after
+correctness and design.
+
+One job per target family runs the slow toolchains in parallel. A
+Kotlin/Native target compiles and runs tests only on its own host OS, so Apple
+families get several macOS jobs.
 
 - `jvm` (COMMON_JVM): `build koverLog` — JVM tests (no Android test source set exists), kover, Android
   lint, verifyBuildPolicy, dependencyGuard.
@@ -51,12 +52,13 @@ macOS jobs.
 - Every job that compiles Kotlin/Native code sets `konan: true`, including
   `api` (it compiles every klib for the ABI check). The cache key is the
   shard plus the catalog's `kotlin` version, never a catalog hash (any
-  dependency bump would re-download every toolchain). Per shard: a cache is saved only on a key miss, so a shared key froze whatever
-  the first job saved, and the other shard redid its own part every run
-  (macOS: ~20 s of `commonizeNativeDistribution` per module). No
+  dependency bump would re-download every toolchain). Keys are per shard: a
+  cache saves only on a key miss, so a shared key keeps whatever the first job
+  saved and every other shard redoes its own part each run (macOS: ~20 s of
+  `commonizeNativeDistribution` per module). No
   `restore-keys`: a prefix fallback would carry old Kotlin toolchains forward.
   Windows keeps them and the Gradle home on D: (`KONAN_DATA_DIR`,
-  `GRADLE_USER_HOME`); extraction to C: was slow.
+  `GRADLE_USER_HOME`): extraction to C: is slow.
   `~/.konan` (Kotlin/Native toolchains) is restored at start and saved with
   `if: always()`: an actions/cache step saves only on success, so cold native
   jobs that time out would never warm it. Step and job timeouts only bound

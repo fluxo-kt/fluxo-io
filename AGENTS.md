@@ -190,7 +190,7 @@ Workflow / release / verification-metadata traps live in
 
 - Configuration cache is on with `problems=fail` and `max-problems=0`.
   Don't capture `Project` or build-script instances in task actions.
-  A cache hit skips configuration, so its side effects never happen: a task action must
+  A configuration-cache hit skips configuration and its side effects: a task action MUST
   create what it needs (e.g. `temporaryDir` is created only when configuration reads it).
   Local builds keep old `build/` output and hide this; CI's fresh checkouts do not.
 - Tests use `runTest(timeout = 9.seconds)`. Concurrency is exercised by

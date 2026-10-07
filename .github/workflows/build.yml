@@ -148,9 +148,9 @@ jobs:
       # recorded comes back. A reader saves no Gradle home, so a recorded file the writer's home
       # lacks is gone every run and its entry never hits. Known kinds travel here: dependency
       # metadata (`.pom`, `.module`, ~6 MB) and the Develocity plugin jar (~20 MB), which the
-      # writer's cache cleanup purges, and kotlin-stdlib, whose metadata jar (`-all`)
-      # version depends on the target filter (2.2.21 JVM-only, 2.3.0 Linux, 2.4.20 unfiltered).
-      # Another kind shows as the file named in a reader's "cannot be reused" line.
+      # writer's cache cleanup purges, and kotlin-stdlib, whose metadata jar (`-all`) version
+      # depends on the target filter, so the writer's unfiltered home lacks the readers' ones.
+      # A new kind shows as a "Configuration cache miss" warning naming the missing file.
       # Gradle checks each entry against its real inputs, so a stale one costs only a recompute.
       - name: Gradle shard state
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

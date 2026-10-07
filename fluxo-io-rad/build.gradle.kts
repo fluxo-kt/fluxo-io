@@ -143,6 +143,9 @@ tasks.matching { it.name == "wasmWasiNodeTest" }.configureEach {
     doFirst {
         val file = driver.get().asFile
         val original = "new WASI({ version: 'preview1', args: argv, env, })"
+        // `temporaryDir` creates the directory only when configuration reads it, so a configuration
+        // cache hit on a fresh checkout leaves it absent, and Node's WASI fails on a missing preopen.
+        tmpDir.mkdirs()
         val hostDir = tmpDir.absolutePath.replace("\\", "\\\\").replace("'", "\\'")
         val text = file.readText()
         if (original !in text) {

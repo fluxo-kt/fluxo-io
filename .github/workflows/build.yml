@@ -18,6 +18,8 @@ env:
   #GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   IS_DEFAULT_REPO: ${{ github.repository == 'fluxo-kt/fluxo-io' }}
   IS_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+  # Gradle encrypts configuration-cache entries with this key; a stable key lets a later run read them.
+  GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -123,11 +125,8 @@ jobs:
           key: konan-${{ runner.os }}-${{ matrix.shard }}-kotlin-${{ steps.kotlin.outputs.version }}
 
       # No `cache-encryption-key`: setup-gradle saves configuration-cache data only for a licensed
-      # Develocity trial (`ProjectCacheStatus` in its vendored caching library). Caching
-      # `.gradle/configuration-cache` yourself needs a restored Gradle home holding every file the
-      # entry recorded. With both providers it did not: entries missed on removed
-      # kotlin/kotlinx/Develocity artifacts in 8 of 11 jobs. Where an entry hit, the Gradle step
-      # fell to 12-28 s.
+      # Develocity trial (`ProjectCacheStatus` in its vendored caching library); the next step
+      # caches it instead.
       # One `cache-writer` job per runner OS saves the Gradle home; the others only read it and
       # fall back to that writer's entry. Each job wrote a new ~600 MB dependency entry on every
       # run, ~6 GB per push against the 10 GB repository quota, so GitHub evicted the previous
@@ -140,6 +139,20 @@ jobs:
           add-job-summary-as-pr-comment: never
           artifact-retention-days: 1
           validate-wrappers: true
+
+      # Per shard, saved every run: its configuration cache (a hit skips configuring, ~30 s) and
+      # the local build cache, which a read-only job above would otherwise never keep. Restored
+      # over the writer's Gradle home. An entry is reusable only while every Gradle-home file it
+      # recorded comes back, which the one stable writer per OS gives; Gradle checks each entry
+      # against its real inputs, so a stale one costs only a recompute.
+      - name: Gradle shard state
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .gradle/configuration-cache
+            ${{ env.GRADLE_USER_HOME || '~/.gradle' }}/caches/build-cache-1
+          key: gradle-shard-${{ matrix.shard }}-${{ github.sha }}
+          restore-keys: gradle-shard-${{ matrix.shard }}-
 
       # TODO: If it's a "build(deps): ..." commit, then run the dependency review actions,
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results

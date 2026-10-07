@@ -8,6 +8,8 @@
 .fleet/
 .gradle/
 .kotlin/
+# Agent-tool state (oh-my-claudecode); it creates one in any directory it touches.
+.omc/
 .vale*
 .vscode/
 bin/

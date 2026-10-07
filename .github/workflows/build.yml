@@ -157,6 +157,15 @@ jobs:
           key: gradle-shard-${{ matrix.shard }}-${{ github.sha }}
           restore-keys: gradle-shard-${{ matrix.shard }}-
 
+      # A reader's configuration cache records the files it resolved while configuring; any the
+      # writer's home lacks (lincheck, per-target atomicfu klibs, the commonizer) are gone next
+      # run, and the entry misses. Configuring every target and task here, without running any,
+      # puts them into the home this writer saves. Its own entry makes this a cache hit later.
+      - name: Resolve every shard's configuration inputs
+        if: matrix.cache-writer && env.IS_DEFAULT_BRANCH == 'true'
+        shell: bash
+        run: KMP_TARGETS='' ./gradlew build koverLog mergeDetektSarif --dry-run
+
       # TODO: If it's a "build(deps): ..." commit, then run the dependency review actions,
       #  amend the `dependencyGuardBaseline` and `kotlinUpgradeYarnLock` task results
 

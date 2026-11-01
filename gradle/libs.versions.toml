@@ -131,4 +131,4 @@ vanniktech-mvn-publish = { id = "com.vanniktech.maven.publish", version = "0.37.
 # https://runningcode.github.io/gradle-doctor/
 # https://plugins.gradle.org/plugin/com.osacky.doctor
 # 0.12.0, not 0.12.1: 0.12.1 has no upstream tag and is not the registry <latest> (.github/AGENTS.md).
-gradle-doctor = { id = "com.osacky.doctor", version = "0.12.0" }
+gradle-doctor = { id = "com.osacky.doctor", version = "0.12.1" }
